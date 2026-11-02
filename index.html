@@ -300,7 +300,9 @@ table.grid td.gx .btn{padding:4px 8px}
         <div class="group-title">المرسل إليه</div>
         <div class="field"><label for="ltRecPrefix">السطر الأول</label><input type="text" id="ltRecPrefix" list="ltPrefixes"></div>
         <datalist id="ltPrefixes"><option value="إلى الفاضل:"><option value="إلى الفاضلة:"><option value="إلى السيد الفاضل:"><option value="إلى الأفاضل:"><option value="إلى السادة:"><option value="إلى الكريم الفاضل:"><option value="إلى الدكتور الفاضل:"></datalist>
-        <div class="field"><label for="ltRecName">الاسم والصفة (سطر أو أكثر، يُكتب بالعريض)</label><textarea id="ltRecName" rows="2"></textarea></div>
+        <div class="field"><label for="ltRecName">الاسم والصفة (سطر أو أكثر، يُكتب بالعريض)</label><textarea id="ltRecName" rows="2"></textarea>
+          <label class="check"><input type="checkbox" id="ltRecKashida"> مدّ الحروف (كشيدة) لتتساوى الأسطر</label>
+          <div class="row"><span class="hint" style="flex:1">اسحب «إلى الفاضل» في المعاينة لتحريكها إلى أي مكان.</span><button class="btn ghost sm" type="button" id="ltRecReset">إرجاعها لمكانها</button></div></div>
         <div class="field"><label for="ltRef">رقم المراسلة (اختياري، يظهر يمينًا)</label><input type="text" id="ltRef" placeholder="الرقم: ....../2026"></div>
 
         <div class="group-title">العنوان الزخرفي</div>
@@ -353,7 +355,9 @@ table.grid td.gx .btn{padding:4px 8px}
           <div class="row"><button class="btn ghost sm" type="button" id="ltAddStamp">+ رفع ختم أو توقيع (PNG)</button><button class="btn ghost sm" type="button" id="ltNoStamp">بدون ختم</button></div>
           <input type="file" id="ltStampFile" accept="image/png,image/*" multiple class="sr">
           <span class="hint">الأختام تُحفظ في هذا المتصفح فقط ولا تُنشر مع الصفحة. اضغط على ختم لاختياره، واسحبه في المعاينة لتحريكه.</span>
-          <div class="field"><label for="ltStampSize">حجم الختم</label><input type="range" id="ltStampSize" min="0.4" max="1.6" step="0.01"></div>
+          <div class="field" id="ltStampMMBox" hidden><label for="ltStampMM" id="ltStampMMLbl">قطر الختم الحقيقي (مم)</label>
+            <div class="row"><input type="number" id="ltStampMM" min="10" max="200" step="0.5" style="flex:0 0 120px" dir="ltr"><span class="hint" id="ltStampMMHint"></span></div>
+            <span class="hint">قِس الختم الحقيقي بالمسطرة (من حافة الدائرة إلى الحافة المقابلة) واكتب الرقم، فيُطبع بنفس المقاس تمامًا. عند الطباعة اختر «الحجم الفعلي / 100%» وليس «ملاءمة للصفحة».</span></div>
         </div>
 
         <div class="group-title">طول النص</div>
@@ -1508,14 +1512,24 @@ function drawLine(c,ln,xr,y,z,width,justify){ const sp=z*0.26, n=ln.words.length
   const groups=[]; for(const w of ln.words){ const g=groups[groups.length-1]; if(w.ltr&&g&&g.ltr) g.ws.push(w); else groups.push({ltr:w.ltr,ws:[w]}); }
   let x=xr; for(const g of groups){ if(g.ltr){ const gw=g.ws.reduce((a,w)=>a+wordW(c,w,z),0)+sp*(g.ws.length-1); let lx=x-gw; for(const w of g.ws){ drawWord(c,w,lx+wordW(c,w,z),y,z); lx+=wordW(c,w,z)+sp; } x-=gw+gap; }
     else { for(const w of g.ws){ drawWord(c,w,x,y,z); x-=wordW(c,w,z)+gap; } } } }
+/* stretch one word (the last word that can take a kashida, e.g. «الفاضـــل») until the line reaches target */
+function kashidaLast(c,line,target){ const words=line.split(" "); let idx=-1; for(let i=words.length-1;i>=0;i--){ if(bestPoint(words[i])>=0){ idx=i; break; } } if(idx<0) return line;
+  for(let n=0;n<200;n++){ const w=words[idx], at=bestPoint(w), w2=w.slice(0,at)+"ـ"+w.slice(at), test=words.map((x,i)=>i===idx?w2:x).join(" "); if(c.measureText(test).width>target) break; words[idx]=w2; }
+  return words.join(" "); }
 function underline(c,x0,x1,y,z){ c.fillRect(Math.min(x0,x1),y+z*0.2,Math.abs(x1-x0),Math.max(3,z*0.045)); }
-function makeLib(key){ return { key, list:store.get(key,[]), img(id){ const e=this.list.find(x=>x.id===id); if(!e) return null; if(!e.im){ e.im=new Image(); e.im.onload=()=>{ letter._ak=null; redraw(); }; e.im.src=e.url; } return e.im.complete&&e.im.naturalWidth?e.im:null; },
-  save(){ try{ localStorage.setItem("rouwad-studio:"+this.key,JSON.stringify(this.list.map(({id,url,name})=>({id,url,name})))); return true; }catch(e){ status("مساحة المتصفح ممتلئة، احذف بعض الصور المرفوعة.",true); return false; } } }; }
+const PXMM=3307/210; /* letter canvas: A4 at 400 dpi → 15.75 px per mm */
+function stampCircle(im){ /* diameter (image px) of the red round stamp, or 0 if the image has no stamp circle */
+  const k=Math.min(1,600/Math.max(im.naturalWidth,im.naturalHeight)), w=Math.round(im.naturalWidth*k), h=Math.round(im.naturalHeight*k), cv=mkCanvas(w,h), c=cv.getContext("2d"); c.drawImage(im,0,0,w,h);
+  const a=c.getImageData(0,0,w,h).data; let x0=w,x1=-1,y0=h,y1=-1,n=0;
+  for(let y=0;y<h;y++) for(let x=0;x<w;x++){ const i=(y*w+x)*4; if(a[i+3]>100&&a[i]>140&&a[i+1]<120&&a[i+2]<120&&a[i]-a[i+2]>60){ n++; if(x<x0)x0=x; if(x>x1)x1=x; if(y<y0)y0=y; if(y>y1)y1=y; } }
+  if(n<200) return 0; return Math.min(x1-x0,y1-y0)/k; }
+function makeLib(key){ return { key, list:store.get(key,[]), img(id){ const e=this.list.find(x=>x.id===id); if(!e) return null; if(!e.im){ e.im=new Image(); e.im.onload=()=>{ if(key==="stamps"&&e.d==null){ e.d=stampCircle(e.im); this.save(); } letter._ak=null; redraw(); }; e.im.src=e.url; } return e.im.complete&&e.im.naturalWidth?e.im:null; },
+  save(){ try{ localStorage.setItem("rouwad-studio:"+this.key,JSON.stringify(this.list.map(({id,url,name,mm,d})=>({id,url,name,mm,d})))); return true; }catch(e){ status("مساحة المتصفح ممتلئة، احذف بعض الصور المرفوعة.",true); return false; } } }; }
 const STAMPS=makeLib("stamps"), TITLES=makeLib("titles");
 function ltTableRows(str){ return String(str||"").split("\n").map(r=>r.trim()).filter(Boolean).map(r=>{ const tot=r[0]==="="; return {tot,cells:(tot?r.slice(1):r).split("|").map(x=>x.trim())}; }); }
 const letter = {
   W:3307,H:4677, sel:null, overflow:false, usedSize:0, page:0, pages:1,
-  state:Object.assign({kind:"tahniaa", style:"plain", dept:"root", deptText:"", email:LT_DEPTS.root.email, phone:LT_DEPTS.root.phone, ref:"", artText:"", artScale:1, table:"", city:"القرارة في:", date:letterDate(new Date()), size:0, flow:"fit", signerName:"", stamp:null, stamp2:null, stampSize:1, stampDX:0, stampDY:0},
+  state:Object.assign({kind:"tahniaa", style:"plain", dept:"root", deptText:"", email:LT_DEPTS.root.email, phone:LT_DEPTS.root.phone, ref:"", artText:"", artScale:1, table:"", city:"القرارة في:", date:letterDate(new Date()), size:0, flow:"fit", signerName:"", stamp:null, stamp2:null, stampDX:0, stampDY:0, recKashida:true},
     (({label,...k})=>k)(LT_KINDS.tahniaa), store.get("letter",{})),
   frame(){ return {x:0,y:0,w:1,h:1}; }, photo(){ return null; },
   artCanvas(){ const s=this.state; if(!s.art||s.art==="none") return null;
@@ -1534,13 +1548,17 @@ const letter = {
   /* build a list of blocks {h, draw(c,y), spacer?, keepWithNext?} at body size z, leading factor lf */
   build(c,z,lf){ const s=this.state, S=LT_STYLE[s.style]||LT_STYLE.plain, L=S.L, R=S.R, W=R-L, k=z/108.6, B=[]; c.direction="rtl";
     const add=(h,draw,o={})=>B.push(Object.assign({h,draw},o));
-    // recipient + reference
-    const recLines=String(s.recName||"").split("\n").map(x=>x.trim()).filter(Boolean), pre=(s.recPrefix||"").trim(), rcx=L+W*0.29, rlh=z*1.16;
-    if(pre||recLines.length||(s.ref||"").trim()){ const rows=[];
-      if(pre) rows.push(c2=>{}); const wrapped=[]; for(const l of recLines){ for(const ln of wrapWords(c,ltParse("**"+l.replace(/\*\*/g,"")+"**"),z,W*0.55)) wrapped.push(ln); }
-      const h=Math.max((pre?1:0)+wrapped.length, (s.ref||"").trim()?1:0)*rlh+z*0.35;
-      add(h,(c,y)=>{ let ry=y; if(pre){ c.font=LBF(400,z); const w=c.measureText(pre).width; c.textAlign="center"; c.fillText(pre,rcx,ry+z); underline(c,rcx-w/2,rcx+w/2,ry+z,z); ry+=rlh; }
-        for(const ln of wrapped){ drawLine(c,ln,rcx+ln.w/2,ry+z,z,ln.w,false); ry+=rlh; }
+    // recipient + reference: prefix (regular, underlined) and name lines (bold), equalised with kashida
+    const recLines=String(s.recName||"").split("\n").map(x=>x.replace(/\*\*/g,"").trim()).filter(Boolean), pre=(s.recPrefix||"").trim(), rcx=L+W*0.29, rlh=z*1.16;
+    if(pre||recLines.length||(s.ref||"").trim()){
+      const rows=[]; if(pre) rows.push({t:pre,b:false}); recLines.forEach(t=>rows.push({t,b:true}));
+      rows.forEach(r=>{ c.font=LBF(r.b?700:400,z); r.w=c.measureText(r.t).width; });
+      const target=Math.min(W*0.6, Math.max(0,...rows.map(r=>r.w)));
+      if(s.recKashida!==false && rows.length>1) rows.forEach(r=>{ c.font=LBF(r.b?700:400,z); if(r.w<target*0.985){ r.t=kashidaLast(c,r.t,target); r.w=c.measureText(r.t).width; } });
+      const h=Math.max(rows.length,(s.ref||"").trim()?1:0)*rlh+z*0.35;
+      add(h,(c,y)=>{ const dx=s.recDX||0, dy=s.recDY||0, cx=rcx+dx; let ry=y+dy; c.direction="rtl"; c.textAlign="center"; c.fillStyle="#000";
+        const bw=Math.max(...rows.map(r=>r.w),1); if(rows.length) this._recBox={x:cx-bw/2-20,y:ry,w:bw+40,h:rows.length*rlh+z*0.3};
+        rows.forEach((r,i)=>{ c.font=LBF(r.b?700:400,z); c.fillText(r.t,cx,ry+z); if(i===0&&pre&&!/ـ{3,}/.test(r.t)) underline(c,cx-r.w/2,cx+r.w/2,ry+z,z); ry+=rlh; });
         if((s.ref||"").trim()){ const ln=wrapWords(c,ltParse(s.ref.trim()),z,W*0.4)[0]; if(ln) drawLine(c,ln,R,y+z,z,ln.w,false); } },{keep:true}); }
     // decorative title (+ ornament)
     const art=this.artCanvas();
@@ -1561,18 +1579,26 @@ const letter = {
         lines.forEach((ln,i)=>add(lh,(c,y)=>{ if(i===0){ c.font=LBF(700,z); c.textAlign="right"; c.fillText("-",R-z*0.1,y+z); } drawLine(c,ln,R-ind,y+z,z,W-ind,i<lines.length-1); })); continue; }
       const lines=wrapWords(c,ltParse(p),z,W); lines.forEach((ln,i)=>add(lh,(c,y)=>drawLine(c,ln,R,y+z,z,W,i<lines.length-1))); }
     if(!hasTable && (s.table||"").trim()){ add(z*0.2,()=>{},{spacer:true}); this.tableBlocks(c,z,L,R,B); }
-    // closing: date + signer(s) + stamp(s) — kept together
-    const dz=z*0.94, city=(s.city||"").trim(), date=(s.date||"").trim(), sz=z*0.94, two=!!(s.signer2||"").trim();
-    const sigs= two ? [[s.signer,L+W*0.84,s.stamp,0],[s.signer2,L+W*0.31,s.stamp2,1]] : [[s.signer,L+W*0.44,s.stamp,0]];
-    let h0=z*0.3+((city||date)?dz*1.35:0); const sigTop=h0; let bottom=sigTop+sz*1.4+(((s.signerName||"").trim())?sz*1.2:0); const stampBoxes=[];
-    for(const [lab,cx,st,idx] of sigs){ const im=st?STAMPS.img(st):null; if(!im) continue; const sc=(s.stampSize||1)*Math.min(1,k*1.1); let w=1126*sc, h=w*im.height/im.width; if(h>614*sc*1.25){ h=614*sc*1.25; w=h*im.width/im.height; }
-      const bx= two ? cx-w/2 : cx-w*0.72, by=sigTop+sz*0.9+(((s.signerName||"").trim()&&!two)?sz*1.1:0); stampBoxes.push({im,idx,x:bx+(idx===0?(s.stampDX||0):0),y:by+(idx===0?(s.stampDY||0):0),w,h}); bottom=Math.max(bottom,by+h); }
-    add(bottom,(c,y)=>{ if(city||date){ const dl=wrapWords(c,ltParse(date),dz,W*0.7)[0]||{words:[],w:0}; c.font=LBF(400,dz); const cw=city?c.measureText(city).width:0;
-        const total=cw+(city&&dl.w?dz*0.3:0)+dl.w, xr=Math.min(R-W*0.3, L+W*0.62+total/2); const yy=y+z*0.3;
-        if(city){ c.textAlign="right"; c.direction="rtl"; c.fillText(city,xr,yy+dz); underline(c,xr-cw,xr,yy+dz,dz); } drawLine(c,dl,xr-cw-(city?dz*0.3:0),yy+dz,dz,dl.w,false); }
-      for(const [lab,cx] of sigs){ const t=(lab||"").trim(); if(!t) continue; c.font=LBF(400,sz); const w=c.measureText(t).width; c.textAlign="center"; c.direction="rtl"; c.fillText(t,cx,y+sigTop+sz); underline(c,cx-w/2,cx+w/2,y+sigTop+sz,sz); }
-      const nm=(s.signerName||"").trim(); if(nm){ c.font=LBF(700,sz); c.textAlign="center"; c.fillText(nm,sigs[0][1],y+sigTop+sz*2.25); }
-      this._stampBox=null; for(const b of stampBoxes){ c.drawImage(b.im,b.x,y+b.y,b.w,b.h); if(b.idx===0) this._stampBox={x:b.x,y:y+b.y,w:b.w,h:b.h}; } },{closing:true, textH:sigTop+sz*1.4});
+    // closing: date + signer(s) + stamp(s), kept together. Single signer: everything aligned to the left margin.
+    const dz=z*0.94, city=(s.city||"").trim(), date=(s.date||"").trim(), sz=z*0.94, two=!!(s.signer2||"").trim(), nm=(s.signerName||"").trim();
+    const sigs= two ? [[s.signer,L+W*0.84,s.stamp,0],[s.signer2,L+W*0.31,s.stamp2,1]] : [[s.signer,null,s.stamp,0]];
+    const sigTop=z*0.3+((city||date)?dz*1.35:0); let bottom=sigTop+sz*1.4+(nm?sz*1.2:0); const stampBoxes=[];
+    c.font=LBF(400,sz); const labW=c.measureText((s.signer||"").trim()).width;
+    const dLine=(city||date)?(wrapWords(c,ltParse(date),dz,W*0.75)[0]||{words:[],w:0}):{words:[],w:0}; c.font=LBF(400,dz); const cityW=city?c.measureText(city).width:0;
+    const dTotal=cityW+(city&&dLine.w?dz*0.3:0)+dLine.w; c.font=LBF(700,sz); const nmW=nm?c.measureText(nm).width:0;
+    const XR= L+Math.max(dTotal,labW,nmW); /* right edge of the closing block: date line right edge */
+    for(const [lab,cx,st,idx] of sigs){ const im=st?STAMPS.img(st):null; if(!im) continue; const e=STAMPS.list.find(x=>x.id===st)||{}; const mm=e.mm||(e.d?40:60);
+      let w= e.d ? mm*PXMM*im.naturalWidth/e.d : mm*PXMM, h=w*im.naturalHeight/im.naturalWidth;
+      const bx= two ? cx-w/2 : XR-w, by=sigTop+sz*1.2+(nm&&!two?sz*1.1:0);
+      stampBoxes.push({im,idx,x:bx+(idx===0?(s.stampDX||0):0),y:by+(idx===0?(s.stampDY||0):0),w,h}); bottom=Math.max(bottom,by+h); }
+    add(bottom,(c,y)=>{ c.fillStyle="#000";
+      if(city||date){ const dl=dLine, cw=cityW, total=dTotal, xr= two ? Math.min(R-W*0.3, L+W*0.62+total/2) : XR; const yy=y+z*0.3; c.font=LBF(400,dz);
+        if(city){ c.textAlign="right"; c.direction="rtl"; const m=c.measureText(city), ox=two?0:(m.actualBoundingBoxRight||0); c.fillText(city,xr-ox,yy+dz); underline(c,xr-ox-cw,xr-ox+(two?0:ox),yy+dz,dz); } drawLine(c,dl,xr-(two?0:(c.measureText(city).actualBoundingBoxRight||0))-cw-(city?dz*0.3:0),yy+dz,dz,dl.w,false); }
+      for(const [lab,cx] of sigs){ const t=(lab||"").trim(); if(!t) continue; c.font=LBF(400,sz); const w=c.measureText(t).width; c.direction="rtl";
+        if(cx==null){ c.textAlign="right"; const ox=c.measureText(t).actualBoundingBoxRight||0; c.fillText(t,XR-ox,y+sigTop+sz); underline(c,XR-ox-w,XR,y+sigTop+sz,sz); }
+        else { c.textAlign="center"; c.fillText(t,cx,y+sigTop+sz); underline(c,cx-w/2,cx+w/2,y+sigTop+sz,sz); } }
+      if(nm){ c.font=LBF(700,sz); c.textAlign="center"; const w=c.measureText(nm).width; if(two) c.fillText(nm,sigs[0][1],y+sigTop+sz*2.25); else { c.textAlign="right"; c.fillText(nm,XR-(c.measureText(nm).actualBoundingBoxRight||0),y+sigTop+sz*2.25); } }
+      this._stampBox=null; for(const b of stampBoxes){ c.drawImage(b.im,b.x,y+b.y,b.w,b.h); if(b.idx===0) this._stampBox={x:b.x,y:y+b.y,w:b.w,h:b.h}; } },{closing:true});
     return B; },
   tableBlocks(c,z,L,R,B){ const rows=ltTableRows(this.state.table); if(!rows.length) return; const n=Math.max(...rows.map(r=>r.cells.length)), tz=z*0.68, pad=tz*0.7, rh=tz*1.85, W=R-L;
     const cw=Array(n).fill(0); rows.forEach((r,i)=>r.cells.forEach((t,j)=>{ c.font=GF(i===0||r.tot?700:400,tz); cw[j]=Math.max(cw[j],c.measureText(t).width+pad*2); }));
@@ -1613,7 +1639,7 @@ const letter = {
     if(!S.footer) for(const [key,val] of [["email",s.email],["phone",s.phone]]){ const P=S[key], t=(val||"").trim(); if(!t) continue; c.font=GF(400,P.z); c.direction="ltr"; c.textAlign="center";
       const w=c.measureText(t).width; if(w>P.w) c.font=GF(400,P.z*P.w/w); const m=c.measureText(t); c.fillStyle="#111"; c.fillText(t,P.cx,P.cy+(m.actualBoundingBoxAscent-m.actualBoundingBoxDescent)/2); }
     c.direction="rtl"; c.fillStyle="#000";
-    this._stampBox=null;
+    this._stampBox=null; this._recBox=null;
     for(const {b,y} of pages[p]) b.draw(c,y);
     if(pages.length>1){ c.font=LBF(400,60); c.fillStyle="#555"; c.textAlign="center"; c.direction="rtl"; c.fillText(`الصفحة ${p+1} من ${pages.length}`,(S.L+S.R)/2,S.stampLimit+40); }
     if(pageIdx==null) ltSyncPages(this);
@@ -1844,15 +1870,22 @@ function fillArtSelect(){ const sel=$("#ltArt"), s=letter.state; sel.textContent
   if(TITLES.list.length){ const g=document.createElement("optgroup"); g.label="عناويني المرفوعة"; TITLES.list.forEach((t,i)=>add("up:"+t.id,t.name||("عنوان "+(i+1)),g)); sel.appendChild(g); }
   sel.value=s.art||"none"; if(sel.value!==(s.art||"none")) sel.value="none"; }
 function fillLetter(){ const s=letter.state;
-  const map={ltStyle:"style",ltDept:"dept",ltDeptText:"deptText",ltEmail:"email",ltPhone:"phone",ltRecPrefix:"recPrefix",ltRecName:"recName",ltRef:"ref",ltArtColor:"artColor",ltArtText:"artText",ltArtScale:"artScale",ltSubject:"subject",ltBody:"body",ltCity:"city",ltDate:"date",ltSigner:"signer",ltSigner2:"signer2",ltSignerName:"signerName",ltStampSize:"stampSize",ltSize:"size",ltFlow:"flow"};
+  const map={ltStyle:"style",ltDept:"dept",ltDeptText:"deptText",ltEmail:"email",ltPhone:"phone",ltRecPrefix:"recPrefix",ltRecName:"recName",ltRef:"ref",ltArtColor:"artColor",ltArtText:"artText",ltArtScale:"artScale",ltSubject:"subject",ltBody:"body",ltCity:"city",ltDate:"date",ltSigner:"signer",ltSigner2:"signer2",ltSignerName:"signerName",ltSize:"size",ltFlow:"flow"};
   for(const [id,k] of Object.entries(map)){ const el=$("#"+id); if(document.activeElement!==el) el.value= s[k]==null?"":s[k]; }
   fillArtSelect();
-  $("#ltOrn").checked=!!s.orn; $("#ltDeptCustomBox").hidden=s.dept!=="custom"; $("#ltArtTextBox").hidden=s.art!=="text";
+  $("#ltOrn").checked=!!s.orn; $("#ltRecKashida").checked=s.recKashida!==false; syncStampMM(); $("#ltDeptCustomBox").hidden=s.dept!=="custom"; $("#ltArtTextBox").hidden=s.art!=="text";
   const sg=$("#ltSignerSel"), sv=(s.signer||"").trim(); sg.value= !sv?"@none": LT_SIGNERS.includes(sv)?sv:"@custom"; $("#ltSignerBox").hidden=sg.value!=="@custom";
   $("#ltKinds").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.lk===s.kind)));
   buildStamps(); buildTitles(); buildGrid(); buildTpls(); }
-const LTB=[["#ltStyle","style"],["#ltDeptText","deptText"],["#ltEmail","email"],["#ltPhone","phone"],["#ltRecPrefix","recPrefix"],["#ltRecName","recName"],["#ltRef","ref"],["#ltArt","art"],["#ltArtColor","artColor"],["#ltArtText","artText"],["#ltArtScale","artScale","n"],["#ltSubject","subject"],["#ltBody","body"],["#ltCity","city"],["#ltDate","date"],["#ltSigner","signer"],["#ltSigner2","signer2"],["#ltSignerName","signerName"],["#ltStampSize","stampSize","n"],["#ltSize","size","n"],["#ltFlow","flow"]];
+const LTB=[["#ltStyle","style"],["#ltDeptText","deptText"],["#ltEmail","email"],["#ltPhone","phone"],["#ltRecPrefix","recPrefix"],["#ltRecName","recName"],["#ltRef","ref"],["#ltArt","art"],["#ltArtColor","artColor"],["#ltArtText","artText"],["#ltArtScale","artScale","n"],["#ltSubject","subject"],["#ltBody","body"],["#ltCity","city"],["#ltDate","date"],["#ltSigner","signer"],["#ltSigner2","signer2"],["#ltSignerName","signerName"],["#ltSize","size","n"],["#ltFlow","flow"]];
 for(const [id,k,ty] of LTB) $(id).addEventListener("input",e=>{ letter.state[k]= ty==="n"?+e.target.value:e.target.value; saveLetter(); if(id==="#ltArt"||id==="#ltStyle") fillLetter(); redraw(); });
+$("#ltRecReset").onclick=()=>{ letter.state.recDX=0; letter.state.recDY=0; saveLetter(); redraw(); };
+$("#ltRecKashida").onchange=e=>{ letter.state.recKashida=e.target.checked; saveLetter(); redraw(); };
+function syncStampMM(){ const s=letter.state, e=STAMPS.list.find(x=>x.id===s.stamp); $("#ltStampMMBox").hidden=!e; if(!e) return; STAMPS.img(e.id);
+  const isCircle=!!e.d; $("#ltStampMMLbl").textContent= isCircle?"قطر دائرة الختم الحقيقي (مم)":"عرض التوقيع عند الطباعة (مم)";
+  if(document.activeElement!==$("#ltStampMM")) $("#ltStampMM").value=e.mm||(isCircle?40:60);
+  $("#ltStampMMHint").textContent = isCircle?"اكتُشفت دائرة الختم تلقائيًا ✓":""; }
+$("#ltStampMM").addEventListener("input",e=>{ const st=STAMPS.list.find(x=>x.id===letter.state.stamp); const v=+e.target.value; if(!st||!(v>=10&&v<=200)) return; st.mm=v; STAMPS.save(); redraw(); });
 $("#ltOrn").onchange=e=>{ letter.state.orn=e.target.checked; saveLetter(); redraw(); };
 $("#ltDept").onchange=e=>{ const D=LT_DEPTS[e.target.value], s=letter.state; s.dept=e.target.value; if(e.target.value!=="custom"){ s.email=D.email; s.phone=D.phone; } saveLetter(); fillLetter(); redraw(); };
 $("#ltSignerSel").onchange=e=>{ const v=e.target.value, s=letter.state; if(v==="@none") s.signer=""; else if(v==="@custom"){ if(LT_SIGNERS.includes(s.signer)) s.signer=""; } else s.signer=v;
@@ -1873,7 +1906,7 @@ function libGrid(box,lib,selected,onPick){ box.textContent="";
 function buildStamps(){ const s=letter.state; libGrid($("#ltStamps"),STAMPS,id=>s.stamp===id?1:s.stamp2===id?2:0,(id,del)=>{
     if(del){ if(s.stamp===id) s.stamp=null; if(s.stamp2===id) s.stamp2=null; }
     else { if((s.signer2||"").trim() && s.stamp && s.stamp!==id) s.stamp2=id; else s.stamp=id; s.stampDX=0; s.stampDY=0; }
-    saveLetter(); buildStamps(); redraw(); }); }
+    saveLetter(); buildStamps(); syncStampMM(); redraw(); }); }
 function buildTitles(){ const s=letter.state; $("#ltTitlesBox").hidden=!TITLES.list.length; libGrid($("#ltTitles"),TITLES,id=>s.art==="up:"+id?1:0,(id,del)=>{
     if(del){ if(s.art==="up:"+id) s.art="none"; } else { s.art="up:"+id; if(!s.artColor||s.artColor==="red") s.artColor="original"; }
     letter._ak=null; saveLetter(); fillLetter(); redraw(); }); }
@@ -1886,12 +1919,16 @@ $("#ltAddTitle").onclick=()=>$("#ltTitleFile").click();
 $("#ltTitleFile").addEventListener("change",async e=>{ const fs=[...e.target.files]; e.target.value=""; let last=null;
   for(const f of fs){ try{ const url=await imageToCleanURL(f); const id="ti"+Date.now()+Math.floor(Math.random()*1e4); TITLES.list.push({id,url,name:f.name.replace(/\.[a-z0-9]+$/i,"")}); last=id; }catch(err){ status("تعذّر فتح الصورة.",true); } }
   TITLES.save(); if(last){ letter.state.art="up:"+last; letter.state.artColor="original"; letter.state.artScale=1; letter._ak=null; } saveLetter(); fillLetter(); redraw(); });
-/* drag the main stamp in the preview */
-{ let dragSt=null;
-  pv.addEventListener("pointerdown",e=>{ if(tab!=="letter"||!letter._stampBox||!letter.state.stamp) return; const r=pv.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*3307, y=(e.clientY-r.top)/r.height*4677, b=letter._stampBox;
-    if(x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h){ e.preventDefault(); e.stopImmediatePropagation(); pv.setPointerCapture(e.pointerId); dragSt={x0:e.clientX,y0:e.clientY,dx:letter.state.stampDX||0,dy:letter.state.stampDY||0,k:3307/r.width}; } },true);
-  pv.addEventListener("pointermove",e=>{ if(!dragSt) return; letter.state.stampDX=dragSt.dx+(e.clientX-dragSt.x0)*dragSt.k; letter.state.stampDY=dragSt.dy+(e.clientY-dragSt.y0)*dragSt.k; redraw(); });
-  const end=()=>{ if(dragSt){ dragSt=null; saveLetter(); } }; pv.addEventListener("pointerup",end); pv.addEventListener("pointercancel",end); }
+/* drag the stamp or the recipient block in the preview */
+{ let dragSt=null; const inBox=(b,x,y)=>b&&x>b.x&&x<b.x+b.w&&y>b.y&&y<b.y+b.h;
+  pv.addEventListener("pointerdown",e=>{ if(tab!=="letter") return; const r=pv.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*3307, y=(e.clientY-r.top)/r.height*4677;
+    const key= (letter.state.stamp&&inBox(letter._stampBox,x,y)) ? "stamp" : inBox(letter._recBox,x,y) ? "rec" : null; if(!key) return;
+    e.preventDefault(); e.stopImmediatePropagation(); pv.setPointerCapture(e.pointerId); pv.classList.add("dragging");
+    dragSt={key,x0:e.clientX,y0:e.clientY,dx:letter.state[key+"DX"]||0,dy:letter.state[key+"DY"]||0,k:3307/r.width}; },true);
+  pv.addEventListener("pointermove",e=>{ if(tab==="letter"&&!dragSt){ const r=pv.getBoundingClientRect(), x=(e.clientX-r.left)/r.width*3307, y=(e.clientY-r.top)/r.height*4677;
+      pv.style.cursor= (letter.state.stamp&&inBox(letter._stampBox,x,y))||inBox(letter._recBox,x,y) ? "move" : ""; }
+    if(!dragSt) return; letter.state[dragSt.key+"DX"]=dragSt.dx+(e.clientX-dragSt.x0)*dragSt.k; letter.state[dragSt.key+"DY"]=dragSt.dy+(e.clientY-dragSt.y0)*dragSt.k; redraw(); });
+  const end=()=>{ if(dragSt){ dragSt=null; pv.classList.remove("dragging"); saveLetter(); } }; pv.addEventListener("pointerup",end); pv.addEventListener("pointercancel",end); }
 
 /* ---- table grid editor (stored as "a | b | c" lines; "=" marks a bold total row) ---- */
 function gridRead(){ const rows=ltTableRows(letter.state.table); if(!rows.length) return []; const n=Math.max(...rows.map(r=>r.cells.length)); rows.forEach(r=>{ while(r.cells.length<n) r.cells.push(""); }); return rows; }
