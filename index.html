@@ -84,8 +84,11 @@ input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--brand
 .drop.over{border-color:var(--brand);color:var(--brand)}
 .drop strong{color:var(--ink);display:block;font-size:14px}
 .thumbs{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}
-.thumbs[data-size="m"]{grid-template-columns:repeat(auto-fill,minmax(122px,1fr))}
-.thumbs[data-size="l"]{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.thumbs[data-size="s"]{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+.thumbs[data-size="m"]{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.thumbs[data-size="l"]{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+.stage.tall{position:static}
+.phhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;font-size:15px}
 .thumbs[data-size="l"] .thumb .n{font-size:14px}
 .thumb .h{position:absolute;bottom:2px;left:3px;width:26px;height:26px;border-radius:7px;background:rgba(10,20,40,.55);color:#fff;font-size:15px;line-height:26px;text-align:center;cursor:grab;touch-action:none;user-select:none}
 .thumb{user-select:none;-webkit-user-select:none}
@@ -232,14 +235,7 @@ table.grid td.gx .btn{padding:4px 8px}
             اسحب الصور هنا أو اضغط للاختيار، ويمكنك اللصق أيضًا. كل صورة تصبح منشورًا بنفس القالب.
           </label>
           <input type="file" id="pFiles" accept="image/*,.heic,.heif" multiple class="sr">
-          <div class="phbar" id="phBar">
-            <div class="seg" role="group" aria-label="حجم المصغّرات" id="phSize"><button type="button" data-v="s">صغيرة</button><button type="button" data-v="m">متوسطة</button><button type="button" data-v="l">كبيرة</button></div>
-            <button class="btn ghost sm" type="button" id="phUndo" aria-label="تراجع (Ctrl+Z)" title="تراجع (Ctrl+Z)">↶</button>
-            <button class="btn ghost sm" type="button" id="phRedo" aria-label="إعادة (Ctrl+Y)" title="إعادة (Ctrl+Y)">↷</button>
-            <button class="btn ghost sm" type="button" id="phNew" title="يمسح الصور والعنوان لبدء منشور آخر">منشور جديد</button>
-          </div>
-          <div class="thumbs" id="pThumbs"></div>
-          <span class="hint">الصور تبقى محفوظة في هذا المتصفح حتى تضغط «منشور جديد». اسحب الصورة لتغيير ترتيبها (على الهاتف اسحبها من ⠿).</span>
+          <span class="hint">الصور تظهر تحت المعاينة، ويمكنك ترتيبها وتكبير مصغّراتها هناك.</span>
         </div>
 
       </section>
@@ -646,6 +642,17 @@ table.grid td.gx .btn{padding:4px 8px}
           <button class="btn" id="dlPdf" type="button" hidden>تنزيل PDF للطباعة</button>
         </div>
         <div class="status" id="status" role="status"></div>
+      </div>
+      <div class="tools" id="phStrip" hidden>
+        <div class="phhead"><strong>صور المنشور <span id="pCount2"></span></strong></div>
+          <div class="phbar" id="phBar">
+            <div class="seg" role="group" aria-label="حجم المصغّرات" id="phSize"><button type="button" data-v="s">صغيرة</button><button type="button" data-v="m">متوسطة</button><button type="button" data-v="l">كبيرة</button></div>
+            <button class="btn ghost sm" type="button" id="phUndo" aria-label="تراجع (Ctrl+Z)" title="تراجع (Ctrl+Z)">↶</button>
+            <button class="btn ghost sm" type="button" id="phRedo" aria-label="إعادة (Ctrl+Y)" title="إعادة (Ctrl+Y)">↷</button>
+            <button class="btn ghost sm" type="button" id="phNew" title="يمسح الصور والعنوان لبدء منشور آخر">منشور جديد</button>
+          </div>
+          <div class="thumbs" id="pThumbs"></div>
+          <span class="hint">الصور تبقى محفوظة في هذا المتصفح حتى تضغط «منشور جديد». اسحب الصورة لتغيير ترتيبها (على الهاتف اسحبها من ⠿).</span>
       </div>
     </div>
   </div>
@@ -2023,7 +2030,10 @@ function buildThumbs(){ const box=$("#pThumbs"); box.textContent=""; box.dataset
       window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",end); window.addEventListener("pointercancel",end); };
     b.onclick=()=>{ if(b._noclick) return; sel(); };
     box.appendChild(b); });
-  $("#pCount").textContent = posts.photos.length ? `(${posts.photos.length})` : ""; phSyncBtns(); drawThumbs(); }
+  $("#pCount").textContent = $("#pCount2").textContent = posts.photos.length ? `(${posts.photos.length})` : ""; phStripSync(); phSyncBtns(); drawThumbs(); }
+function phStripSync(){ const st=$("#phStrip"); st.hidden= tab!=="posts" || (!posts.photos.length && !PH.hist.length); stageFit(); }
+function stageFit(){ const sg=document.querySelector(".stage"); if(!sg) return; sg.classList.remove("tall"); sg.classList.toggle("tall", sg.offsetHeight > window.innerHeight-24); }
+window.addEventListener("resize",()=>stageFit()); try{ new ResizeObserver(()=>{ const sg=document.querySelector(".stage"); const want=sg.offsetHeight>window.innerHeight-24; if(want!==sg.classList.contains("tall")) sg.classList.toggle("tall",want); }).observe(document.querySelector(".stage")); }catch(e){}
 function phNew(){ if(!posts.photos.length&&!posts.state.title) return; phPush(); posts.photos=[]; posts.active=0; posts.state.title=""; $("#pTitle").value=""; savePosts(); buildThumbs(); redraw(); phSave(); status("منشور جديد. إن كان ذلك خطأ اضغط ↶ للتراجع."); }
 document.addEventListener("keydown",e=>{ if(tab!=="posts"||!(e.ctrlKey||e.metaKey)) return; const t0=e.target; if(t0&&/INPUT|TEXTAREA|SELECT/.test(t0.tagName)) return;
   const k=e.key.toLowerCase(); if(k==="z"&&!e.shiftKey){ e.preventDefault(); phUndo(); } else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); phRedo(); } });
@@ -2031,7 +2041,7 @@ function drawThumbs(){ if(!ready) return; const cvs=[...document.querySelectorAl
   cvs.forEach((cv,i)=>{ const c=cv.getContext("2d"); c.setTransform(cv.width/posts.W,0,0,cv.width/posts.W,0,0); posts.draw(c,i); }); }
 
 /* tabs */
-function setTab(t){ tab=t; store.set("tab",t);
+function setTab(t){ tab=t; store.set("tab",t); if(typeof phStripSync==="function"&&ready) setTimeout(phStripSync,0);
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t || (t==="env"&&b.dataset.tab==="letter"))));
   for(const k of ["posts","occ","cond","reel","letter"]) $("#panel-"+k).hidden = !(k===t || (k==="letter"&&t==="env"));
   $("#ltView").hidden = t!=="letter"&&t!=="env"; $("#panel-letter").classList.toggle("env-mode",t==="env"); document.querySelectorAll("#ltView button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===t))); if(t==="env") fillEnv(); $("#panel-elems").hidden = t==="cond"||t==="letter"||t==="env"; $("#dlPdf").hidden = t!=="letter"&&t!=="env"; $("#ltPages").hidden = t!=="letter" || letter.pages<2; $("#elemsWhere").textContent = t==="posts"?"حول الصورة":"في التصميم"; buildItemList(); syncEditor(); redraw(); }
