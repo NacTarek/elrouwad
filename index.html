@@ -140,6 +140,29 @@ table.grid tr.gt input{font-weight:700;background:var(--sunken)}
 table.grid td.gx{white-space:nowrap;border:0;padding-inline-start:4px}
 table.grid td.gx .btn{padding:4px 8px}
 .tpl-box{border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--sunken)}
+.lt-panel{gap:10px;padding:12px}
+.acc{border:1px solid var(--line);border-radius:12px;background:var(--surface)}
+.acc[open]{border-color:color-mix(in srgb,var(--brand) 35%,var(--line))}
+.acc>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;border-radius:12px}
+.acc>summary::-webkit-details-marker{display:none}
+.acc>summary::after{content:"";margin-inline-start:auto;width:8px;height:8px;border-left:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:translateY(-3px) rotate(-45deg);transition:transform .15s;flex:none}
+.acc[open]>summary::after{transform:translateY(2px) rotate(135deg)}
+.acc>summary:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.acc-n{width:24px;height:24px;border-radius:50%;background:var(--brand-soft);color:var(--brand);font-weight:700;font-size:13px;display:grid;place-items:center;flex:none}
+.acc[open] .acc-n{background:var(--brand);color:var(--brand-ink)}
+.acc-t{font-weight:700;font-size:14.5px;white-space:nowrap}
+.acc-s{color:var(--muted);font-size:12.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+.acc-b{display:flex;flex-direction:column;gap:12px;padding:4px 14px 16px}
+.sub{border:1px dashed var(--line);border-radius:10px;background:var(--sunken)}
+.sub>summary{cursor:pointer;padding:9px 12px;font-weight:600;font-size:13px;color:var(--muted)}
+.sub-b{display:flex;flex-direction:column;gap:10px;padding:0 12px 12px}
+.fmt{display:flex;flex-wrap:wrap;gap:6px}
+.fmt .btn{padding:5px 10px;font-size:12.5px}
+.stylegrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px}
+.stylegrid button{padding:0;border:2px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;overflow:hidden;font:inherit}
+.stylegrid button canvas{width:100%;height:auto;display:block;aspect-ratio:210/297;background:#fff}
+.stylegrid button span{font-size:11px;padding:4px 5px;color:var(--ink);line-height:1.35;text-align:center;min-height:2.7em;display:grid;place-items:center}
+.stylegrid button[aria-checked="true"]{border-color:var(--brand);box-shadow:0 0 0 2px var(--brand)}
 #panel-letter.env-mode > :not(#evBox){display:none!important}
 #panel-letter:not(.env-mode) #evBox{display:none!important}
 #panel-letter.env-mode .env-box{border:0;padding:0;background:transparent;margin:0}
@@ -280,113 +303,157 @@ table.grid td.gx .btn{padding:4px 8px}
       </section>
 
       <!-- Letters -->
-      <section class="panel" id="panel-letter" hidden>
-        <div class="field">
-          <span class="lbl">نوع المراسلة</span>
-          <div class="presets" id="ltKinds"></div>
-          <span class="hint">اختيار النوع يملأ نصًا نموذجيًا تعدّله كما تشاء.</span>
-        </div>
-        <div class="field tpl-box">
-          <span class="lbl">نماذجي المحفوظة</span>
-          <div class="row"><select id="ltTplSel" aria-label="نماذجي" style="flex:1 1 200px"></select><button class="btn sm" type="button" id="ltTplApply">تطبيق</button><button class="btn ghost sm danger" type="button" id="ltTplDel">حذف</button></div>
-          <div class="row" id="ltTplConfirm" hidden><span id="ltTplConfirmText" class="hint"></span><button class="btn sm danger" type="button" id="ltTplYes">نعم، احذف</button><button class="btn ghost sm" type="button" id="ltTplNo">إلغاء</button></div>
-          <div class="row"><input type="text" id="ltTplName" placeholder="اسم النموذج، مثل: تعزية لشخص مقرّب" style="flex:1 1 200px"><button class="btn primary sm" type="button" id="ltTplSave">حفظ الرسالة الحالية كنموذج</button></div>
-          <div class="row"><button class="btn ghost sm" type="button" id="ltTplExport">تصدير النماذج (ملف)</button><button class="btn ghost sm" type="button" id="ltTplImport">استيراد نماذج</button><input type="file" id="ltTplFile" accept=".json,application/json" class="sr"></div>
-          <span class="hint">النموذج يحفظ: النوع والعنوان والمرسل إليه والموضوع والنص والجدول والتوقيع. احفظ النماذج في ملف لنقلها إلى جهاز آخر أو لزميل.</span>
-        </div>
-        <div class="row">
-          <div class="field" style="flex:1 1 220px"><label for="ltStyle">الورقة</label><select id="ltStyle"></select></div>
-          <div class="field" style="flex:1 1 220px"><label for="ltDept">الجهة المرسلة</label><select id="ltDept"></select></div>
-        </div>
-        <div class="row">
-          <div class="field" style="flex:1 1 200px"><label for="ltHdrL">صورة يسار الرأس</label><select id="ltHdrL"></select></div>
-          <div class="field" style="flex:1 1 200px"><label for="ltHdrR">صورة يمين الرأس</label><select id="ltHdrR"></select></div>
-        </div>
-        <div class="row"><button class="btn ghost sm" type="button" id="ltHdrUp">+ رفع صورة للرأس (PNG)</button><span class="hint">تُضاف إلى القائمتين أعلاه وتُحفظ في هذا المتصفح.</span></div>
-        <input type="file" id="ltHdrFile" accept="image/*" class="sr">
-        <div class="field" id="ltDeptCustomBox" hidden><label for="ltDeptText">اسم المصلحة</label><input type="text" id="ltDeptText"></div>
-        <div class="row">
-          <div class="field" style="flex:1 1 220px"><label for="ltEmail">البريد (أسفل الورقة)</label><input type="text" id="ltEmail" list="ltEmails" dir="ltr"></div>
-          <div class="field" style="flex:1 1 220px"><label for="ltPhone">الهاتف</label><input type="text" id="ltPhone" list="ltPhones" dir="ltr"></div>
-        </div>
-        <datalist id="ltEmails"><option value="elrouwad.edu@gmail.com"><option value="rowad.fin.rel@gmail.com"><option value="rowad.edu.rd@gmail.com"></datalist>
-        <datalist id="ltPhones"><option value="00(213)667.69.79.27"><option value="00 (213) 560 33 03 90"><option value="00(213)699.59.34.38"><option value="00(213)560.34.11.36"></datalist>
-
-        <div class="group-title">المرسل إليه</div>
-        <div class="row"><button class="btn sm" type="button" id="ltToEnv">✉ اصنع ظرفًا لهذه الرسالة</button></div>
-        <div class="field"><label for="ltRecPrefix">السطر الأول</label><input type="text" id="ltRecPrefix" list="ltPrefixes"></div>
-        <datalist id="ltPrefixes"><option value="إلى الفاضل:"><option value="إلى الفاضلة:"><option value="إلى السيد الفاضل:"><option value="إلى الأفاضل:"><option value="إلى السادة:"><option value="إلى الكريم الفاضل:"><option value="إلى الدكتور الفاضل:"></datalist>
-        <div class="field"><label for="ltRecName">الاسم والصفة (سطر أو أكثر، يُكتب بالعريض)</label><textarea id="ltRecName" rows="2"></textarea>
-          <label class="check"><input type="checkbox" id="ltRecKashida"> مدّ الحروف (كشيدة) لتتساوى الأسطر</label>
-          <div class="row"><span class="hint" style="flex:1">اسحب «إلى الفاضل» في المعاينة لتحريكها إلى أي مكان.</span><button class="btn ghost sm" type="button" id="ltRecReset">إرجاعها لمكانها</button></div></div>
-        <div class="field"><label for="ltRef">رقم المراسلة (اختياري، يظهر يمينًا)</label><input type="text" id="ltRef" placeholder="الرقم: ....../2026"></div>
-
-        <div class="group-title">العنوان الزخرفي</div>
-        <div class="row">
-          <div class="field" style="flex:1 1 180px"><label for="ltArt">العنوان</label><select id="ltArt"></select></div>
-          <div class="field" style="flex:1 1 140px"><label for="ltArtColor">اللون</label>
-            <select id="ltArtColor"><option value="original">ألوان الصورة الأصلية</option><option value="red">أحمر</option><option value="orange">برتقالي</option><option value="gold">ذهبي</option><option value="navy">كحلي</option><option value="green">أخضر</option><option value="black">أسود</option><option value="gray">رمادي</option></select></div>
-        </div>
-        <div class="field" id="ltArtTextBox" hidden><label for="ltArtText">نص العنوان</label><input type="text" id="ltArtText"></div>
-        <div class="field"><label for="ltArtScale">حجم العنوان</label><input type="range" id="ltArtScale" min="0.3" max="2.5" step="0.01"></div>
-        <label class="check"><input type="checkbox" id="ltOrn"> زخرفة تحت العنوان</label>
-        <div class="field" id="ltTitlesBox" hidden><span class="lbl">عناويني المرفوعة</span><div class="lib" id="ltTitles"></div></div>
-        <div class="row"><button class="btn ghost sm" type="button" id="ltAddTitle">+ رفع عنوان بالخط العربي (PNG)</button></div>
-        <input type="file" id="ltTitleFile" accept="image/png,image/*" multiple class="sr">
-        <span class="hint">الخلفية البيضاء تُزال تلقائيًا. «ألوان الصورة الأصلية» يُبقي ألوان الملف، أو اختر لونًا لتلوينه.</span>
-
-        <div class="group-title">المحتوى</div>
-        <div class="field"><label for="ltSubject">الموضوع (اختياري)</label><input type="text" id="ltSubject"></div>
-        <div class="field">
-          <label for="ltBody">نص المراسلة</label>
-          <textarea id="ltBody" rows="12" style="font-family:'LetterBody','Amiri',serif;font-size:18px;line-height:1.7"></textarea>
-          <span class="hint">**نص** للخط العريض · ﴿الآيات﴾ تُكتب بخط المصحف تلقائيًا · سطر يبدأ بـ # يُوسَّط بالعريض · سطر يبدأ بـ - يصبح نقطة · سطر فارغ = مسافة · [جدول] مكان الجدول.</span>
-        </div>
-        <div class="field">
-          <span class="lbl">جدول (اختياري)</span>
-          <button class="btn sm" type="button" id="ltGridNew" style="align-self:flex-start">+ إضافة جدول</button>
-          <div class="gridwrap" id="ltGrid"></div>
-          <div class="row" id="ltGridTools" hidden>
-            <button class="btn ghost sm" type="button" id="ltRowAdd">+ صف</button><button class="btn ghost sm" type="button" id="ltColAdd">+ عمود</button><button class="btn ghost sm" type="button" id="ltColDel">− عمود</button>
-            <button class="btn ghost sm" type="button" id="ltSum">∑ صف المجموع تلقائيًا</button><button class="btn ghost sm danger" type="button" id="ltGridDel">حذف الجدول</button>
+      <section class="panel lt-panel" id="panel-letter" hidden>
+        <!-- 1 -->
+        <details class="acc" data-acc="kind" open>
+          <summary><span class="acc-n">1</span><span class="acc-t">نوع المراسلة</span><span class="acc-s" id="sumKind"></span></summary>
+          <div class="acc-b">
+            <div class="presets" id="ltKinds"></div>
+            <span class="hint">اختيار النوع يملأ نصًا نموذجيًا تعدّله كما تشاء.</span>
+            <details class="sub">
+              <summary>نماذجي المحفوظة</summary>
+              <div class="sub-b">
+                <div class="row"><select id="ltTplSel" aria-label="نماذجي" style="flex:1 1 200px"></select><button class="btn sm" type="button" id="ltTplApply">تطبيق</button><button class="btn ghost sm danger" type="button" id="ltTplDel">حذف</button></div>
+                <div class="row" id="ltTplConfirm" hidden><span id="ltTplConfirmText" class="hint"></span><button class="btn sm danger" type="button" id="ltTplYes">نعم، احذف</button><button class="btn ghost sm" type="button" id="ltTplNo">إلغاء</button></div>
+                <div class="row"><input type="text" id="ltTplName" placeholder="اسم النموذج، مثل: تعزية لشخص مقرّب" style="flex:1 1 200px"><button class="btn primary sm" type="button" id="ltTplSave">حفظ الرسالة الحالية</button></div>
+                <div class="row"><button class="btn ghost sm" type="button" id="ltTplExport">تصدير النماذج (ملف)</button><button class="btn ghost sm" type="button" id="ltTplImport">استيراد نماذج</button><input type="file" id="ltTplFile" accept=".json,application/json" class="sr"></div>
+                <span class="hint">النموذج يحفظ النوع والعنوان والمرسل إليه والنص والجدول والتوقيع وإعدادات الصفحات.</span>
+              </div>
+            </details>
           </div>
-          <span class="hint">الصف الأول للعناوين. يمكنك لصق جدول كامل من Excel داخل أي خانة. Enter ينتقل إلى الصف التالي.</span>
-        </div>
+        </details>
 
-        <div class="group-title">التاريخ والتوقيع</div>
-        <div class="row">
-          <div class="field" style="flex:1"><label for="ltCity">المكان</label><input type="text" id="ltCity"></div>
-          <div class="field" style="flex:1"><label for="ltDatePick">اختر اليوم</label><input type="date" id="ltDatePick"></div>
-        </div>
-        <div class="field"><label for="ltDate">التاريخ كما يُكتب</label><input type="text" id="ltDate"><span class="hint">يُكتب الهجري والميلادي تلقائيًا من التقويم، وتأكّد من اليوم الهجري قبل الطباعة.</span></div>
-        <div class="field"><label for="ltSignerSel">صفة الموقّع</label><select id="ltSignerSel"></select></div>
-        <div class="field" id="ltSignerBox" hidden><label for="ltSigner">اكتب الصفة</label><input type="text" id="ltSigner" placeholder="مثال: مدير مصلحة الشؤون التربوية:"></div>
-        <div class="row">
-          <div class="field" style="flex:1 1 200px"><label for="ltSignerName">اسم الموقّع (اختياري)</label><input type="text" id="ltSignerName"></div>
-          <div class="field" style="flex:1 1 200px"><label for="ltSigner2">طرف ثانٍ (للعقود)</label><input type="text" id="ltSigner2" placeholder="مثال: توقيع الطرف الثاني:"></div>
-        </div>
-        <div class="field">
-          <span class="lbl">الختم والتوقيع</span>
-          <div class="row"><button class="btn ghost sm" type="button" id="ltStampExport">حفظ أختامي في ملف</button><button class="btn ghost sm" type="button" id="ltStampImport">تحميل ملف الأختام</button><input type="file" id="ltStampPack" accept=".json,application/json" class="sr"></div>
-          <div class="lib" id="ltStamps"></div>
-          <div class="row"><button class="btn ghost sm" type="button" id="ltAddStamp">+ رفع ختم أو توقيع (PNG)</button><button class="btn ghost sm" type="button" id="ltNoStamp">بدون ختم</button></div>
-          <input type="file" id="ltStampFile" accept="image/png,image/*" multiple class="sr">
-          <span class="hint">الأختام تبقى محفوظة في هذا المتصفح فلا تحتاج رفعها كل مرة، ولا تُنشر مع الصفحة. لاستعمالها على جهاز أو متصفح آخر: «حفظ أختامي في ملف» ثم «تحميل ملف الأختام» هناك.</span>
-          <div class="field" id="ltStampMMBox" hidden><label for="ltStampMM" id="ltStampMMLbl">قطر الختم الحقيقي (مم)</label>
-            <div class="row"><input type="number" id="ltStampMM" min="10" max="200" step="0.5" style="flex:0 0 120px" dir="ltr"><span class="hint" id="ltStampMMHint"></span></div>
-            <span class="hint">قِس الختم الحقيقي بالمسطرة (من حافة الدائرة إلى الحافة المقابلة) واكتب الرقم، فيُطبع بنفس المقاس تمامًا. عند الطباعة اختر «الحجم الفعلي / 100%» وليس «ملاءمة للصفحة».</span></div>
-        </div>
+        <!-- 2 -->
+        <details class="acc" data-acc="rec" open>
+          <summary><span class="acc-n">2</span><span class="acc-t">المرسل إليه</span><span class="acc-s" id="sumRec"></span></summary>
+          <div class="acc-b">
+            <div class="field"><label for="ltRecPrefix">السطر الأول</label><input type="text" id="ltRecPrefix" list="ltPrefixes"></div>
+            <datalist id="ltPrefixes"><option value="إلى الفاضل:"><option value="إلى الفاضلة:"><option value="إلى السيد الفاضل:"><option value="إلى الأفاضل:"><option value="إلى السادة:"><option value="إلى الكريم الفاضل:"><option value="إلى الدكتور الفاضل:"></datalist>
+            <div class="field"><label for="ltRecName">الاسم والصفة (يُكتب بالعريض)</label><textarea id="ltRecName" rows="2"></textarea></div>
+            <label class="check"><input type="checkbox" id="ltRecKashida"> مدّ الحروف (كشيدة) لتتساوى الأسطر</label>
+            <div class="field"><label for="ltRef">رقم المراسلة (اختياري، يظهر يمينًا)</label><input type="text" id="ltRef" placeholder="الرقم: ....../2026"></div>
+            <div class="row"><span class="hint" style="flex:1">اسحب «إلى الفاضل» في المعاينة لتحريكها.</span><button class="btn ghost sm" type="button" id="ltRecReset">إرجاعها لمكانها</button></div>
+            <button class="btn sm" type="button" id="ltToEnv" style="align-self:flex-start">✉ اصنع ظرفًا لهذه الرسالة</button>
+          </div>
+        </details>
 
-        <div class="group-title">طول النص</div>
-        <div class="field"><label for="ltFlow">إذا كان النص طويلًا</label>
-          <select id="ltFlow"><option value="fit">ضغطه في صفحة واحدة (تصغير الخط والمسافات)</option><option value="pages">الانتقال إلى صفحة ثانية وثالثة…</option></select></div>
-        <div class="field multi-box" id="ltMultiBox">
-          <span class="lbl">عند تعدد الصفحات</span>
-          <div class="gridwrap"><table class="mtab"><thead><tr><th></th><th>الخلفية</th><th>الرأس (الشعار والعنوان)</th><th>التذييل (التواصل)</th></tr></thead><tbody id="ltMulti"></tbody></table></div>
-          <label class="check"><input type="checkbox" id="ltPageNums"> ترقيم الصفحات «الصفحة 1 من 2»</label>
-          <span class="hint">يُطبَّق على أي تصميم تختاره في «الورقة». إخفاء الرأس أو التذييل يُخفي زخارفه ويترك مكانه للنص. «الوسطى» لكل الصفحات بين الأولى والأخيرة.</span>
-        </div>
-        <div class="field"><label for="ltSize">حجم الخط</label><input type="range" id="ltSize" min="0" max="130" step="1"><span class="hint" id="ltSizeHint"></span></div>
+        <!-- 3 -->
+        <details class="acc" data-acc="body" open>
+          <summary><span class="acc-n">3</span><span class="acc-t">النص</span><span class="acc-s" id="sumBody"></span></summary>
+          <div class="acc-b">
+            <div class="field"><label for="ltSubject">الموضوع (اختياري)</label><input type="text" id="ltSubject"></div>
+            <div class="field">
+              <label for="ltBody">نص المراسلة</label>
+              <div class="fmt" role="toolbar" aria-label="تنسيق النص">
+                <button type="button" class="btn ghost sm" data-fmt="bold" title="اجعل المحدد عريضًا"><b>عريض</b></button>
+                <button type="button" class="btn ghost sm" data-fmt="verse" title="ضع المحدد بين قوسي الآية">﴿ آية ﴾</button>
+                <button type="button" class="btn ghost sm" data-fmt="center" title="وسّط السطر بالعريض">توسيط</button>
+                <button type="button" class="btn ghost sm" data-fmt="bullet" title="اجعل السطر نقطة">• نقطة</button>
+                <button type="button" class="btn ghost sm" data-fmt="table" title="مكان الجدول في النص">▦ مكان الجدول</button>
+              </div>
+              <textarea id="ltBody" rows="12" style="font-family:'LetterBody','Amiri',serif;font-size:18px;line-height:1.7"></textarea>
+              <span class="hint">حدّد كلمات ثم اضغط زرًا. السطر الفارغ يترك مسافة.</span>
+            </div>
+            <details class="sub" id="ltTableSub">
+              <summary>جدول <span class="hint" id="sumTable"></span></summary>
+              <div class="sub-b">
+                <button class="btn sm" type="button" id="ltGridNew" style="align-self:flex-start">+ إضافة جدول</button>
+                <div class="gridwrap" id="ltGrid"></div>
+                <div class="row" id="ltGridTools" hidden>
+                  <button class="btn ghost sm" type="button" id="ltRowAdd">+ صف</button><button class="btn ghost sm" type="button" id="ltColAdd">+ عمود</button><button class="btn ghost sm" type="button" id="ltColDel">− عمود</button>
+                  <button class="btn ghost sm" type="button" id="ltSum">∑ صف المجموع</button><button class="btn ghost sm danger" type="button" id="ltGridDel">حذف الجدول</button>
+                </div>
+                <span class="hint">الصف الأول للعناوين. الصق جدولًا من Excel في أي خانة. Enter ينتقل إلى الصف التالي.</span>
+              </div>
+            </details>
+          </div>
+        </details>
+
+        <!-- 4 -->
+        <details class="acc" data-acc="art">
+          <summary><span class="acc-n">4</span><span class="acc-t">العنوان الزخرفي</span><span class="acc-s" id="sumArt"></span></summary>
+          <div class="acc-b">
+            <div class="row">
+              <div class="field" style="flex:1 1 180px"><label for="ltArt">العنوان</label><select id="ltArt"></select></div>
+              <div class="field" style="flex:1 1 140px"><label for="ltArtColor">اللون</label>
+                <select id="ltArtColor"><option value="original">ألوان الصورة الأصلية</option><option value="red">أحمر</option><option value="orange">برتقالي</option><option value="gold">ذهبي</option><option value="navy">كحلي</option><option value="green">أخضر</option><option value="black">أسود</option><option value="gray">رمادي</option></select></div>
+            </div>
+            <div class="field" id="ltArtTextBox" hidden><label for="ltArtText">نص العنوان</label><input type="text" id="ltArtText"></div>
+            <div class="field"><label for="ltArtScale">الحجم</label><input type="range" id="ltArtScale" min="0.3" max="2.5" step="0.01"></div>
+            <label class="check"><input type="checkbox" id="ltOrn"> زخرفة تحت العنوان</label>
+            <div class="field" id="ltTitlesBox" hidden><span class="lbl">عناويني المرفوعة</span><div class="lib" id="ltTitles"></div></div>
+            <button class="btn ghost sm" type="button" id="ltAddTitle" style="align-self:flex-start">+ رفع عنوان بالخط العربي (PNG)</button>
+            <input type="file" id="ltTitleFile" accept="image/png,image/*" multiple class="sr">
+          </div>
+        </details>
+
+        <!-- 5 -->
+        <details class="acc" data-acc="sign">
+          <summary><span class="acc-n">5</span><span class="acc-t">التاريخ والتوقيع والختم</span><span class="acc-s" id="sumSign"></span></summary>
+          <div class="acc-b">
+            <div class="row">
+              <div class="field" style="flex:1 1 140px"><label for="ltCity">المكان</label><input type="text" id="ltCity"></div>
+              <div class="field" style="flex:1 1 160px"><label for="ltDatePick">اختر اليوم</label><input type="date" id="ltDatePick"></div>
+            </div>
+            <div class="field"><label for="ltDate">التاريخ كما يُكتب</label><input type="text" id="ltDate"><span class="hint">الهجري يُحسب تلقائيًا، تأكّد منه قبل الطباعة.</span></div>
+            <div class="row">
+              <div class="field" style="flex:1 1 200px"><label for="ltSignerSel">صفة الموقّع</label><select id="ltSignerSel"></select></div>
+              <div class="field" style="flex:1 1 200px"><label for="ltSignerName">اسم الموقّع (اختياري)</label><input type="text" id="ltSignerName"></div>
+            </div>
+            <div class="field" id="ltSignerBox" hidden><label for="ltSigner">اكتب الصفة</label><input type="text" id="ltSigner" placeholder="مثال: مدير مصلحة الشؤون التربوية:"></div>
+            <div class="field"><label for="ltSigner2">طرف ثانٍ (للعقود فقط)</label><input type="text" id="ltSigner2" placeholder="مثال: توقيع الطرف الثاني:"></div>
+            <div class="field">
+              <span class="lbl">الختم</span>
+              <div class="lib" id="ltStamps"></div>
+              <div class="row"><button class="btn ghost sm" type="button" id="ltAddStamp">+ رفع ختم (PNG)</button><button class="btn ghost sm" type="button" id="ltNoStamp">بدون ختم</button></div>
+              <input type="file" id="ltStampFile" accept="image/png,image/*" multiple class="sr">
+              <div class="field" id="ltStampMMBox" hidden><label for="ltStampMM" id="ltStampMMLbl">قطر الختم الحقيقي (مم)</label>
+                <div class="row"><input type="number" id="ltStampMM" min="10" max="200" step="0.5" style="flex:0 0 120px" dir="ltr"><span class="hint" id="ltStampMMHint"></span></div>
+                <span class="hint">قِسه بالمسطرة من حافة الدائرة إلى الأخرى. اسحب الختم في المعاينة لتحريكه. اطبع بـ«الحجم الفعلي 100%».</span></div>
+              <details class="sub"><summary>نقل الأختام إلى جهاز آخر</summary><div class="sub-b">
+                <div class="row"><button class="btn ghost sm" type="button" id="ltStampExport">حفظ أختامي في ملف</button><button class="btn ghost sm" type="button" id="ltStampImport">تحميل ملف الأختام</button><input type="file" id="ltStampPack" accept=".json,application/json" class="sr"></div>
+                <span class="hint">الأختام محفوظة في هذا المتصفح ولا تُنشر مع الصفحة.</span></div></details>
+            </div>
+          </div>
+        </details>
+
+        <!-- 6 -->
+        <details class="acc" data-acc="paper">
+          <summary><span class="acc-n">6</span><span class="acc-t">الورقة والجهة المرسلة</span><span class="acc-s" id="sumPaper"></span></summary>
+          <div class="acc-b">
+            <div class="stylegrid" id="ltStyleGrid" role="radiogroup" aria-label="تصميم الورقة"></div>
+            <select id="ltStyle" class="sr" aria-hidden="true" tabindex="-1"></select>
+            <div class="field"><label for="ltDept">الجهة المرسلة (سطر تحت اسم المؤسسة)</label><select id="ltDept"></select></div>
+            <div class="field" id="ltDeptCustomBox" hidden><label for="ltDeptText">اسم المصلحة</label><input type="text" id="ltDeptText"></div>
+            <div class="row">
+              <div class="field" style="flex:1 1 180px"><label for="ltEmail">البريد</label><input type="text" id="ltEmail" list="ltEmails" dir="ltr"></div>
+              <div class="field" style="flex:1 1 180px"><label for="ltPhone">الهاتف</label><input type="text" id="ltPhone" list="ltPhones" dir="ltr"></div>
+            </div>
+            <datalist id="ltEmails"><option value="elrouwad.edu@gmail.com"><option value="rowad.fin.rel@gmail.com"><option value="rowad.edu.rd@gmail.com"></datalist>
+            <datalist id="ltPhones"><option value="00(213)667.69.79.27"><option value="00 (213) 560 33 03 90"><option value="00(213)699.59.34.38"><option value="00(213)560.34.11.36"></datalist>
+            <div class="row">
+              <div class="field" style="flex:1 1 180px"><label for="ltHdrL">صورة يسار الرأس</label><select id="ltHdrL"></select></div>
+              <div class="field" style="flex:1 1 180px"><label for="ltHdrR">صورة يمين الرأس</label><select id="ltHdrR"></select></div>
+            </div>
+            <button class="btn ghost sm" type="button" id="ltHdrUp" style="align-self:flex-start">+ رفع صورة للرأس (PNG)</button>
+            <input type="file" id="ltHdrFile" accept="image/*" class="sr">
+          </div>
+        </details>
+
+        <!-- 7 -->
+        <details class="acc" data-acc="pages">
+          <summary><span class="acc-n">7</span><span class="acc-t">طول النص والصفحات</span><span class="acc-s" id="sumPages"></span></summary>
+          <div class="acc-b">
+            <div class="seg" role="group" aria-label="إذا كان النص طويلًا" id="ltFlowSeg"><button type="button" data-v="fit">ضغطه في صفحة واحدة</button><button type="button" data-v="pages">صفحات متعددة</button></div>
+            <select id="ltFlow" class="sr" aria-hidden="true" tabindex="-1"><option value="fit">fit</option><option value="pages">pages</option></select>
+            <div class="field multi-box" id="ltMultiBox">
+              <div class="gridwrap"><table class="mtab"><thead><tr><th></th><th>الخلفية</th><th>الرأس</th><th>التذييل</th></tr></thead><tbody id="ltMulti"></tbody></table></div>
+              <label class="check"><input type="checkbox" id="ltPageNums"> ترقيم الصفحات «الصفحة 1 من 2»</label>
+              <span class="hint">الرأس = الشعار والعنوان، التذييل = معلومات التواصل. «الوسطى» لكل الصفحات بين الأولى والأخيرة.</span>
+            </div>
+            <div class="field"><label for="ltSize">حجم الخط</label><input type="range" id="ltSize" min="0" max="130" step="1"><span class="hint" id="ltSizeHint"></span></div>
+          </div>
+        </details>
         <div class="env-box" id="evBox">
         <div class="group-title" style="font-size:14px;color:var(--ink)">✉ الظرف</div>
         <span class="hint">«إلى…» والاسم يُؤخذان من الرسالة. لتعديلهما ارجع إلى «الرسالة» فوق المعاينة، أو ألغِ الخيار أدناه واكتبهما هنا.</span>
@@ -2046,7 +2113,7 @@ function fillLetter(){ const s=letter.state;
   $("#ltOrn").checked=!!s.orn; $("#ltRecKashida").checked=s.recKashida!==false; syncStampMM(); $("#ltDeptCustomBox").hidden=s.dept!=="custom"; $("#ltArtTextBox").hidden=s.art!=="text";
   const sg=$("#ltSignerSel"), sv=(s.signer||"").trim(); sg.value= !sv?"@none": LT_SIGNERS.includes(sv)?sv:"@custom"; $("#ltSignerBox").hidden=sg.value!=="@custom";
   $("#ltKinds").querySelectorAll(".chip").forEach(c=>c.setAttribute("aria-pressed",String(c.dataset.lk===s.kind)));
-  buildStamps(); buildTitles(); buildGrid(); buildTpls(); buildMulti(); fillHdr(); }
+  buildStamps(); buildTitles(); buildGrid(); buildTpls(); buildMulti(); fillHdr(); buildStyleGrid(); ltSummaries(); if(ltTableRows(s.table).length) $("#ltTableSub").open=true; }
 const LTB=[["#ltStyle","style"],["#ltDeptText","deptText"],["#ltEmail","email"],["#ltPhone","phone"],["#ltRecPrefix","recPrefix"],["#ltRecName","recName"],["#ltRef","ref"],["#ltArt","art"],["#ltArtColor","artColor"],["#ltArtText","artText"],["#ltArtScale","artScale","n"],["#ltSubject","subject"],["#ltBody","body"],["#ltCity","city"],["#ltDate","date"],["#ltSigner","signer"],["#ltSigner2","signer2"],["#ltSignerName","signerName"],["#ltSize","size","n"],["#ltFlow","flow"]];
 for(const [id,k,ty] of LTB) $(id).addEventListener("input",e=>{ letter.state[k]= ty==="n"?+e.target.value:e.target.value; saveLetter(); if(id==="#ltArt"||id==="#ltStyle") fillLetter(); redraw(); });
 $("#ltRecReset").onclick=()=>{ letter.state.recDX=0; letter.state.recDY=0; saveLetter(); redraw(); };
@@ -2196,6 +2263,38 @@ $("#ltHdrFile").addEventListener("change",async e=>{ const f=e.target.files[0]; 
     const id="hd"+Date.now(); HEADIMGS.list.push({id,url:trimToDataURL(t),name:f.name.replace(/\.[a-z0-9]+$/i,"")}); HEADIMGS.save(); letter.state.hdrL="up:"+id; saveLetter(); fillHdr(); redraw(); status("أُضيفت الصورة إلى يسار الرأس، ويمكنك نقلها إلى اليمين من القائمة."); }
   catch(err){ status("تعذّر فتح الصورة.",true); } });
 HEADIMGS.ready.then(()=>{ fillHdr(); redraw(); });
+/* ---- letters panel UX: design picker, formatting toolbar, section summaries, remembered sections ---- */
+function buildStyleGrid(){ const g=$("#ltStyleGrid"); if(!g) return; const s=letter.state;
+  if(!g.children.length && ready){ for(const [k,S] of Object.entries(LT_STYLE)){ const b=document.createElement("button"); b.type="button"; b.dataset.k=k; b.setAttribute("role","radio"); b.title=S.name;
+      const cv=mkCanvas(132,187); const c=cv.getContext("2d"); c.setTransform(132/3307,0,0,132/3307,0,0); try{ S.base(c,s); S.hd(c,s); S.ft(c,s);
+        c.fillStyle=S.ink||"#000"; c.globalAlpha=0.28; for(let i=0;i<9;i++) c.fillRect(S.L+ (i%3===0?600:0), S.top+260+i*190, (S.R-S.L)-(i%3===0?600:0), 60); c.globalAlpha=1; }catch(e){}
+      const lab=document.createElement("span"); lab.textContent=S.name; b.append(cv,lab);
+      b.onclick=()=>{ letter.state.style=k; saveLetter(); fillLetter(); redraw(); }; g.appendChild(b); } }
+  g.querySelectorAll("button").forEach(b=>b.setAttribute("aria-checked",String(b.dataset.k===s.style))); }
+function ltSummaries(){ const s=letter.state, one=t=>String(t||"").replace(/\*\*/g,"").replace(/\s+/g," ").trim();
+  const K=LT_KINDS[s.kind]; $("#sumKind").textContent= K?K.label:"";
+  $("#sumRec").textContent= one([s.recPrefix,String(s.recName||"").split("\n")[0]].filter(Boolean).join(" "));
+  $("#sumBody").textContent= one(s.subject)||one(String(s.body||"").slice(0,60));
+  $("#sumArt").textContent= s.art==="none"?"بدون": s.art==="text"?one(s.artText): /^up:/.test(s.art)?"عنوان مرفوع":(LT_ART[s.art]||{}).name||"";
+  const st=STAMPS.list.find(x=>x.id===s.stamp); $("#sumSign").textContent= one([s.signer, st?"مع ختم":"بدون ختم"].filter(Boolean).join(" · "));
+  const D=s.dept==="custom"?(s.deptText||""):(LT_DEPTS[s.dept]||{}).name||""; $("#sumPaper").textContent= one(((LT_STYLE[s.style]||{}).name||"")+" · "+D);
+  $("#sumPages").textContent= (s.flow==="pages"?"صفحات متعددة":"صفحة واحدة")+(letter.pages>1?` (${letter.pages})`:"");
+  const rows=ltTableRows(s.table); $("#sumTable").textContent= rows.length?`(${rows.length} صفوف)`:"";
+  document.querySelectorAll("#ltFlowSeg button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===(s.flow||"fit")))); }
+document.querySelectorAll("#ltFlowSeg button").forEach(b=>b.onclick=()=>{ const sel=$("#ltFlow"); sel.value=b.dataset.v; sel.dispatchEvent(new Event("input",{bubbles:true})); buildMulti(); ltSummaries(); });
+/* formatting toolbar */
+document.querySelectorAll(".fmt [data-fmt]").forEach(b=>b.onclick=()=>{ const ta=$("#ltBody"), v=ta.value, a=ta.selectionStart, z=ta.selectionEnd, sel=v.slice(a,z), f=b.dataset.fmt;
+  const ls=v.lastIndexOf("\n",a-1)+1; let nv=v, ca=a, cz=z;
+  if(f==="bold"){ nv=v.slice(0,a)+"**"+(sel||"نص عريض")+"**"+v.slice(z); ca=a+2; cz=a+2+(sel||"نص عريض").length; }
+  else if(f==="verse"){ nv=v.slice(0,a)+"﴿"+(sel||"")+"﴾"+v.slice(z); ca=a+1; cz=a+1+sel.length; }
+  else if(f==="center"||f==="bullet"){ const p= f==="center"?"#":"- "; const line=v.slice(ls); const has= f==="center"?line.startsWith("#"):/^[-•]\s/.test(line);
+    nv= has ? v.slice(0,ls)+line.replace(f==="center"?/^#\s?/:/^[-•]\s+/,"") : v.slice(0,ls)+p+line; const d=nv.length-v.length; ca=a+d; cz=z+d; }
+  else if(f==="table"){ const ins=(a>0&&v[a-1]!=="\n"?"\n":"")+"[جدول]\n"; nv=v.slice(0,a)+ins+v.slice(z); ca=cz=a+ins.length; $("#ltTableSub").open=true; if(!ltTableRows(letter.state.table).length) $("#ltGridNew").click(); }
+  ta.value=nv; ta.focus(); ta.setSelectionRange(ca,cz); ta.dispatchEvent(new Event("input",{bubbles:true})); });
+/* remember open sections */
+{ const st=store.get("ltAcc",null); document.querySelectorAll("#panel-letter details.acc").forEach(d=>{ if(st&&d.dataset.acc in st) d.open=!!st[d.dataset.acc];
+    d.addEventListener("toggle",()=>{ const o={}; document.querySelectorAll("#panel-letter details.acc").forEach(x=>o[x.dataset.acc]=x.open); store.set("ltAcc",o); if(d.dataset.acc==="paper"&&d.open) buildStyleGrid(); }); }); }
+$("#panel-letter").addEventListener("input",()=>ltSummaries()); $("#panel-letter").addEventListener("change",()=>ltSummaries());
 fillLetter();
 window.rouwadStudio={letter};
 
@@ -2342,7 +2441,7 @@ window.addEventListener("resize",redraw);
   loads.push(document.fonts.load('400 24px "Amiri"',"﴿الله﴾"));
   loads.push(document.fonts.load('400 24px "Noto Sans Tifinagh"',"ⴰⵙ"), document.fonts.load('400 24px "Abril Fatface"',"2974"));
   await Promise.race([Promise.allSettled(loads), new Promise(r=>setTimeout(r,4000))]);
-  ready=true; buildThumbs(); redraw();
+  ready=true; buildThumbs(); buildStyleGrid(); ltSummaries(); redraw();
 })();
 })();
 </script>
