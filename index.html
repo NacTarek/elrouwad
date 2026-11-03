@@ -174,6 +174,7 @@ table.grid td.gx .btn{padding:4px 8px}
 #ltView{max-width:640px;width:100%;align-self:center}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+#applySeg button{white-space:nowrap}
 </style>
 
 <div class="app" dir="rtl" lang="ar">
@@ -606,6 +607,7 @@ table.grid td.gx .btn{padding:4px 8px}
       <div class="canvas-wrap"><canvas id="preview" aria-label="معاينة المنشور"></canvas></div>
       <div class="tools row" id="ltPages" hidden></div>
       <div class="tools" id="photoTools">
+        <div class="row" id="applyRow" hidden><span class="lbl">تطبيق التكبير والضبط على:</span><div class="seg" role="group" aria-label="تطبيق على" id="applySeg" style="flex:1;min-width:220px"><button type="button" data-v="one">الصورة المحددة</button><button type="button" data-v="all">كل الصور</button></div></div>
         <div class="zoomrow">
           <span class="lbl">التكبير</span>
           <button class="btn ghost" id="zOut" type="button" aria-label="تصغير">−</button>
@@ -1952,7 +1954,7 @@ const cur=()=>T[tab];
 function renderTo(cv){ const t=cur(); const cssW=cv.clientWidth||600, dpr=Math.min(2,window.devicePixelRatio||1);
   cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssW*dpr*t.H/t.W); const c=cv.getContext("2d"); c.setTransform(cv.width/t.W,0,0,cv.width/t.W,0,0); c.imageSmoothingQuality="high"; if(t===posts) posts.draw(c,posts.active,true); else if(t===occ||t===reel) t.draw(c,true); else t.draw(c); }
 function redraw(){ if(!ready) return; cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{ pv.style.aspectRatio=cur().W+"/"+cur().H; pv.style.maxWidth = cur().H>cur().W*1.5 ? "min(400px,100%)" : (cur().H>cur().W ? "560px" : "640px"); renderTo(pv); if(dlg.open) renderTo(cropCv); syncTools(); }); thumbsSoon(); }
-function syncTools(){ const p=cur().photo(); $("#photoTools").hidden=!p; if(p){ const A=cur().frame(); const f=fitZoom(p,A); const z=$("#zoom"); z.min=(Math.min(1,f)*0.85).toFixed(3); z.value=p.zoom; }
+function syncTools(){ const p=cur().photo(); $("#photoTools").hidden=!p; if(typeof syncApply==="function") syncApply(); if(p){ const A=cur().frame(); const f=fitZoom(p,A); const z=$("#zoom"); z.min=(Math.min(1,f)*0.85).toFixed(3); z.value=p.zoom; }
   $("#dlAll").hidden = tab!=="posts" || posts.photos.length<2; $("#dlAll").textContent=`تنزيل الكل في ملف مضغوط (${posts.photos.length} صور)`; }
 let thumbT=0; function thumbsSoon(){ if(tab!=="posts") return; clearTimeout(thumbT); thumbT=setTimeout(drawThumbs,280); }
 function buildThumbs(){ const box=$("#pThumbs"); box.textContent="";
@@ -2296,7 +2298,7 @@ document.querySelectorAll(".fmt [data-fmt]").forEach(b=>b.onclick=()=>{ const ta
     d.addEventListener("toggle",()=>{ const o={}; document.querySelectorAll("#panel-letter details.acc").forEach(x=>o[x.dataset.acc]=x.open); store.set("ltAcc",o); if(d.dataset.acc==="paper"&&d.open) buildStyleGrid(); }); }); }
 $("#panel-letter").addEventListener("input",()=>ltSummaries()); $("#panel-letter").addEventListener("change",()=>ltSummaries());
 fillLetter();
-window.rouwadStudio={letter};
+window.rouwadStudio={letter,posts};
 
 /* envelope controls */
 const saveEnv=()=>store.set("envelope",envelope.state);
@@ -2370,11 +2372,16 @@ document.addEventListener("paste",e=>{ const fs=e.clipboardData&&e.clipboardData
 
 /* photo manipulation */
 function changed(){ const p=cur().photo(); if(p) clampP(p,cur().frame()); redraw(); }
-$("#zoom").oninput=e=>{ const p=cur().photo(); if(!p) return; p.zoom=+e.target.value; changed(); };
-$("#zIn").onclick=()=>{ const p=cur().photo(); if(p){ p.zoom*=1.1; changed(); } };
-$("#zOut").onclick=()=>{ const p=cur().photo(); if(p){ p.zoom/=1.1; changed(); } };
-$("#fitCover").onclick=()=>{ const p=cur().photo(); if(p){ p.zoom=1; p.ox=p.oy=0; changed(); } };
-$("#fitWhole").onclick=()=>{ const p=cur().photo(); if(p){ p.zoom=fitZoom(p,cur().frame()); p.ox=p.oy=0; changed(); } };
+let applyAll=false; try{ applyAll=localStorage.getItem("rw_applyAll")==="1"; }catch(e){}
+const targets=()=>{ const t=cur(), p=t.photo(); if(!p) return []; return (applyAll&&t===posts&&posts.photos.length>1)?posts.photos:[p]; };
+function applyZ(fn){ const ps=targets(); if(!ps.length) return; const A=cur().frame(); ps.forEach(q=>{ fn(q,A); clampP(q,A); q._auto=true; }); changed(); if(ps.length>1) drawThumbs(); }
+function syncApply(){ const show=tab==="posts"&&posts.photos.length>1; $("#applyRow").hidden=!show; document.querySelectorAll("#applySeg button").forEach(b=>b.setAttribute("aria-pressed",String((b.dataset.v==="all")===applyAll))); }
+document.querySelectorAll("#applySeg button").forEach(b=>b.onclick=()=>{ applyAll=b.dataset.v==="all"; try{ localStorage.setItem("rw_applyAll",applyAll?"1":"0"); }catch(e){} syncApply(); });
+$("#zoom").oninput=e=>{ const v=+e.target.value; applyZ(q=>{ q.zoom=v; }); };
+$("#zIn").onclick=()=>applyZ(q=>{ q.zoom*=1.1; });
+$("#zOut").onclick=()=>applyZ(q=>{ q.zoom/=1.1; });
+$("#fitCover").onclick=()=>applyZ(q=>{ q.zoom=1; q.ox=q.oy=0; });
+$("#fitWhole").onclick=()=>applyZ((q,A)=>{ q.zoom=fitZoom(q,A); q.ox=q.oy=0; });
 $("#openCrop").onclick=()=>{ dlg.showModal(); requestAnimationFrame(()=>renderTo(cropCv)); };
 dlg.addEventListener("close",redraw);
 function attach(el,allowTouch){
