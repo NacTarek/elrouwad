@@ -189,6 +189,67 @@ table.grid td.gx .btn{padding:4px 8px}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 #applySeg button{white-space:nowrap}
+
+/* culling */
+.cull-open{width:100%;margin-top:8px;justify-content:center}
+dialog.cull{width:100vw;height:100dvh;max-width:none;max-height:none;margin:0;border-radius:0;padding:0;display:none;flex-direction:column;background:var(--bg)}
+dialog.cull[open]{display:flex}
+.cu-top,.cu-tools,.cu-foot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+.cu-foot{border-bottom:0;border-top:1px solid var(--line)}
+.cu-foot #cuAdd{margin-inline-start:auto}
+.cu-ttl{display:flex;flex-direction:column;gap:2px;margin-inline-end:auto}.cu-ttl strong{font-size:17px}
+.cu-x{min-width:38px}
+.cu-tools .seg{flex:none}.cu-tools .seg button{white-space:nowrap}
+.cu-main{flex:1;overflow:auto;padding:14px 16px;position:relative}
+.cu-main.over{outline:3px dashed var(--brand);outline-offset:-10px}
+.cu-empty{height:100%;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:14px}
+.cu-empty strong{font-size:18px;color:var(--ink)}
+.cu-group{margin-bottom:14px}
+.cu-group.multi{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px}
+.cu-gh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;font-weight:700;font-size:14px}.cu-gh span{margin-inline-end:auto}
+.cu-row{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(200px,1fr))}
+.cu-grid[data-size="s"] .cu-row{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+.cu-grid[data-size="l"] .cu-row{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}
+@media (max-width:600px){ .cu-row{grid-template-columns:repeat(2,1fr)!important} .cu-grid[data-size="s"] .cu-row{grid-template-columns:repeat(3,1fr)!important} .cu-grid[data-size="l"] .cu-row{grid-template-columns:1fr!important} }
+.cu-tile{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#0b1220;cursor:zoom-in;border:3px solid transparent}
+.cu-tile img{width:100%;height:100%;object-fit:contain;display:block}
+.cu-tile.st-k{border-color:#16A34A}
+.cu-tile.st-r{border-color:#DC2626}.cu-tile.st-r img{opacity:.35;filter:grayscale(.7)}
+.cu-acts{position:absolute;bottom:6px;left:6px;display:flex;gap:6px}
+.cu-acts button{width:34px;height:34px;border-radius:50%;border:0;font-size:17px;font-weight:700;cursor:pointer;background:rgba(10,20,40,.72);color:#fff}
+.cu-tile.st-k .cu-acts .k{background:#16A34A}.cu-tile.st-r .cu-acts .r{background:#DC2626}
+.cu-best,.cu-used{position:absolute;top:6px;right:6px;font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;background:#F5B301;color:#1b1400}
+.cu-used{right:auto;left:6px;background:var(--brand);color:#fff}
+.cu-viewer{position:absolute;inset:0;background:#05080f;color:#fff;display:flex;flex-direction:column;z-index:3;outline:none}
+.cu-viewer .hint{color:#aab4c6}
+.cu-vtop{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px}
+.cu-vtop #cuVPos{margin-inline-end:auto}
+.cu-viewer .btn.ghost{color:#fff;border-color:#33405a;background:transparent}.cu-viewer .btn[aria-pressed="true"]{background:#1d3a66;border-color:#5C9CEB}
+.cu-keys{font-size:12px}@media (max-width:700px){.cu-keys{display:none}}
+.cu-vmid{flex:1;display:flex;align-items:stretch;min-height:0;gap:6px;padding:0 6px}
+.cu-nav{flex:none;width:46px;border:0;border-radius:10px;background:rgba(255,255,255,.06);color:#fff;font-size:34px;cursor:pointer}
+.cu-nav:hover{background:rgba(255,255,255,.14)}
+.cu-vstage{flex:1;min-width:0;display:grid;gap:8px;grid-template-columns:1fr;touch-action:pan-y}
+.cu-vstage.cmp[data-n="2"]{grid-template-columns:1fr 1fr}
+.cu-vstage.cmp[data-n="3"]{grid-template-columns:1fr 1fr 1fr}
+.cu-vstage.cmp[data-n="4"]{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr}
+@media (max-width:700px){ .cu-vstage.cmp[data-n="2"],.cu-vstage.cmp[data-n="3"]{grid-template-columns:1fr} .cu-nav{width:30px;font-size:24px} }
+.cu-vstage.cmp{overflow:auto}
+.cu-fig{margin:0;display:flex;flex-direction:column;min-height:0;border-radius:10px;border:3px solid transparent;overflow:hidden;background:#000}
+.cu-fig.st-k{border-color:#16A34A}.cu-fig.st-r{border-color:#DC2626}.cu-fig.cur{box-shadow:0 0 0 2px #5C9CEB}
+.cu-imgw{flex:1;min-height:120px;overflow:hidden;position:relative;cursor:zoom-in}
+.cu-imgw img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;user-select:none}
+.cu-imgw img.z{cursor:zoom-out}
+.cu-fig figcaption{display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:6px 8px;background:#0b1220}
+.cu-cap{margin-inline-end:auto;font-size:13px;color:#cfd7e6}
+.cu-fig .btn.sm{padding:6px 10px;font-size:13px;color:#fff;border:1px solid #33405a;background:transparent}
+.cu-fig .btn.ck{border-color:#16A34A}.cu-fig.st-k .btn.ck{background:#16A34A}
+.cu-fig .btn.cr{border-color:#DC2626}.cu-fig.st-r .btn.cr{background:#DC2626}
+.cu-fig .btn.cb{border-color:#F5B301;color:#F5B301}
+.cu-film{display:flex;gap:6px;overflow-x:auto;padding:8px 14px 12px}
+.cu-fs{flex:none;width:76px;height:56px;padding:0;border-radius:6px;overflow:hidden;border:2px solid transparent;background:#000;cursor:pointer;opacity:.7}
+.cu-fs img{width:100%;height:100%;object-fit:cover;display:block}
+.cu-fs.on{opacity:1;border-color:#5C9CEB}.cu-fs.st-k{box-shadow:inset 0 -4px 0 #16A34A}.cu-fs.st-r{opacity:.35}
 </style>
 
 <div class="app" dir="rtl" lang="ar">
@@ -235,6 +296,8 @@ table.grid td.gx .btn{padding:4px 8px}
             اسحب الصور هنا أو اضغط للاختيار، ويمكنك اللصق أيضًا. كل صورة تصبح منشورًا بنفس القالب.
           </label>
           <input type="file" id="pFiles" accept="image/*,.heic,.heif" multiple class="sr">
+          <button class="btn cull-open" type="button" id="pCull"><span aria-hidden="true">▦</span> فرز الصور واختيار الأفضل أولًا <span id="pCullCount"></span></button>
+          <span class="hint">عندك صور كثيرة أو متشابهة؟ افرزها هنا: تُجمَّع الصور المتشابهة، تقارنها جنبًا إلى جنب، ثم تُرسل المختارة فقط إلى القالب.</span>
           <span class="hint">الصور تظهر تحت المعاينة، ويمكنك ترتيبها وتكبير مصغّراتها هناك.</span>
         </div>
 
@@ -658,6 +721,46 @@ table.grid td.gx .btn{padding:4px 8px}
   </div>
 </div>
 
+<dialog id="cullDlg" class="cull" dir="rtl" lang="ar" aria-labelledby="cuTitle">
+  <div class="cu-top">
+    <div class="cu-ttl"><strong id="cuTitle">فرز الصور</strong><span id="cuStats" class="hint"></span></div>
+    <label class="btn primary sm" for="cuFiles">+ أضف صورًا</label><input type="file" id="cuFiles" accept="image/*,.heic,.heif" multiple class="sr">
+    <button class="btn ghost sm" type="button" id="cuImport" title="ينسخ صور المنشور الحالي إلى قائمة الفرز">جلب صور المنشور</button>
+    <button class="btn ghost sm cu-x" type="button" id="cuClose" aria-label="إغلاق">✕</button>
+  </div>
+  <div class="cu-tools">
+    <div class="seg" role="group" aria-label="عرض" id="cuFilter"><button type="button" data-v="all">الكل</button><button type="button" data-v="u">لم تُحسم</button><button type="button" data-v="k">المختارة</button><button type="button" data-v="r">المرفوضة</button></div>
+    <label class="check"><input type="checkbox" id="cuGroupOn"> تجميع الصور المتشابهة</label>
+    <div class="seg" role="group" aria-label="درجة التشابه" id="cuSensBox"><span class="lbl" style="padding:0 6px">التشابه:</span><span id="cuSens" style="display:contents"><button type="button" data-v="s">دقيق</button><button type="button" data-v="n">عادي</button><button type="button" data-v="l">واسع</button></span></div>
+    <div class="seg" role="group" aria-label="حجم الصور" id="cuSize"><button type="button" data-v="s">صغيرة</button><button type="button" data-v="m">متوسطة</button><button type="button" data-v="l">كبيرة</button></div>
+  </div>
+  <div class="cu-main" id="cuDrop">
+    <div class="cu-empty" id="cuEmpty"><strong>اسحب كل صور النشاط هنا</strong><span>أو اضغط «+ أضف صورًا». الصور المتشابهة تُجمَّع تلقائيًا، وتُعلَّم الأوضح في كل مجموعة.</span></div>
+    <div id="cuBody" hidden><div class="cu-grid" id="cuGrid"></div></div>
+  </div>
+  <div class="cu-foot">
+    <button class="btn ghost sm" type="button" id="cuAuto" title="في كل مجموعة لم تحسمها بعد: يختار الأوضح ويرفض الباقي">اختيار الأوضح من كل مجموعة تلقائيًا</button>
+    <button class="btn ghost sm" type="button" id="cuKeepRest">اختيار كل ما لم يُحسم</button>
+    <button class="btn ghost sm" type="button" id="cuDropRej">حذف المرفوضة</button>
+    <button class="btn ghost sm" type="button" id="cuClear">إفراغ القائمة</button>
+    <button class="btn primary" type="button" id="cuAdd" disabled>أضف المختارة إلى المنشور (0)</button>
+  </div>
+  <div class="cu-viewer" id="cuViewer" hidden tabindex="-1" role="group" aria-label="عرض الصورة">
+    <div class="cu-vtop">
+      <span id="cuVPos" class="hint"></span>
+      <button class="btn ghost sm" type="button" id="cuVCmp" aria-pressed="false" title="C">قارن المجموعة</button>
+      <button class="btn ghost sm" type="button" id="cuVZoom" aria-pressed="false" title="Z أو نقرتان على الصورة">تكبير 100٪ للتفاصيل</button>
+      <span class="hint cu-keys">→ ← للتنقل · P اختيار · X رفض · C مقارنة · Z تكبير</span>
+      <button class="btn ghost sm cu-x" type="button" id="cuVClose" aria-label="رجوع إلى كل الصور">✕</button>
+    </div>
+    <div class="cu-vmid">
+      <button class="cu-nav" type="button" id="cuVPrev" aria-label="السابقة">›</button>
+      <div class="cu-vstage" id="cuVStage"></div>
+      <button class="cu-nav" type="button" id="cuVNext" aria-label="التالية">‹</button>
+    </div>
+    <div class="cu-film" id="cuFilm"></div>
+  </div>
+</dialog>
 <dialog id="cropDlg">
   <form method="dialog" style="display:flex;flex-direction:column;gap:12px">
     <strong>حرّك الصورة أو العناصر بإصبعك، وكبّر بإصبعين</strong>
@@ -2439,7 +2542,7 @@ document.querySelectorAll(".drop").forEach(d=>{
   d.addEventListener("drop",e=>{ e.preventDefault(); d.classList.remove("over"); addFiles(e.dataTransfer.files); }); });
 document.querySelector(".canvas-wrap").addEventListener("dragover",e=>e.preventDefault());
 document.querySelector(".canvas-wrap").addEventListener("drop",e=>{ e.preventDefault(); addFiles(e.dataTransfer.files); });
-document.addEventListener("paste",e=>{ const fs=e.clipboardData&&e.clipboardData.files; if(fs&&fs.length){ e.preventDefault(); addFiles(fs); } });
+document.addEventListener("paste",e=>{ if(document.getElementById("cullDlg").open) return; const fs=e.clipboardData&&e.clipboardData.files; if(fs&&fs.length){ e.preventDefault(); addFiles(fs); } });
 
 /* photo manipulation */
 function changed(){ const p=cur().photo(); if(p) clampP(p,cur().frame()); redraw(); if(tab==="posts") phSave(); }
@@ -2506,6 +2609,156 @@ $("#dlAll").onclick=async()=>{ if(!window.JSZip){ status("تعذّر تحميل 
 async function letterZip(){ if(!window.JSZip){ status("تعذّر تحميل أداة الضغط.",true); return; } const zip=new JSZip();
   for(let i=0;i<letter.pages;i++){ status(`جارٍ تجهيز الصفحة ${i+1} من ${letter.pages}…`); zip.file(`${slug()}-p${i+1}.png`, await toBlob(letterPageCanvas(i))); }
   await saveFile(slug()+".zip", await zip.generateAsync({type:"blob",compression:"STORE"})); }
+/* ===== photo culling (فرز الصور) ===== */
+const CU={ list:[], filter:"all", group:true, sens:"n", size:"m", vi:-1, cmp:false, zoom:false, zx:.5, zy:.5, saveT:0, busy:0 };
+try{ const o=JSON.parse(localStorage.getItem("rw_cull")||"{}"); Object.assign(CU,{group:o.group!==false, sens:o.sens||"n", size:o.size||"m"}); }catch(e){}
+const cuPrefs=()=>{ try{ localStorage.setItem("rw_cull",JSON.stringify({group:CU.group,sens:CU.sens,size:CU.size})); }catch(e){} };
+const cuDlg=$("#cullDlg");
+const CU_TH={s:0.82,n:0.68,l:0.55};
+let cuSeq=0; const cuId=()=>Date.now().toString(36)+(cuSeq++).toString(36);
+function cuThumbCanvas(img,max){ const k=Math.min(1,max/Math.max(img.naturalWidth||img.width,img.naturalHeight||img.height)); const w=Math.max(1,Math.round((img.naturalWidth||img.width)*k)), h=Math.max(1,Math.round((img.naturalHeight||img.height)*k));
+  const c=document.createElement("canvas"); c.width=w; c.height=h; const g=c.getContext("2d"); g.imageSmoothingQuality="high"; g.drawImage(img,0,0,w,h); return c; }
+function cuAnalyse(img){ // shape (12x12 normalised luma) + colour histogram + sharpness
+  const step=(src,w,h)=>{ const t=document.createElement("canvas"); t.width=w; t.height=h; const g=t.getContext("2d"); g.imageSmoothingQuality="high"; g.drawImage(src,0,0,w,h); return t; };
+  const base=cuThumbCanvas(img,360);
+  const s12=step(step(step(base,96,96),32,32),12,12), d=s12.getContext("2d").getImageData(0,0,12,12).data;
+  const g=new Array(144); let m=0; for(let i=0;i<144;i++){ g[i]=d[i*4]*.3+d[i*4+1]*.59+d[i*4+2]*.11; m+=g[i]; } m/=144; let v=0; for(const x of g) v+=(x-m)*(x-m); const sd=Math.sqrt(v/144)+1e-6; for(let i=0;i<144;i++) g[i]=Math.round((g[i]-m)/sd*1000)/1000;
+  const s64=step(base,64,64), q=s64.getContext("2d").getImageData(0,0,64,64).data, hist=new Array(128).fill(0);
+  for(let i=0;i<4096;i++){ const r=q[i*4]/255, gg=q[i*4+1]/255, b=q[i*4+2]/255, mx=Math.max(r,gg,b), mn=Math.min(r,gg,b), dd=mx-mn; let h=0;
+    if(dd){ h= mx===r ? ((gg-b)/dd)%6 : mx===gg ? (b-r)/dd+2 : (r-gg)/dd+4; h/=6; if(h<0) h+=1; }
+    const sat=mx?dd/mx:0; hist[Math.min(7,Math.floor(h*8))*16+Math.min(3,Math.floor(sat*4))*4+Math.min(3,Math.floor(mx*4))]++; }
+  for(let i=0;i<128;i++) hist[i]=Math.round(hist[i]/4096*10000)/10000;
+  const w=base.width, h=base.height, px=base.getContext("2d").getImageData(0,0,w,h).data, L=new Float32Array(w*h);
+  for(let i=0;i<w*h;i++) L[i]=px[i*4]*.3+px[i*4+1]*.59+px[i*4+2]*.11;
+  let s=0,s2=0,n=0; for(let y=1;y<h-1;y++) for(let x=1;x<w-1;x++){ const i=y*w+x, vv=4*L[i]-L[i-1]-L[i+1]-L[i-w]-L[i+w]; s+=vv; s2+=vv*vv; n++; }
+  const mm=s/n; return {g, hist, sharp:Math.round(s2/n-mm*mm)}; }
+function cuSim(a,b){ let c=0; for(let i=0;i<144;i++) c+=a.g[i]*b.g[i]; c/=144; let hi=0; for(let i=0;i<128;i++) hi+=Math.min(a.hist[i],b.hist[i]); return 0.6*c+0.4*hi; }
+function cuUrl(e,big){ if(big){ if(!e._u) e._u=URL.createObjectURL(e.blob); return e._u; } if(!e._t) e._t=URL.createObjectURL(e.thumb); return e._t; }
+async function cuAddFiles(files){ const list=[...files].filter(isImg); if(!list.length) return; CU.busy+=list.length; cuStat();
+  for(const f of list){ try{ const im=await fileToImage(f); const blob=im._blob||f; const tc=cuThumbCanvas(im,640);
+      const thumb=await new Promise(r=>tc.toBlob(r,"image/jpeg",0.85)); const an=cuAnalyse(im);
+      CU.list.push({id:cuId(), blob, thumb, name:f.name||"صورة", lm:f.lastModified||0, w:im.naturalWidth, h:im.naturalHeight, st:"u", used:false, ...an}); }
+    catch(e){ status("تعذّر فتح إحدى الصور.",true); }
+    CU.busy--; cuStat(); cuRenderSoon(); }
+  cuSave(); cuRender(); }
+function cuSave(){ clearTimeout(CU.saveT); CU.saveT=setTimeout(()=>IDB.set("cullPool",CU.list.map(({_u,_t,...r})=>r)),400); }
+async function cuRestore(){ const l=await IDB.get("cullPool"); if(Array.isArray(l)) CU.list=l.filter(e=>e&&e.blob&&e.thumb&&e.g&&e.hist); }
+function cuGroups(){ const th=CU_TH[CU.sens]||0.68, gs=[];
+  if(!CU.group){ return CU.list.map(e=>[e]); }
+  for(const e of CU.list){ let best=null,bs=-9; for(const g of gs){ for(const m of g){ const d=cuSim(e,m); if(d>bs){ bs=d; best=g; } } } if(best&&bs>=th) best.push(e); else gs.push([e]); }
+  return gs; }
+const cuPass=e=> CU.filter==="all" || (CU.filter==="k"&&e.st==="k") || (CU.filter==="r"&&e.st==="r") || (CU.filter==="u"&&e.st==="u");
+function cuStat(){ const n=CU.list.length, k=CU.list.filter(e=>e.st==="k").length, r=CU.list.filter(e=>e.st==="r").length;
+  $("#cuStats").textContent= n ? `${n} صورة · ${k} مختارة · ${r} مرفوضة · ${n-k-r} لم تُحسم` + (CU.busy?` · جارٍ تحميل ${CU.busy}…`:"") : (CU.busy?`جارٍ تحميل ${CU.busy}…`:"");
+  $("#cuAdd").textContent=`أضف المختارة إلى المنشور (${k})`; $("#cuAdd").disabled=!k;
+  $("#cuEmpty").hidden=!!n||!!CU.busy; $("#cuBody").hidden=!n;
+  const pc=$("#pCullCount"); if(pc) pc.textContent= n?`(${n})`:""; }
+let cuRT=0; function cuRenderSoon(){ clearTimeout(cuRT); cuRT=setTimeout(cuRender,250); }
+function cuSet(e,st){ e.st= e.st===st&&st!=="u" ? "u" : st; cuSave(); }
+function cuTile(e,g){ const t=document.createElement("div"); t.className="cu-tile st-"+e.st; t.dataset.id=e.id;
+  const im=document.createElement("img"); im.src=cuUrl(e); im.alt=e.name; im.loading="lazy"; im.decoding="async"; t.appendChild(im);
+  if(g.length>1){ const best=g.reduce((a,b)=>b.sharp>a.sharp?b:a); if(best===e){ const b=document.createElement("span"); b.className="cu-best"; b.textContent="الأوضح"; t.appendChild(b); } }
+  if(e.used){ const b=document.createElement("span"); b.className="cu-used"; b.textContent="في المنشور"; t.appendChild(b); }
+  const bar=document.createElement("div"); bar.className="cu-acts";
+  const mk=(txt,cls,lab,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className=cls; b.textContent=txt; b.setAttribute("aria-label",lab); b.onclick=ev=>{ ev.stopPropagation(); fn(); }; bar.appendChild(b); };
+  mk("✓","k","اختيار",()=>{ cuSet(e,"k"); cuRender(); }); mk("✗","r","رفض",()=>{ cuSet(e,"r"); cuRender(); });
+  t.appendChild(bar);
+  t.onclick=()=>cuOpen(e.id,false); t.tabIndex=0; t.setAttribute("role","button"); t.setAttribute("aria-label",e.name+" — افتح بحجم كبير");
+  t.onkeydown=ev=>{ if(ev.key==="Enter"){ ev.preventDefault(); cuOpen(e.id,false); } };
+  return t; }
+function cuRender(){ cuStat(); const body=$("#cuGrid"); body.textContent=""; body.dataset.size=CU.size;
+  const gs0=cuGroups(); let shown=0, gi=0;
+  const singles=gs0.filter(g=>g.length===1).flat(), gs=gs0.filter(g=>g.length>1); if(singles.length) gs.push(singles);
+  for(const g of gs){ const vis=g.filter(cuPass); gi++; if(!vis.length) continue; shown+=vis.length;
+    const isSingles=g===gs[gs.length-1]&&singles.length&&g===singles;
+    const sec=document.createElement("section"); sec.className="cu-group"+(!isSingles&&CU.group?" multi":"");
+    if(isSingles&&CU.group&&gs.length>1){ const h=document.createElement("div"); h.className="cu-gh"; const sp=document.createElement("span"); sp.textContent=`صور بلا تكرار (${g.length})`; h.appendChild(sp); sec.appendChild(h); }
+    if(!isSingles&&CU.group){ const h=document.createElement("div"); h.className="cu-gh";
+      const k=g.filter(e=>e.st==="k").length; const s=document.createElement("span"); s.textContent=`صور متشابهة: ${g.length}\u200F`+(k?` · المختارة منها: ${k}\u200F`:""); h.appendChild(s);
+      const cb=document.createElement("button"); cb.type="button"; cb.className="btn ghost sm"; cb.textContent="قارن جنبًا إلى جنب"; cb.onclick=()=>cuOpen(g[0].id,true); h.appendChild(cb);
+      const bb=document.createElement("button"); bb.type="button"; bb.className="btn ghost sm"; bb.textContent="اختر الأوضح وارفض الباقي"; bb.onclick=()=>{ const best=g.reduce((a,b)=>b.sharp>a.sharp?b:a); g.forEach(e=>e.st= e===best?"k":"r"); cuSave(); cuRender(); }; h.appendChild(bb);
+      sec.appendChild(h); }
+    const row=document.createElement("div"); row.className="cu-row"; vis.forEach(e=>row.appendChild(cuTile(e,isSingles?[e]:g))); sec.appendChild(row); body.appendChild(sec); }
+  if(!shown&&CU.list.length){ const p=document.createElement("p"); p.className="hint"; p.textContent="لا توجد صور في هذا التصنيف."; body.appendChild(p); }
+  if(CU.vi!==-1) cuView(); }
+/* viewer / compare */
+function cuGroupOf(id){ return cuGroups().find(g=>g.some(e=>e.id===id))||[]; }
+function cuSeqList(){ const out=[]; for(const g of cuGroups()) for(const e of g) if(cuPass(e)) out.push(e); return out; }
+function cuOpen(id,cmp){ CU.vi=id; CU.cmp=cmp; CU.zoom=false; $("#cuViewer").hidden=false; cuView(); $("#cuViewer").focus(); }
+function cuClose(){ CU.vi=-1; $("#cuViewer").hidden=true; cuRender(); const t=$("#cuGrid").querySelector(".cu-tile"); }
+function cuStep(d){ const L=cuSeqList(); if(!L.length) return; let i=L.findIndex(e=>e.id===CU.vi); if(i<0) i=0; i=Math.max(0,Math.min(L.length-1,i+d)); CU.vi=L[i].id; if(CU.cmp){ const g=cuGroupOf(CU.vi); if(g.length<2) CU.cmp=false; } cuView(); }
+function cuView(){ const all=CU.list, e=all.find(x=>x.id===CU.vi); if(!e){ cuClose(); return; }
+  const g=cuGroupOf(e.id), stage=$("#cuVStage"); stage.textContent=""; stage.classList.toggle("cmp",CU.cmp);
+  const items= CU.cmp ? g : [e]; stage.dataset.n=Math.min(items.length,4);
+  const best=g.length>1 ? g.reduce((a,b)=>b.sharp>a.sharp?b:a) : null;
+  items.forEach(x=>{ const f=document.createElement("figure"); f.className="cu-fig st-"+x.st+(x.id===e.id&&CU.cmp?" cur":"");
+    const w=document.createElement("div"); w.className="cu-imgw"; const im=document.createElement("img"); im.src=cuUrl(x,true); im.alt=x.name; im.draggable=false;
+    if(CU.zoom){ im.style.transformOrigin=`${CU.zx*100}% ${CU.zy*100}%`; im.classList.add("z"); im.dataset.w=x.w; }
+    w.appendChild(im); f.appendChild(w);
+    const cap=document.createElement("figcaption");
+    const lab=document.createElement("span"); lab.className="cu-cap"; lab.textContent=(x===best?"الأوضح · ":"")+(x.st==="k"?"مختارة":x.st==="r"?"مرفوضة":"لم تُحسم"); cap.appendChild(lab);
+    const mk=(t,cls,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn sm "+cls; b.textContent=t; b.onclick=ev=>{ ev.stopPropagation(); fn(); }; cap.appendChild(b); };
+    mk("✓ اختيار","ck",()=>{ cuSet(x,"k"); cuView(); cuStat(); }); mk("✗ رفض","cr",()=>{ cuSet(x,"r"); cuView(); cuStat(); });
+    if(CU.cmp) mk("هذه الأفضل","cb",()=>{ g.forEach(y=>y.st= y===x?"k":"r"); cuSave(); cuView(); cuStat(); });
+    f.appendChild(cap);
+    f.onclick=()=>{ if(CU.cmp&&!CU.zoom){ CU.vi=x.id; cuView(); } };
+    stage.appendChild(f); });
+  stage.querySelectorAll("img.z").forEach(im=>{ const W=im.parentNode.clientWidth||900; im.style.transform=`scale(${Math.max(2,Math.min(5,(+im.dataset.w||2000)/W))})`; });
+  // zoom interactions
+  stage.querySelectorAll(".cu-imgw").forEach(w=>{ w.onpointermove=ev=>{ if(!CU.zoom) return; const r=w.getBoundingClientRect(); CU.zx=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)); CU.zy=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height)); stage.querySelectorAll("img.z").forEach(i=>i.style.transformOrigin=`${CU.zx*100}% ${CU.zy*100}%`); };
+    w.ondblclick=ev=>{ ev.preventDefault(); const r=w.getBoundingClientRect(); CU.zx=(ev.clientX-r.left)/r.width; CU.zy=(ev.clientY-r.top)/r.height; CU.zoom=!CU.zoom; cuView(); }; });
+  const L=cuSeqList(), i=L.findIndex(x=>x.id===e.id);
+  $("#cuVPos").textContent= (i>=0?`${i+1} / ${L.length}`:"") + (g.length>1?` · مجموعة من ${g.length}`:"");
+  $("#cuVCmp").setAttribute("aria-pressed",String(CU.cmp)); $("#cuVCmp").disabled=g.length<2; $("#cuVZoom").setAttribute("aria-pressed",String(CU.zoom));
+  // filmstrip of the group (or neighbours)
+  const fs=$("#cuFilm"); fs.textContent=""; const strip= g.length>1 ? g : L.slice(Math.max(0,i-6),i+7);
+  strip.forEach(x=>{ const b=document.createElement("button"); b.type="button"; b.className="cu-fs st-"+x.st+(x.id===e.id?" on":""); const im=document.createElement("img"); im.src=cuUrl(x); im.alt=""; b.appendChild(im); b.setAttribute("aria-label",x.name); b.onclick=()=>{ CU.vi=x.id; cuView(); }; fs.appendChild(b); });
+  cuStat(); const ae=document.activeElement; if(!ae||ae===document.body||!cuDlg.contains(ae)) $("#cuViewer").focus({preventScroll:true}); }
+function cuToPost(){ const ks=CU.list.filter(e=>e.st==="k"&&!e.used); const all=CU.list.filter(e=>e.st==="k"); const use= ks.length?ks:all; if(!use.length) return;
+  (async()=>{ phPush(); const first=posts.photos.length; for(const e of use){ try{ const im=await loadImg(URL.createObjectURL(e.blob)); const p=mkPhoto(im,e.name); p.blob=e.blob; posts.photos.push(p); e.used=true; }catch(err){} }
+    posts.active=Math.min(first,posts.photos.length-1); cuSave(); cuDlg.close(); if(tab!=="posts") setTab("posts"); buildThumbs(); redraw(); phSave();
+    status(`أُضيفت ${use.length} صورة إلى المنشور. اضبط كل صورة الآن بالتكبير والسحب.`); const st=$("#phStrip"); if(st&&st.scrollIntoView) st.scrollIntoView({behavior:"smooth",block:"start"}); })(); }
+/* wiring */
+function cuOpenDlg(){ if(!cuDlg.open) cuDlg.showModal(); cuSyncSegs(); cuRender(); }
+function cuSyncSegs(){ document.querySelectorAll("#cuFilter button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===CU.filter)));
+  document.querySelectorAll("#cuSize button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===CU.size)));
+  document.querySelectorAll("#cuSens button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===CU.sens)));
+  $("#cuGroupOn").checked=CU.group; $("#cuSensBox").hidden=!CU.group; }
+$("#pCull").onclick=cuOpenDlg;
+$("#cuClose").onclick=()=>cuDlg.close();
+$("#cuFiles").onchange=e=>{ cuAddFiles(e.target.files); e.target.value=""; };
+document.querySelectorAll("#cuFilter button").forEach(b=>b.onclick=()=>{ CU.filter=b.dataset.v; cuSyncSegs(); cuRender(); });
+document.querySelectorAll("#cuSize button").forEach(b=>b.onclick=()=>{ CU.size=b.dataset.v; cuPrefs(); cuSyncSegs(); cuRender(); });
+document.querySelectorAll("#cuSens button").forEach(b=>b.onclick=()=>{ CU.sens=b.dataset.v; cuPrefs(); cuSyncSegs(); cuRender(); });
+$("#cuGroupOn").onchange=e=>{ CU.group=e.target.checked; cuPrefs(); cuSyncSegs(); cuRender(); };
+$("#cuAuto").onclick=()=>{ for(const g of cuGroups()){ if(g.length<2) continue; if(g.some(e=>e.st!=="u")) continue; const best=g.reduce((a,b)=>b.sharp>a.sharp?b:a); g.forEach(e=>e.st= e===best?"k":"r"); } cuSave(); cuRender(); status(""); };
+$("#cuKeepRest").onclick=()=>{ CU.list.forEach(e=>{ if(e.st==="u") e.st="k"; }); cuSave(); cuRender(); };
+$("#cuDropRej").onclick=()=>{ const n=CU.list.filter(e=>e.st==="r").length; if(!n) return; if(!confirm(`حذف ${n} صورة مرفوضة من قائمة الفرز؟`)) return; CU.list=CU.list.filter(e=>e.st!=="r"); cuSave(); cuRender(); };
+$("#cuClear").onclick=()=>{ if(!CU.list.length) return; if(!confirm("إفراغ قائمة الفرز كلها؟ (الصور المضافة إلى المنشور تبقى فيه)")) return; CU.list=[]; cuSave(); cuRender(); };
+$("#cuImport").onclick=()=>{ const ps=posts.photos.filter(p=>p.blob); if(!ps.length){ status("لا توجد صور مرفوعة في المنشور الحالي.",true); return; } cuAddFiles(ps.map(p=>new File([p.blob],p.name||"صورة",{type:p.blob.type||"image/jpeg"}))); };
+$("#cuAdd").onclick=cuToPost;
+$("#cuVClose").onclick=cuClose; $("#cuVPrev").onclick=()=>cuStep(-1); $("#cuVNext").onclick=()=>cuStep(1);
+$("#cuVCmp").onclick=()=>{ CU.cmp=!CU.cmp; CU.zoom=false; cuView(); }; $("#cuVZoom").onclick=()=>{ CU.zoom=!CU.zoom; cuView(); };
+const cuDZ=$("#cuDrop"); ["dragover","dragenter"].forEach(t=>cuDlg.addEventListener(t,e=>{ e.preventDefault(); cuDZ.classList.add("over"); }));
+["dragleave","drop"].forEach(t=>cuDlg.addEventListener(t,e=>{ e.preventDefault(); cuDZ.classList.remove("over"); if(t==="drop"&&e.dataTransfer&&e.dataTransfer.files.length) cuAddFiles(e.dataTransfer.files); }));
+cuDlg.addEventListener("paste",e=>{ const fs=e.clipboardData&&e.clipboardData.files; if(fs&&fs.length){ e.preventDefault(); e.stopPropagation(); cuAddFiles(fs); } });
+document.addEventListener("keydown",e=>{ if(cuDlg.open&&e.key==="Escape"&&CU.vi!==-1&&!$("#cuViewer").hidden){ e.preventDefault(); e.stopPropagation(); CU.reopen=true; setTimeout(()=>CU.reopen=false,400); cuClose(); } },true);
+cuDlg.addEventListener("cancel",e=>{ if(CU.vi!==-1&&!$("#cuViewer").hidden){ e.preventDefault(); cuClose(); } });
+cuDlg.addEventListener("close",()=>{ if(CU.reopen){ CU.reopen=false; cuDlg.showModal(); return; } CU.vi=-1; $("#cuViewer").hidden=true; });
+document.addEventListener("keydown",e=>{ if(!cuDlg.open||CU.vi===-1||$("#cuViewer").hidden) return; const t0=e.target; if(t0&&/INPUT|TEXTAREA|SELECT/.test(t0.tagName)) return;
+  const x=CU.list.find(q=>q.id===CU.vi); const k=e.key.toLowerCase();
+  if(false){}
+  else if(e.key==="ArrowLeft"){ e.preventDefault(); cuStep(1); } else if(e.key==="ArrowRight"){ e.preventDefault(); cuStep(-1); }
+  else if(k==="p"||k==="1"||k==="ح"){ e.preventDefault(); if(x){ x.st="k"; cuSave(); cuStep(1); cuView(); } }
+  else if(k==="x"||k==="0"||k==="ء"){ e.preventDefault(); if(x){ x.st="r"; cuSave(); cuStep(1); cuView(); } }
+  else if(k==="u"){ e.preventDefault(); if(x){ x.st="u"; cuSave(); cuView(); } }
+  else if(k==="c"||k==="ؤ"){ e.preventDefault(); if(!$("#cuVCmp").disabled){ CU.cmp=!CU.cmp; CU.zoom=false; cuView(); } }
+  else if(k==="z"||k==="ئ"){ e.preventDefault(); CU.zoom=!CU.zoom; cuView(); } });
+(()=>{ const st=$("#cuVStage"); let sx=null,sy=0; st.addEventListener("pointerdown",e=>{ if(e.pointerType==="mouse"||CU.zoom||CU.cmp) return; sx=e.clientX; sy=e.clientY; });
+  st.addEventListener("pointerup",e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) cuStep(dx>0?1:-1); }); })();
+cuRestore().then(()=>cuStat());
+window.rouwadCull={CU,cuSim,cuGroups};
+
 /* boot */
 markChips(); fillOcc(); fillCond(); buildLib(); buildItemList(); syncEditor(); setTab(tab);
 window.addEventListener("resize",redraw);
