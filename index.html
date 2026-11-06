@@ -105,7 +105,13 @@ input[type=text]:focus,textarea:focus,select:focus{outline:2px solid var(--brand
 .thumb .n{position:absolute;bottom:3px;right:5px;font-size:11px;font-weight:700;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,.6)}
 .stage{position:sticky;top:12px;display:flex;flex-direction:column;gap:12px;min-width:0}
 @media (max-width:860px){ .stage{position:static} }
-.canvas-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;justify-content:center}
+.canvas-wrap{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px;display:flex;justify-content:center;position:relative}
+.pv-nav{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:64px;border:0;border-radius:12px;background:rgba(10,20,40,.55);color:#fff;font-size:34px;line-height:1;cursor:pointer;z-index:2;backdrop-filter:blur(4px)}
+.pv-nav:hover{background:rgba(10,20,40,.8)}.pv-nav:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.pv-nav.prev{right:6px}.pv-nav.next{left:6px}
+.pv-nav,.cu-nav,.pv-count{direction:ltr;unicode-bidi:isolate}
+.pv-count{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(10,20,40,.7);color:#fff;font-size:13px;font-weight:700;padding:4px 12px;border-radius:99px;pointer-events:none;z-index:2}
+@media (max-width:600px){ .pv-nav{width:34px;height:52px;font-size:26px} }
 #preview{width:100%;max-width:640px;height:auto;display:block;border-radius:4px;box-shadow:0 10px 30px rgba(15,30,60,.14);touch-action:pan-y;cursor:grab;background:#fff}
 #preview.dragging{cursor:grabbing}
 .tools{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;display:flex;flex-direction:column;gap:10px}
@@ -250,6 +256,53 @@ dialog.cull[open]{display:flex}
 .cu-fs{flex:none;width:76px;height:56px;padding:0;border-radius:6px;overflow:hidden;border:2px solid transparent;background:#000;cursor:pointer;opacity:.7}
 .cu-fs img{width:100%;height:100%;object-fit:cover;display:block}
 .cu-fs.on{opacity:1;border-color:#5C9CEB}.cu-fs.st-k{box-shadow:inset 0 -4px 0 #16A34A}.cu-fs.st-r{opacity:.35}
+
+/* duplicate review */
+.dup .cu-row{grid-template-columns:repeat(auto-fill,minmax(280px,1fr))}
+@media (max-width:600px){ .dup .cu-row{grid-template-columns:1fr 1fr!important} }
+.dup-tile{cursor:pointer}
+.dup-tile .dup-new{background:#0E9F6E}
+.dup-state{position:absolute;bottom:8px;right:8px;font-size:13px;font-weight:700;padding:4px 10px;border-radius:99px;color:#fff;background:#16A34A}
+.dup-tile.st-r .dup-state{background:#DC2626}
+.dup-zoom{position:absolute;bottom:6px;left:6px;width:36px;height:36px;border-radius:50%;border:0;background:rgba(10,20,40,.72);color:#fff;font-size:18px;cursor:pointer}
+.cu-nav:disabled{opacity:.25;cursor:default}
+
+/* post board */
+.bd-sec{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:12px;transition:box-shadow .12s}
+.bd-sec.grp{border-color:var(--gc);box-shadow:inset 4px 0 0 var(--gc)}
+.bd-sec.over,.bd-new.over{box-shadow:0 0 0 3px var(--brand);background:var(--brand-soft)}
+.bd-sh{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px}
+.bd-sw{width:14px;height:14px;border-radius:4px;background:var(--gc);flex:none}
+.bd-name{width:auto!important;min-width:120px;max-width:260px;padding:6px 10px!important;font-weight:700}
+.bd-row{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+#bdGrid[data-size="s"] .bd-row{grid-template-columns:repeat(auto-fill,minmax(130px,1fr))}
+#bdGrid[data-size="l"] .bd-row{grid-template-columns:repeat(auto-fill,minmax(300px,1fr))}
+#bdGrid[data-size="xl"] .bd-row{grid-template-columns:repeat(auto-fill,minmax(min(100%,480px),1fr))}
+.bd-tile.ins-b::after,.bd-tile.ins-a::after{content:"";position:absolute;top:4px;bottom:4px;width:6px;border-radius:3px;background:var(--brand);box-shadow:0 0 0 2px #fff}
+.bd-tile.ins-b::after{right:2px}.bd-tile.ins-a::after{left:2px}
+.bd-tile.ins-b,.bd-tile.ins-a{outline:2px dashed var(--brand);outline-offset:2px}
+#bdVStage[data-n="1"] .cu-imgw{min-height:60vh}
+@media (hover:hover) and (pointer:fine){ .bd-tile .bd-acts,.bd-tile .bd-h{opacity:0;transition:opacity .12s} .bd-tile:hover .bd-acts,.bd-tile:focus-within .bd-acts{opacity:1} .bd-h{display:none} }
+@media (max-width:600px){ .bd-row{grid-template-columns:1fr 1fr!important} #bdGrid[data-size="s"] .bd-row{grid-template-columns:repeat(3,1fr)!important} }
+.bd-tile{position:relative;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:#0b1220;cursor:grab;border:3px solid transparent;user-select:none;-webkit-user-select:none}
+.bd-tile.has-g{border-color:var(--gc)}
+.bd-tile.sel{outline:3px solid var(--brand);outline-offset:2px}
+.bd-tile.act{box-shadow:0 0 0 2px #F5B301}
+.bd-tile.dragging{opacity:.35}
+.bd-tile img{width:100%;height:100%;object-fit:contain;display:block;pointer-events:none}
+.bd-n{position:absolute;top:6px;right:6px;min-width:22px;height:22px;border-radius:11px;background:rgba(10,20,40,.75);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 5px}
+.bd-ck{position:absolute;top:6px;left:6px;width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:rgba(10,20,40,.4);color:transparent;font-size:14px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.bd-tile.sel .bd-ck{background:var(--brand);color:#fff}
+.bd-h{position:absolute;bottom:6px;right:6px;width:30px;height:30px;border-radius:8px;background:rgba(10,20,40,.6);color:#fff;font-size:16px;line-height:30px;text-align:center;touch-action:none;cursor:grab}
+.bd-acts{position:absolute;bottom:6px;left:6px;display:flex;gap:6px}
+.bd-acts button{width:32px;height:32px;border-radius:50%;border:0;background:rgba(10,20,40,.72);color:#fff;font-size:15px;cursor:pointer}
+.bd-empty{grid-column:1/-1;padding:22px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:10px}
+.bd-new{padding:26px;text-align:center;color:var(--muted);border:2px dashed var(--line);border-radius:12px;font-weight:600}
+.bd-ghost{position:fixed;left:0;top:0;width:100px;height:80px;border-radius:10px;overflow:hidden;box-shadow:0 12px 30px rgba(0,0,0,.4);pointer-events:none;z-index:10;background:#000}
+.bd-ghost img{width:100%;height:100%;object-fit:cover}
+.bd-ghost span{position:absolute;top:4px;right:4px;background:var(--brand);color:#fff;border-radius:10px;padding:0 7px;font-weight:700;font-size:13px}
+.thumb.has-g{box-shadow:0 0 0 3px var(--gc)}
+.thumb .gtag{position:absolute;top:4px;left:50%;transform:translateX(-50%);max-width:56%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px;font-weight:700;padding:2px 6px;border-radius:6px;background:var(--gc);color:#fff}
 </style>
 
 <div class="app" dir="rtl" lang="ar">
@@ -681,7 +734,10 @@ dialog.cull[open]{display:flex}
     <!-- STAGE -->
     <div class="stage">
       <div class="seg" role="group" aria-label="المعاينة" id="ltView" hidden><button type="button" data-v="letter">الرسالة</button><button type="button" data-v="env">✉ الظرف</button></div>
-      <div class="canvas-wrap"><canvas id="preview" aria-label="معاينة المنشور"></canvas></div>
+      <div class="canvas-wrap"><canvas id="preview" aria-label="معاينة المنشور"></canvas>
+        <button class="pv-nav prev" type="button" id="pvPrev" aria-label="الصورة السابقة (→)" title="الصورة السابقة (→)" hidden>›</button>
+        <button class="pv-nav next" type="button" id="pvNext" aria-label="الصورة التالية (←)" title="الصورة التالية (←)" hidden>‹</button>
+        <span class="pv-count" id="pvCount" aria-live="polite" hidden></span></div>
       <div class="tools row" id="ltPages" hidden></div>
       <div class="tools" id="photoTools">
         <div class="row" id="applyRow" hidden><span class="lbl">تطبيق التكبير والضبط على:</span><div class="seg" role="group" aria-label="تطبيق على" id="applySeg" style="flex:1;min-width:220px"><button type="button" data-v="one">الصورة المحددة</button><button type="button" data-v="all">كل الصور</button></div></div>
@@ -712,6 +768,8 @@ dialog.cull[open]{display:flex}
             <div class="seg" role="group" aria-label="حجم المصغّرات" id="phSize"><button type="button" data-v="s">صغيرة</button><button type="button" data-v="m">متوسطة</button><button type="button" data-v="l">كبيرة</button></div>
             <button class="btn ghost sm" type="button" id="phUndo" aria-label="تراجع (Ctrl+Z)" title="تراجع (Ctrl+Z)">↶</button>
             <button class="btn ghost sm" type="button" id="phRedo" aria-label="إعادة (Ctrl+Y)" title="إعادة (Ctrl+Y)">↷</button>
+            <button class="btn ghost sm" type="button" id="phBoard" title="عرض كل صور المنشور بملء الشاشة وتجميعها">⤢ لوحة موسّعة</button>
+            <button class="btn ghost sm" type="button" id="phDup" title="يجمع الصور الملتقطة من نفس المكان (حتى من مصورين مختلفين) لتبقي واحدة">كشف المكرر</button>
             <button class="btn ghost sm" type="button" id="phNew" title="يمسح الصور والعنوان لبدء منشور آخر">منشور جديد</button>
           </div>
           <div class="thumbs" id="pThumbs"></div>
@@ -759,6 +817,55 @@ dialog.cull[open]{display:flex}
       <button class="cu-nav" type="button" id="cuVNext" aria-label="التالية">‹</button>
     </div>
     <div class="cu-film" id="cuFilm"></div>
+  </div>
+</dialog>
+<dialog id="dupDlg" class="cull dup" dir="rtl" lang="ar" aria-labelledby="dupTitle">
+  <div class="cu-top">
+    <div class="cu-ttl"><strong id="dupTitle">لقطات متكررة</strong><span id="dupInfo" class="hint"></span></div>
+    <button class="btn ghost sm cu-x" type="button" id="dupClose" aria-label="إغلاق دون تغيير">✕</button>
+  </div>
+  <div class="cu-tools">
+    <div class="seg" role="group" aria-label="درجة التشابه" id="dupSensBox"><span class="lbl" style="padding:0 6px">اعتبرها متكررة إذا كانت:</span><span id="dupSens" style="display:contents"><button type="button" data-v="s">متطابقة تقريبًا</button><button type="button" data-v="n">من نفس المكان</button><button type="button" data-v="l">متشابهة عمومًا</button></span></div>
+    <span class="hint">اضغط على الصورة لتبديل: تبقى ✓ / تُحذف ✗. زر ⤢ يعرض المجموعة كبيرة جنبًا إلى جنب.</span>
+  </div>
+  <div class="cu-main"><div class="cu-grid" id="dupGrid" data-size="l"></div></div>
+  <div class="cu-foot">
+    <button class="btn ghost sm" type="button" id="dupSkip">تخطّ المراجعة</button>
+    <button class="btn primary" type="button" id="dupApply">تطبيق</button>
+  </div>
+  <div class="cu-viewer" id="dupViewer" hidden tabindex="-1" role="group" aria-label="مقارنة المجموعة">
+    <div class="cu-vtop">
+      <span id="dupVPos" class="hint"></span>
+      <span class="hint cu-keys">→ ← للتنقل بين المجموعات · Esc للرجوع</span>
+      <button class="btn ghost sm cu-x" type="button" id="dupVClose" aria-label="رجوع">✕</button>
+    </div>
+    <div class="cu-vmid">
+      <button class="cu-nav" type="button" id="dupVPrev" aria-label="المجموعة السابقة">›</button>
+      <div class="cu-vstage cmp" id="dupVStage"></div>
+      <button class="cu-nav" type="button" id="dupVNext" aria-label="المجموعة التالية">‹</button>
+    </div>
+  </div>
+</dialog>
+<dialog id="boardDlg" class="cull board" dir="rtl" lang="ar" aria-labelledby="bdTitle">
+  <div class="cu-top">
+    <div class="cu-ttl"><strong id="bdTitle">لوحة صور المنشور</strong><span class="hint">اسحب الصورة إلى مجموعة، أو فوق صورة أخرى لتضعها قبلها أو بعدها (يتغيّر ترتيب المنشور). 🔍 أو نقرتان لعرضها كبيرة. التجميع لا يظهر في المنشور.</span></div>
+    <button class="btn ghost sm" type="button" id="bdAuto" title="يضع الصور الملتقطة من نفس المكان في مجموعات (لا يغيّر مجموعاتك)">تجميع تلقائي حسب المكان</button>
+    <button class="btn ghost sm" type="button" id="bdSort" title="يجعل صور كل مجموعة متتالية في المنشور">رتّب المنشور حسب المجموعات</button>
+    <button class="btn ghost sm cu-x" type="button" id="bdClose" aria-label="إغلاق">✕</button>
+  </div>
+  <div class="cu-tools">
+    <span class="hint" id="bdSelInfo"></span>
+    <button class="btn ghost sm" type="button" id="bdMoveNew">مجموعة جديدة من المحددة</button>
+    <select id="bdMoveTo" aria-label="نقل المحددة إلى مجموعة" style="width:auto;padding:7px 10px"></select>
+    <button class="btn ghost sm" type="button" id="bdUngroup">إخراج المحددة من مجموعاتها</button>
+    <button class="btn ghost sm" type="button" id="bdClearSel">إلغاء التحديد</button>
+    <span style="flex:1"></span>
+    <div class="seg" role="group" aria-label="حجم الصور" id="bdSize"><button type="button" data-v="s">صغيرة</button><button type="button" data-v="m">متوسطة</button><button type="button" data-v="l">كبيرة</button><button type="button" data-v="xl">كبيرة جدًا</button></div>
+  </div>
+  <div class="cu-main" id="bdMain"><div id="bdGrid" data-size="m"></div></div>
+  <div class="cu-viewer" id="bdViewer" hidden tabindex="-1" role="group" aria-label="مقارنة المجموعة">
+    <div class="cu-vtop"><span id="bdVPos" class="hint"></span><span class="hint cu-keys">→ ← للتنقل · Esc للرجوع</span><button class="btn ghost sm cu-x" type="button" id="bdVClose" aria-label="رجوع">✕</button></div>
+    <div class="cu-vmid"><button class="cu-nav" type="button" id="bdVPrev" aria-label="المجموعة السابقة">›</button><div class="cu-vstage cmp" id="bdVStage"></div><button class="cu-nav" type="button" id="bdVNext" aria-label="المجموعة التالية">‹</button></div>
   </div>
 </dialog>
 <dialog id="cropDlg">
@@ -2082,30 +2189,30 @@ const cur=()=>T[tab];
 function renderTo(cv){ const t=cur(); const cssW=cv.clientWidth||600, dpr=Math.min(2,window.devicePixelRatio||1);
   cv.width=Math.round(cssW*dpr); cv.height=Math.round(cssW*dpr*t.H/t.W); const c=cv.getContext("2d"); c.setTransform(cv.width/t.W,0,0,cv.width/t.W,0,0); c.imageSmoothingQuality="high"; if(t===posts) posts.draw(c,posts.active,true); else if(t===occ||t===reel) t.draw(c,true); else t.draw(c); }
 function redraw(){ if(!ready) return; cancelAnimationFrame(raf); raf=requestAnimationFrame(()=>{ pv.style.aspectRatio=cur().W+"/"+cur().H; pv.style.maxWidth = cur().H>cur().W*1.5 ? "min(400px,100%)" : (cur().H>cur().W ? "560px" : "640px"); renderTo(pv); if(dlg.open) renderTo(cropCv); syncTools(); }); thumbsSoon(); }
-function syncTools(){ const p=cur().photo(); $("#photoTools").hidden=!p; if(typeof syncApply==="function") syncApply(); if(p){ const A=cur().frame(); const f=fitZoom(p,A); const z=$("#zoom"); z.min=(Math.min(1,f)*0.85).toFixed(3); z.value=p.zoom; }
+function syncTools(){ if(typeof pvNavSync==="function") pvNavSync(); const p=cur().photo(); $("#photoTools").hidden=!p; if(typeof syncApply==="function") syncApply(); if(p){ const A=cur().frame(); const f=fitZoom(p,A); const z=$("#zoom"); z.min=(Math.min(1,f)*0.85).toFixed(3); z.value=p.zoom; }
   $("#dlAll").hidden = tab!=="posts" || posts.photos.length<2; $("#dlAll").textContent=`تنزيل الكل في ملف مضغوط (${posts.photos.length} صور)`; }
 let thumbT=0; function thumbsSoon(){ if(tab!=="posts") return; clearTimeout(thumbT); thumbT=setTimeout(drawThumbs,280); }
 /* posts photo strip: persistence, history, size, reorder */
-const PH={ hist:[], fut:[], size:"m", saveT:0 };
+const PH={ hist:[], fut:[], size:"m", saveT:0, groups:[] };
 try{ PH.size=localStorage.getItem("rw_thumbSize")||"m"; }catch(e){}
-function phSnap(){ return {photos:posts.photos.slice(), active:posts.active, title:posts.state.title}; }
+function phSnap(){ return {photos:posts.photos.slice(), grps:posts.photos.map(p=>p.grp||null), groups:PH.groups.map(g=>({...g})), active:posts.active, title:posts.state.title}; }
 function phPush(){ PH.hist.push(phSnap()); if(PH.hist.length>60) PH.hist.shift(); PH.fut=[]; phSyncBtns(); }
-function phApply(s){ posts.photos=s.photos.slice(); posts.active=Math.min(s.active,Math.max(0,posts.photos.length-1)); if(s.title!==posts.state.title){ posts.state.title=s.title; $("#pTitle").value=s.title; savePosts(); } buildThumbs(); redraw(); phSave(); }
+function phApply(s){ posts.photos=s.photos.slice(); if(s.grps){ posts.photos.forEach((p,i)=>p.grp=s.grps[i]); PH.groups=s.groups.map(g=>({...g})); } if(typeof bdDlg!=="undefined"&&bdDlg.open) setTimeout(bdRender,0); posts.active=Math.min(s.active,Math.max(0,posts.photos.length-1)); if(s.title!==posts.state.title){ posts.state.title=s.title; $("#pTitle").value=s.title; savePosts(); } buildThumbs(); redraw(); phSave(); }
 function phUndo(){ if(!PH.hist.length) return; PH.fut.push(phSnap()); phApply(PH.hist.pop()); phSyncBtns(); status("تم التراجع."); }
 function phRedo(){ if(!PH.fut.length) return; PH.hist.push(phSnap()); phApply(PH.fut.pop()); phSyncBtns(); status("تمت الإعادة."); }
 function phSyncBtns(){ const u=$("#phUndo"), r=$("#phRedo"); if(u) u.disabled=!PH.hist.length; if(r) r.disabled=!PH.fut.length; const n=$("#phNew"); if(n) n.disabled=!posts.photos.length&&!posts.state.title; }
 function phSave(){ clearTimeout(PH.saveT); PH.saveT=setTimeout(async()=>{
-  const list=posts.photos.map(p=>({blob:p.blob||null, sample:p.sample||null, name:p.name, zoom:p.zoom, ox:p.ox, oy:p.oy})).filter(e=>e.blob||e.sample);
-  await IDB.set("postPhotos",{list, active:posts.active}); },500); }
+  const list=posts.photos.map(p=>({blob:p.blob||null, sample:p.sample||null, name:p.name, zoom:p.zoom, ox:p.ox, oy:p.oy, grp:p.grp||null})).filter(e=>e.blob||e.sample);
+  await IDB.set("postPhotos",{list, active:posts.active, groups:PH.groups.map(({id,name,color})=>({id,name,color}))}); },500); }
 async function phRestore(){ const s=await IDB.get("postPhotos"); if(!s||!Array.isArray(s.list)) return false;
-  const out=[]; for(const e of s.list){ try{ const img= e.sample ? IMG[e.sample] : await loadImg(URL.createObjectURL(e.blob)); if(!img) continue; const p=mkPhoto(img,e.name); p.blob=e.blob; p.sample=e.sample; p.zoom=e.zoom; p.ox=e.ox; p.oy=e.oy; p._auto=true; out.push(p); }catch(err){} }
-  posts.photos=out; posts.active=Math.min(s.active||0,Math.max(0,out.length-1)); return true; }
+  const out=[]; for(const e of s.list){ try{ const img= e.sample ? IMG[e.sample] : await loadImg(URL.createObjectURL(e.blob)); if(!img) continue; const p=mkPhoto(img,e.name); p.blob=e.blob; p.sample=e.sample; p.zoom=e.zoom; p.ox=e.ox; p.oy=e.oy; p.grp=e.grp||null; p._auto=true; out.push(p); }catch(err){} }
+  PH.groups=Array.isArray(s.groups)?s.groups:[]; posts.photos=out; posts.active=Math.min(s.active||0,Math.max(0,out.length-1)); return true; }
 function phSetSize(v){ PH.size=v; try{ localStorage.setItem("rw_thumbSize",v); }catch(e){} $("#pThumbs").dataset.size=v; document.querySelectorAll("#phSize button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===v))); buildThumbs(); }
 function phMove(from,to){ if(from===to) return; const act=posts.photos[posts.active]; const [p]=posts.photos.splice(from,1); posts.photos.splice(to,0,p); posts.active=Math.max(0,posts.photos.indexOf(act)); }
 function buildThumbs(){ const box=$("#pThumbs"); box.textContent=""; box.dataset.size=PH.size; const res=PH.size==="l"?420:PH.size==="m"?260:180;
   posts.photos.forEach((p,i)=>{ const b=document.createElement("div"); b.className="thumb"; b.setAttribute("role","button"); b.tabIndex=0; b.dataset.i=i; b.setAttribute("aria-label","الصورة "+(i+1)+"، اسحبها لتغيير ترتيبها"); if(i===posts.active) b.setAttribute("aria-current","true");
     const cv=document.createElement("canvas"); cv.width=cv.height=res; b.appendChild(cv);
-    const n=document.createElement("span"); n.className="n"; n.textContent=i+1; b.appendChild(n);
+    const n=document.createElement("span"); n.className="n"; n.textContent=i+1; b.appendChild(n); { const g=PH.groups.find(x=>x.id===p.grp); if(g){ b.style.setProperty("--gc",g.color); b.classList.add("has-g"); const gl=document.createElement("span"); gl.className="gtag"; gl.textContent=g.name; b.appendChild(gl); } }
     const h=document.createElement("span"); h.className="h"; h.setAttribute("aria-hidden","true"); h.textContent="⠿"; h.title="اسحب لتغيير الترتيب"; b.appendChild(h);
     const x=document.createElement("button"); x.className="x"; x.type="button"; x.textContent="×"; x.setAttribute("aria-label","حذف الصورة "+(i+1));
     x.onclick=e=>{ e.stopPropagation(); phPush(); posts.photos.splice(i,1); posts.active=Math.min(posts.active>i?posts.active-1:posts.active,Math.max(0,posts.photos.length-1)); buildThumbs(); redraw(); phSave(); status("حُذفت الصورة. للتراجع اضغط ↶ أو Ctrl+Z."); };
@@ -2140,9 +2247,19 @@ window.addEventListener("resize",()=>stageFit()); try{ new ResizeObserver(()=>{ 
 function phNew(){ if(!posts.photos.length&&!posts.state.title) return; phPush(); posts.photos=[]; posts.active=0; posts.state.title=""; $("#pTitle").value=""; savePosts(); buildThumbs(); redraw(); phSave(); status("منشور جديد. إن كان ذلك خطأ اضغط ↶ للتراجع."); }
 document.addEventListener("keydown",e=>{ if(tab!=="posts"||!(e.ctrlKey||e.metaKey)) return; const t0=e.target; if(t0&&/INPUT|TEXTAREA|SELECT/.test(t0.tagName)) return;
   const k=e.key.toLowerCase(); if(k==="z"&&!e.shiftKey){ e.preventDefault(); phUndo(); } else if(k==="y"||(k==="z"&&e.shiftKey)){ e.preventDefault(); phRedo(); } });
+function phMarkActive(){ document.querySelectorAll("#pThumbs .thumb").forEach((b,i)=>{ if(i===posts.active) b.setAttribute("aria-current","true"); else b.removeAttribute("aria-current"); }); }
+function phGo(d){ const n=posts.photos.length; if(n<2) return; posts.active=(posts.active+d+n)%n; phMarkActive(); pvNavSync(); redraw(); phSave();
+  const t=document.querySelector(`#pThumbs .thumb[data-i="${posts.active}"]`); if(t&&t.scrollIntoView){ const r=t.getBoundingClientRect(); if(r.bottom>innerHeight||r.top<0){} } }
+function pvNavSync(){ const n=tab==="posts"?posts.photos.length:0, show=n>1; ["#pvPrev","#pvNext","#pvCount"].forEach(id=>{ const e=$(id); if(e) e.hidden=!show; }); if(show) $("#pvCount").textContent=`${posts.active+1} / ${n}`; }
 function drawThumbs(){ if(!ready) return; const cvs=[...document.querySelectorAll("#pThumbs canvas")];
   cvs.forEach((cv,i)=>{ const c=cv.getContext("2d"); c.setTransform(cv.width/posts.W,0,0,cv.width/posts.W,0,0); posts.draw(c,i); }); }
 
+$("#pvPrev").onclick=()=>phGo(-1); $("#pvNext").onclick=()=>phGo(1);
+document.addEventListener("keydown",e=>{ if(tab!=="posts"||e.ctrlKey||e.metaKey||e.altKey) return; if(e.key!=="ArrowLeft"&&e.key!=="ArrowRight") return;
+  const t0=e.target; if(t0&&(/INPUT|TEXTAREA|SELECT/.test(t0.tagName)||t0.isContentEditable)) return; if(document.querySelector("dialog[open]")) return;
+  if(posts.sel) return; // arrows move the selected element instead
+  if(t0&&t0.closest&&t0.closest("#pThumbs")) return; // Alt+arrows reorder there; plain arrows stay with the strip
+  if(posts.photos.length<2) return; e.preventDefault(); phGo(e.key==="ArrowLeft"?1:-1); });
 /* tabs */
 function setTab(t){ tab=t; store.set("tab",t); if(typeof phStripSync==="function"&&ready) setTimeout(phStripSync,0);
   document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",String(b.dataset.tab===t || (t==="env"&&b.dataset.tab==="letter"))));
@@ -2715,9 +2832,12 @@ function cuView(){ const all=CU.list, e=all.find(x=>x.id===CU.vi); if(!e){ cuClo
   strip.forEach(x=>{ const b=document.createElement("button"); b.type="button"; b.className="cu-fs st-"+x.st+(x.id===e.id?" on":""); const im=document.createElement("img"); im.src=cuUrl(x); im.alt=""; b.appendChild(im); b.setAttribute("aria-label",x.name); b.onclick=()=>{ CU.vi=x.id; cuView(); }; fs.appendChild(b); });
   cuStat(); const ae=document.activeElement; if(!ae||ae===document.body||!cuDlg.contains(ae)) $("#cuViewer").focus({preventScroll:true}); }
 function cuToPost(){ const ks=CU.list.filter(e=>e.st==="k"&&!e.used); const all=CU.list.filter(e=>e.st==="k"); const use= ks.length?ks:all; if(!use.length) return;
-  (async()=>{ phPush(); const first=posts.photos.length; for(const e of use){ try{ const im=await loadImg(URL.createObjectURL(e.blob)); const p=mkPhoto(im,e.name); p.blob=e.blob; posts.photos.push(p); e.used=true; }catch(err){} }
-    posts.active=Math.min(first,posts.photos.length-1); cuSave(); cuDlg.close(); if(tab!=="posts") setTab("posts"); buildThumbs(); redraw(); phSave();
-    status(`أُضيفت ${use.length} صورة إلى المنشور. اضبط كل صورة الآن بالتكبير والسحب.`); const st=$("#phStrip"); if(st&&st.scrollIntoView) st.scrollIntoView({behavior:"smooth",block:"start"}); })(); }
+  (async()=>{ $("#cuAdd").disabled=true; status("جارٍ البحث عن اللقطات المتكررة…"); const r=await dupReview({mode:"add",fresh:use}); cuStat(); if(!r){ status(""); return; }
+    phPush(); if(r.remove.length) removeFromPost(r.remove); r.drop.forEach(e=>e.st="r");
+    const first=posts.photos.length; for(const e of r.add){ try{ const im=await loadImg(URL.createObjectURL(e.blob)); const p=mkPhoto(im,e.name); p.blob=e.blob; posts.photos.push(p); e.used=true; }catch(err){} }
+    posts.active=Math.min(first,Math.max(0,posts.photos.length-1)); cuSave(); cuRender(); cuDlg.close(); if(tab!=="posts") setTab("posts"); buildThumbs(); redraw(); phSave();
+    const extra=(r.drop.length?` · لم تُضف ${r.drop.length} مكررة`:"")+(r.remove.length?` · حُذفت ${r.remove.length} من المنشور`:"");
+    status(`أُضيفت ${r.add.length} صورة إلى المنشور${extra}. اضبط كل صورة الآن بالتكبير والسحب.`); const st=$("#phStrip"); if(st&&st.scrollIntoView) st.scrollIntoView({behavior:"smooth",block:"start"}); })(); }
 /* wiring */
 function cuOpenDlg(){ if(!cuDlg.open) cuDlg.showModal(); cuSyncSegs(); cuRender(); }
 function cuSyncSegs(){ document.querySelectorAll("#cuFilter button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===CU.filter)));
@@ -2758,6 +2878,209 @@ document.addEventListener("keydown",e=>{ if(!cuDlg.open||CU.vi===-1||$("#cuViewe
   st.addEventListener("pointerup",e=>{ if(sx==null) return; const dx=e.clientX-sx, dy=e.clientY-sy; sx=null; if(Math.abs(dx)>50&&Math.abs(dx)>Math.abs(dy)*1.5) cuStep(dx>0?1:-1); }); })();
 cuRestore().then(()=>cuStat());
 window.rouwadCull={CU,cuSim,cuGroups};
+
+/* ===== duplicate-scene review: same place/moment shot by different people (different angle, zoom, colours) ===== */
+const DUP={ TH:{s:0.7,n:0.6,l:0.5}, sens:"n", items:[], groups:[], mode:"", resolve:null, gi:-1 };
+try{ DUP.sens=localStorage.getItem("rw_dupSens")||"n"; }catch(e){}
+const dupDlg=$("#dupDlg"), G4=new WeakMap();
+function dupZ(v){ const m=v.reduce((s,x)=>s+x,0)/v.length; const sd=Math.sqrt(v.reduce((s,x)=>s+(x-m)*(x-m),0)/v.length)+1e-6; return v.map(x=>(x-m)/sd); }
+function dupFeat(f){ let o=G4.get(f); if(o) return o; const g=new Array(16).fill(0); for(let y=0;y<12;y++) for(let x=0;x<12;x++) g[((y/3)|0)*4+((x/3)|0)]+=f.g[y*12+x]/9;
+  const hs=new Array(32).fill(0); for(let i=0;i<128;i++) hs[(i>>4)*4+((i>>2)&3)]+=f.hist[i]; o={g:dupZ(g),hs}; G4.set(f,o); return o; }
+function sceneSim(a,b){ const A=dupFeat(a), B=dupFeat(b); let c=0; for(let i=0;i<16;i++) c+=A.g[i]*B.g[i]; c/=16; let h=0; for(let i=0;i<32;i++) h+=Math.min(A.hs[i],B.hs[i]); return 0.5*c+0.5*h; }
+function postFeat(p){ if(!p._f){ try{ p._f=cuAnalyse(p.img); }catch(e){ p._f=null; } } return p._f; }
+function postThumb(p){ if(!p._th){ const c=cuThumbCanvas(p.img,520); p._th=c.toDataURL("image/jpeg",0.82); } return p._th; }
+function postBig(p){ if(p.blob){ if(!p._bu) p._bu=URL.createObjectURL(p.blob); return p._bu; } return p.img.src; }
+function dupCluster(){ const th=DUP.TH[DUP.sens]||0.6, it=DUP.items, n=it.length, par=it.map((_,i)=>i), find=i=>par[i]===i?i:(par[i]=find(par[i]));
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++){ if(!it[i].f||!it[j].f) continue; if(sceneSim(it[i].f,it[j].f)>=th) par[find(i)]=find(j); }
+  const m=new Map(); it.forEach((x,i)=>{ const r=find(i); if(!m.has(r)) m.set(r,[]); m.get(r).push(x); });
+  DUP.groups=[...m.values()].filter(g=>g.length>1 && (DUP.mode!=="add" || g.some(x=>x.kind==="new")));
+  for(const g of DUP.groups){ if(g.some(x=>x._touched)) continue; // default: keep one — the photo already in the post, otherwise the sharpest
+    const keep=g.find(x=>x.kind==="post") || g.reduce((a,b)=>(b.f&&a.f&&b.f.sharp>a.f.sharp)?b:a); g.forEach(x=>x.keep= x===keep); }
+  const inG=new Set(DUP.groups.flat()); DUP.items.forEach(x=>{ if(!inG.has(x)&&!x._touched) x.keep=true; }); }
+function dupReview(opt){ return new Promise(res=>{
+  const items=[]; posts.photos.forEach(p=>{ const f=postFeat(p); if(f) items.push({kind:"post", ref:p, f, name:p.name, keep:true, thumb:()=>postThumb(p), big:()=>postBig(p)}); });
+  (opt.fresh||[]).forEach(e=>items.push({kind:"new", ref:e, f:e, name:e.name, keep:true, thumb:()=>cuUrl(e), big:()=>cuUrl(e,true)}));
+  DUP.items=items; DUP.mode=opt.mode; DUP.resolve=res; dupCluster();
+  if(!DUP.groups.length){ res({add:(opt.fresh||[]), drop:[], remove:[], none:true}); return; }
+  if(!dupDlg.open) dupDlg.showModal(); dupSync(); dupRender(); }); }
+function dupFinish(r){ const f=DUP.resolve; DUP.resolve=null; DUP.gi=-1; $("#dupViewer").hidden=true; if(dupDlg.open) dupDlg.close(); if(f) f(r); }
+function dupResult(all){ const it=DUP.items; return { add: it.filter(x=>x.kind==="new"&&(all||x.keep)).map(x=>x.ref), drop: all?[]:it.filter(x=>x.kind==="new"&&!x.keep).map(x=>x.ref), remove: all?[]:it.filter(x=>x.kind==="post"&&!x.keep).map(x=>x.ref) }; }
+function dupSync(){ document.querySelectorAll("#dupSens button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===DUP.sens)));
+  const add=DUP.mode==="add"; $("#dupSkip").textContent= add ? "تخطّ المراجعة وأضف الكل" : "إلغاء"; $("#dupTitle").textContent= add ? "قبل الإضافة: لقطات متكررة" : "اللقطات المتكررة في المنشور"; }
+function dupSum(){ const it=DUP.items, nAdd=it.filter(x=>x.kind==="new"&&x.keep).length, nDrop=it.filter(x=>x.kind==="new"&&!x.keep).length, nRem=it.filter(x=>x.kind==="post"&&!x.keep).length;
+  const parts=[]; if(DUP.mode==="add"){ parts.push(`ستُضاف ${nAdd}`); if(nDrop) parts.push(`لن تُضاف ${nDrop}`); } if(nRem) parts.push(`ستُحذف من المنشور ${nRem}`); if(!parts.length) parts.push("لا تغيير");
+  $("#dupApply").textContent="تطبيق: "+parts.join(" · ");
+  $("#dupInfo").textContent=`${DUP.groups.length} ${DUP.groups.length===1?"مجموعة":"مجموعات"} من لقطات تبدو من نفس المكان. أبقِ صورة واحدة من كل مجموعة، أو أكثر إن كانت مختلفة فعلًا.`; }
+function dupTile(x,g){ const t=document.createElement("div"); t.className="cu-tile dup-tile "+(x.keep?"st-k":"st-r"); t.setAttribute("role","button"); t.tabIndex=0; t.setAttribute("aria-pressed",String(x.keep)); t.setAttribute("aria-label",(x.keep?"مُبقاة: ":"محذوفة: ")+x.name+" — اضغط للتبديل");
+  const im=document.createElement("img"); im.src=x.thumb(); im.alt=x.name; im.loading="lazy"; t.appendChild(im);
+  const best=g.reduce((a,b)=>(b.f&&a.f&&b.f.sharp>a.f.sharp)?b:a); if(best===x){ const b=document.createElement("span"); b.className="cu-best"; b.textContent="الأوضح"; t.appendChild(b); }
+  const k=document.createElement("span"); k.className= x.kind==="post"?"cu-used":"cu-used dup-new"; k.textContent= x.kind==="post"?"في المنشور":"جديدة"; t.appendChild(k);
+  const st=document.createElement("span"); st.className="dup-state"; st.textContent= x.keep?"✓ تبقى":"✗ تُحذف"; t.appendChild(st);
+  const z=document.createElement("button"); z.type="button"; z.className="dup-zoom"; z.textContent="⤢"; z.setAttribute("aria-label","عرض المجموعة بحجم كبير"); z.onclick=ev=>{ ev.stopPropagation(); dupOpen(DUP.groups.indexOf(g)); }; t.appendChild(z);
+  const tog=()=>{ x.keep=!x.keep; x._touched=true; g.forEach(y=>y._touched=true); dupRender(); }; t.onclick=tog; t.onkeydown=ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); tog(); } };
+  return t; }
+function dupRender(){ const box=$("#dupGrid"); box.textContent="";
+  DUP.groups.forEach((g,gi)=>{ const sec=document.createElement("section"); sec.className="cu-group multi";
+    const h=document.createElement("div"); h.className="cu-gh"; const s=document.createElement("span"); const k=g.filter(x=>x.keep).length; s.textContent=`المجموعة ${gi+1}: ${g.length} صور · تبقى ${k}‏`; h.appendChild(s);
+    const mk=(t,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn ghost sm"; b.textContent=t; b.onclick=fn; h.appendChild(b); };
+    mk("قارن بحجم كبير",()=>dupOpen(gi));
+    mk("أبقِ الكل",()=>{ g.forEach(x=>{ x.keep=true; x._touched=true; }); dupRender(); });
+    sec.appendChild(h); const row=document.createElement("div"); row.className="cu-row"; g.forEach(x=>row.appendChild(dupTile(x,g))); sec.appendChild(row); box.appendChild(sec); });
+  dupSum(); if(DUP.gi>=0) dupView(); }
+function dupOpen(gi){ DUP.gi=gi; $("#dupViewer").hidden=false; dupView(); $("#dupViewer").focus(); }
+function dupView(){ const g=DUP.groups[DUP.gi]; if(!g){ $("#dupViewer").hidden=true; DUP.gi=-1; return; } const st=$("#dupVStage"); st.textContent=""; st.dataset.n=Math.min(g.length,4);
+  g.forEach(x=>{ const f=document.createElement("figure"); f.className="cu-fig "+(x.keep?"st-k":"st-r");
+    const w=document.createElement("div"); w.className="cu-imgw"; const im=document.createElement("img"); im.src=x.big(); im.alt=x.name; w.appendChild(im); f.appendChild(w);
+    const cap=document.createElement("figcaption"); const lab=document.createElement("span"); lab.className="cu-cap"; lab.textContent=(x.kind==="post"?"في المنشور":"جديدة")+" · "+(x.keep?"تبقى":"تُحذف"); cap.appendChild(lab);
+    const mk=(t,cls,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn sm "+cls; b.textContent=t; b.onclick=ev=>{ ev.stopPropagation(); fn(); g.forEach(y=>y._touched=true); dupRender(); }; cap.appendChild(b); };
+    mk("✓ إبقاء","ck",()=>x.keep=true); mk("✗ حذف","cr",()=>x.keep=false); mk("هذه فقط","cb",()=>g.forEach(y=>y.keep= y===x));
+    f.appendChild(cap); st.appendChild(f); });
+  $("#dupVPos").textContent=`المجموعة ${DUP.gi+1} من ${DUP.groups.length}`; $("#dupVPrev").disabled=DUP.gi<=0; $("#dupVNext").disabled=DUP.gi>=DUP.groups.length-1; }
+document.querySelectorAll("#dupSens button").forEach(b=>b.onclick=()=>{ DUP.sens=b.dataset.v; try{ localStorage.setItem("rw_dupSens",DUP.sens); }catch(e){} DUP.items.forEach(x=>delete x._touched); dupCluster(); dupSync();
+  if(!DUP.groups.length){ $("#dupGrid").textContent=""; const p=document.createElement("p"); p.className="hint"; p.textContent="لا توجد لقطات متكررة بهذه الدرجة."; $("#dupGrid").appendChild(p); dupSum(); } else dupRender(); });
+$("#dupApply").onclick=()=>dupFinish(dupResult(false));
+$("#dupSkip").onclick=()=>dupFinish(DUP.mode==="add"?dupResult(true):null);
+$("#dupClose").onclick=()=>dupFinish(null);
+dupDlg.addEventListener("cancel",e=>{ e.preventDefault(); if(DUP.gi>=0){ DUP.gi=-1; $("#dupViewer").hidden=true; } else dupFinish(null); });
+$("#dupVClose").onclick=()=>{ DUP.gi=-1; $("#dupViewer").hidden=true; dupRender(); };
+$("#dupVPrev").onclick=()=>{ if(DUP.gi>0){ DUP.gi--; dupView(); } }; $("#dupVNext").onclick=()=>{ if(DUP.gi<DUP.groups.length-1){ DUP.gi++; dupView(); } };
+document.addEventListener("keydown",e=>{ if(!dupDlg.open||DUP.gi<0) return; if(e.key==="ArrowLeft"){ e.preventDefault(); $("#dupVNext").click(); } else if(e.key==="ArrowRight"){ e.preventDefault(); $("#dupVPrev").click(); } else if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); $("#dupVClose").click(); } },true);
+function removeFromPost(list){ if(!list.length) return; const set=new Set(list); const act=posts.photos[posts.active]; posts.photos=posts.photos.filter(p=>!set.has(p)); posts.active=Math.max(0,posts.photos.indexOf(act)); if(posts.active<0) posts.active=0; }
+async function phDupCheck(){ if(posts.photos.length<2){ status("أضف صورتين على الأقل."); return; } status("جارٍ البحث عن اللقطات المتكررة…"); await new Promise(r=>setTimeout(r,30));
+  const r=await dupReview({mode:"post"}); if(!r){ status(""); return; } if(r.none){ status("لا توجد لقطات متكررة في المنشور."); return; }
+  if(!r.remove.length){ status("لم يُحذف شيء."); return; } phPush(); removeFromPost(r.remove); buildThumbs(); redraw(); phSave(); status(`حُذفت ${r.remove.length} صورة مكررة. للتراجع اضغط ↶.`); }
+$("#phDup").onclick=phDupCheck;
+
+/* ===== post board: full-screen view of the post photos, with groups you build by dragging ===== */
+const GCOL=["#E8364B","#12A4F5","#2BB24C","#F5A400","#7A3FD1","#FF7A00","#0E9F8E","#D6409F","#5B6B8C","#A0522D"];
+const BD={ size:"m", sel:new Set(), cmp:null, drag:null };
+try{ BD.size=localStorage.getItem("rw_boardSize")||"m"; }catch(e){}
+const bdDlg=$("#boardDlg");
+const grpOf=id=>PH.groups.find(g=>g.id===id)||null;
+function newGroup(){ const used=new Set(PH.groups.map(g=>g.color)); const color=GCOL.find(c=>!used.has(c))||GCOL[PH.groups.length%GCOL.length];
+  let n=PH.groups.length+1; const names=new Set(PH.groups.map(g=>g.name)); while(names.has("مجموعة "+n)) n++;
+  const g={id:"g"+Date.now().toString(36)+Math.floor(Math.random()*1e4), name:"مجموعة "+n, color}; PH.groups.push(g); return g; }
+function pruneGroups(){ const used=new Set(posts.photos.map(p=>p.grp).filter(Boolean)); PH.groups=PH.groups.filter(g=>used.has(g.id)||g._keep); posts.photos.forEach(p=>{ if(p.grp&&!grpOf(p.grp)) p.grp=null; }); }
+function bdChanged(rebuild=true){ pruneGroups(); phSave(); buildThumbs(); if(rebuild) bdRender(); }
+function bdOpen(){ if(!posts.photos.length){ status("أضف صورًا أولًا."); return; } BD.sel.clear(); if(!bdDlg.open) bdDlg.showModal(); bdSyncSize(); bdRender(); }
+function bdSyncSize(){ $("#bdGrid").dataset.size=BD.size; document.querySelectorAll("#bdSize button").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.v===BD.size))); }
+function bdTile(p){ const i=posts.photos.indexOf(p), t=document.createElement("div"); t.className="bd-tile"+(BD.sel.has(p)?" sel":"")+(i===posts.active?" act":""); t.dataset.i=i;
+  t.setAttribute("role","button"); t.tabIndex=0; t.setAttribute("aria-pressed",String(BD.sel.has(p))); t.setAttribute("aria-label",`الصورة ${i+1}${p.grp?" — "+(grpOf(p.grp)||{}).name:""}. اضغط للتحديد، واسحبها إلى مجموعة`);
+  const im=document.createElement("img"); im.src=postThumb(p); im.alt=""; im.draggable=false; t.appendChild(im);
+  const n=document.createElement("span"); n.className="bd-n"; n.textContent=i+1; t.appendChild(n);
+  const g=grpOf(p.grp); if(g){ t.style.setProperty("--gc",g.color); t.classList.add("has-g"); }
+  const ck=document.createElement("span"); ck.className="bd-ck"; ck.setAttribute("aria-hidden","true"); ck.textContent="✓"; t.appendChild(ck);
+  const h=document.createElement("span"); h.className="bd-h"; h.setAttribute("aria-hidden","true"); h.textContent="⠿"; t.appendChild(h);
+  const acts=document.createElement("div"); acts.className="bd-acts";
+  const mk=(txt,lab,fn)=>{ const b=document.createElement("button"); b.type="button"; b.textContent=txt; b.setAttribute("aria-label",lab); b.title=lab; b.onclick=ev=>{ ev.stopPropagation(); fn(); }; b.onpointerdown=ev=>ev.stopPropagation(); acts.appendChild(b); };
+  mk("🔍","عرض بحجم كبير",()=>bdZoom(p));
+  mk("✎","فتح في المعاينة للتعديل",()=>{ posts.active=posts.photos.indexOf(p); bdDlg.close(); buildThumbs(); redraw(); const s=$(".canvas-wrap"); if(s&&s.scrollIntoView) s.scrollIntoView({behavior:"smooth",block:"center"}); });
+  mk("×","حذف من المنشور",()=>{ phPush(); const act=posts.photos[posts.active]; posts.photos=posts.photos.filter(q=>q!==p); BD.sel.delete(p); posts.active=Math.max(0,posts.photos.indexOf(act)); if(posts.active<0) posts.active=0; bdChanged(); redraw(); status("حُذفت الصورة. للتراجع اضغط ↶."); });
+  t.appendChild(acts);
+  const toggle=()=>{ BD.sel.has(p)?BD.sel.delete(p):BD.sel.add(p); bdSelSync(); };
+  t.onkeydown=ev=>{ if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); toggle(); } };
+  bdDragable(t,h,p,toggle);
+  return t; }
+function bdSection(g,list){ const sec=document.createElement("section"); sec.className="bd-sec"+(g?" grp":" none"); sec.dataset.g=g?g.id:"";
+  if(g) sec.style.setProperty("--gc",g.color);
+  const hd=document.createElement("div"); hd.className="bd-sh";
+  if(g){ const sw=document.createElement("span"); sw.className="bd-sw"; hd.appendChild(sw);
+    const nm=document.createElement("input"); nm.type="text"; nm.value=g.name; nm.className="bd-name"; nm.setAttribute("aria-label","اسم المجموعة"); nm.oninput=e=>{ g.name=e.target.value; phSave(); buildThumbs(); }; nm.onpointerdown=e=>e.stopPropagation(); hd.appendChild(nm); }
+  else { const s=document.createElement("strong"); s.textContent="بدون مجموعة"; hd.appendChild(s); }
+  const c=document.createElement("span"); c.className="hint"; c.textContent=`${list.length} صورة`; hd.appendChild(c);
+  const sp=document.createElement("span"); sp.style.flex="1"; hd.appendChild(sp);
+  const mk=(t,fn,cls)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn ghost sm"+(cls?" "+cls:""); b.textContent=t; b.onclick=fn; hd.appendChild(b); };
+  if(g&&list.length>1) mk("قارن جنبًا إلى جنب",()=>bdCompare(g.id));
+  if(g) mk("إلغاء المجموعة",()=>{ posts.photos.forEach(p=>{ if(p.grp===g.id) p.grp=null; }); g._keep=false; bdChanged(); });
+  sec.appendChild(hd);
+  const row=document.createElement("div"); row.className="bd-row"; list.forEach(p=>row.appendChild(bdTile(p)));
+  if(!list.length){ const e=document.createElement("div"); e.className="bd-empty"; e.textContent= g?"اسحب الصور إلى هنا":"كل الصور في مجموعات"; row.appendChild(e); }
+  sec.appendChild(row); return sec; }
+function bdRender(){ const box=$("#bdGrid"); box.textContent=""; pruneGroups();
+  for(const g of PH.groups) box.appendChild(bdSection(g, posts.photos.filter(p=>p.grp===g.id)));
+  box.appendChild(bdSection(null, posts.photos.filter(p=>!p.grp)));
+  const nz=document.createElement("div"); nz.className="bd-new"; nz.dataset.g="@new"; nz.textContent="＋ اسحب صورة (أو الصور المحددة) إلى هنا لإنشاء مجموعة جديدة"; box.appendChild(nz);
+  bdSelSync(); $("#bdTitle").textContent=`لوحة صور المنشور (${posts.photos.length})`; $("#bdSort").disabled=!PH.groups.length; }
+function bdSelSync(){ document.querySelectorAll("#bdGrid .bd-tile").forEach(t=>{ const on=BD.sel.has(posts.photos[+t.dataset.i]); t.classList.toggle("sel",on); t.setAttribute("aria-pressed",String(on)); });
+  const n=BD.sel.size; $("#bdSelInfo").textContent= n?`محددة: ${n}`:"اضغط على الصور لتحديدها، أو اسحبها مباشرة إلى مجموعة";
+  $("#bdMoveNew").disabled=!n; $("#bdUngroup").disabled=!n; $("#bdClearSel").disabled=!n;
+  const mv=$("#bdMoveTo"); mv.textContent=""; const o0=document.createElement("option"); o0.value=""; o0.textContent="نقل المحددة إلى…"; mv.appendChild(o0);
+  PH.groups.forEach(g=>{ const o=document.createElement("option"); o.value=g.id; o.textContent=g.name; mv.appendChild(o); }); mv.disabled=!n||!PH.groups.length; }
+$("#bdGrid").addEventListener("dblclick",e=>{ const t=e.target.closest&&e.target.closest(".bd-tile"); if(!t) return; e.preventDefault(); const p=posts.photos[+t.dataset.i]; if(p){ BD.sel.delete(p); bdSelSync(); bdZoom(p); } });
+function bdPlace(list,tp,before){ if(!tp||list.includes(tp)) return; phPush(); const act=posts.photos[posts.active];
+  const rest=posts.photos.filter(q=>!list.includes(q)); const at=rest.indexOf(tp)+(before?0:1); rest.splice(at,0,...list); list.forEach(q=>q.grp=tp.grp||null);
+  posts.photos=rest; posts.active=Math.max(0,rest.indexOf(act)); BD.sel.clear(); bdChanged(); redraw(); }
+function bdMove(list,target){ if(!list.length) return; phPush(); let gid=target;
+  if(target==="@new"){ gid=newGroup().id; } list.forEach(p=>p.grp= gid||null); BD.sel.clear(); bdChanged(); }
+/* pointer drag (mouse: whole tile; touch: the ⠿ handle) */
+function bdDragable(t,h,p,onClick){ let st=null, ghost=null, over=null;
+  const move=e=>{ if(!st||e.pointerId!==st.id||st.tapOnly) return;
+    if(!st.drag){ if(Math.hypot(e.clientX-st.x,e.clientY-st.y)<7) return; st.drag=true;
+      const items= (BD.sel.has(p) ? [...BD.sel] : [p]).sort((a,b)=>posts.photos.indexOf(a)-posts.photos.indexOf(b)); st.items=items;
+      ghost=document.createElement("div"); ghost.className="bd-ghost"; const im=document.createElement("img"); im.src=postThumb(p); ghost.appendChild(im);
+      if(items.length>1){ const c=document.createElement("span"); c.textContent=items.length; ghost.appendChild(c); } bdDlg.appendChild(ghost); t.classList.add("dragging"); }
+    e.preventDefault(); ghost.style.transform=`translate(${e.clientX-50}px,${e.clientY-40}px)`;
+    ghost.style.display="none"; const el=document.elementFromPoint(e.clientX,e.clientY); ghost.style.display="";
+    let tgt=el&&el.closest&&(el.closest(".bd-tile")||el.closest("[data-g]")); if(tgt&&tgt.classList.contains("bd-tile")&&(tgt===t||st.items.includes(posts.photos[+tgt.dataset.i]))) tgt=tgt.closest("[data-g]");
+    if(over&&over!==tgt) over.classList.remove("over","ins-b","ins-a"); over=tgt;
+    if(over){ if(over.classList.contains("bd-tile")){ const r0=over.getBoundingClientRect(); const before=e.clientX>r0.left+r0.width/2; over.classList.toggle("ins-b",before); over.classList.toggle("ins-a",!before); st.before=before; } else over.classList.add("over"); }
+    const main=$("#bdMain"), r=main.getBoundingClientRect(); if(e.clientY<r.top+60) main.scrollTop-=14; else if(e.clientY>r.bottom-60) main.scrollTop+=14; };
+  const end=e=>{ if(!st||e.pointerId!==st.id) return; const s=st; st=null; window.removeEventListener("pointermove",move); window.removeEventListener("pointerup",end); window.removeEventListener("pointercancel",end);
+    if(ghost){ ghost.remove(); ghost=null; } t.classList.remove("dragging"); if(over) over.classList.remove("over","ins-b","ins-a");
+    if(!s.drag){ if(e.type==="pointerup") onClick(); return; }
+    if(over&&e.type==="pointerup"){ if(over.classList.contains("bd-tile")) bdPlace(s.items, posts.photos[+over.dataset.i], s.before); else { const g=over.dataset.g; bdMove(s.items, g==="@new"?"@new":(g||null)); } } over=null; };
+  t.addEventListener("pointerdown",e=>{ if(e.button>0) return; const onH=e.target===h; if(e.pointerType!=="mouse"&&!onH){ st={x:e.clientX,y:e.clientY,id:e.pointerId,drag:false,tapOnly:true}; }
+    else { st={x:e.clientX,y:e.clientY,id:e.pointerId,drag:false}; if(onH) e.preventDefault(); }
+    window.addEventListener("pointermove",move,{passive:false}); window.addEventListener("pointerup",end); window.addEventListener("pointercancel",end); });
+}
+/* one photo, large; ← → move through its group (or the photos without a group) */
+function bdList(p){ return posts.photos.filter(q=>(q.grp||null)===(p.grp||null)); }
+function bdZoom(p){ BD.one=p; BD.cmp=null; $("#bdViewer").hidden=false; bdOne(); $("#bdViewer").focus(); }
+function bdOne(){ const p=BD.one; if(!p||!posts.photos.includes(p)){ BD.one=null; $("#bdViewer").hidden=true; bdRender(); return; }
+  const L=bdList(p), i=L.indexOf(p), g=grpOf(p.grp), st=$("#bdVStage"); st.textContent=""; st.dataset.n=1;
+  const f=document.createElement("figure"); f.className="cu-fig"; const w=document.createElement("div"); w.className="cu-imgw"; const im=document.createElement("img"); im.src=postBig(p); im.alt=""; w.appendChild(im); f.appendChild(w);
+  const cap=document.createElement("figcaption"); const lab=document.createElement("span"); lab.className="cu-cap"; lab.textContent=`الصورة ${posts.photos.indexOf(p)+1} في المنشور`; cap.appendChild(lab);
+  const mk=(t,cls,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn sm "+cls; b.textContent=t; b.onclick=fn; cap.appendChild(b); };
+  mk("✎ تعديل في المعاينة","ck",()=>{ posts.active=posts.photos.indexOf(p); BD.one=null; bdDlg.close(); buildThumbs(); redraw(); });
+  mk("✗ حذف من المنشور","cr",()=>{ phPush(); const nx=L[i+1]||L[i-1]||null; const act=posts.photos[posts.active]; posts.photos=posts.photos.filter(q=>q!==p); posts.active=Math.max(0,posts.photos.indexOf(act)); BD.one=nx; bdChanged(false); redraw(); bdOne(); });
+  f.appendChild(cap); st.appendChild(f);
+  $("#bdVPos").textContent=`${g?g.name:"بدون مجموعة"} · ${i+1} من ${L.length}`; $("#bdVPrev").disabled=i<=0; $("#bdVNext").disabled=i>=L.length-1; }
+/* compare a group */
+function bdCompare(gid){ BD.one=null; BD.cmp=gid; $("#bdViewer").hidden=false; bdView(); $("#bdViewer").focus(); }
+function bdView(){ const g=grpOf(BD.cmp), list=posts.photos.filter(p=>p.grp===BD.cmp); if(!g||!list.length){ BD.cmp=null; $("#bdViewer").hidden=true; return; }
+  const st=$("#bdVStage"); st.textContent=""; st.dataset.n=Math.min(list.length,4);
+  list.forEach(p=>{ const f=document.createElement("figure"); f.className="cu-fig"; const w=document.createElement("div"); w.className="cu-imgw"; const im=document.createElement("img"); im.src=postBig(p); im.alt=""; w.appendChild(im); f.appendChild(w);
+    const cap=document.createElement("figcaption"); const lab=document.createElement("span"); lab.className="cu-cap"; lab.textContent=`الصورة ${posts.photos.indexOf(p)+1}`; cap.appendChild(lab);
+    const mk=(t,cls,fn)=>{ const b=document.createElement("button"); b.type="button"; b.className="btn sm "+cls; b.textContent=t; b.onclick=fn; cap.appendChild(b); };
+    mk("✗ حذف من المنشور","cr",()=>{ phPush(); const act=posts.photos[posts.active]; posts.photos=posts.photos.filter(q=>q!==p); posts.active=Math.max(0,posts.photos.indexOf(act)); bdChanged(); redraw(); bdView(); });
+    mk("أبقِ هذه فقط","cb",()=>{ const rm=list.filter(q=>q!==p); if(!rm.length) return; phPush(); const act=posts.photos[posts.active]; posts.photos=posts.photos.filter(q=>!rm.includes(q)); posts.active=Math.max(0,posts.photos.indexOf(act)); bdChanged(); redraw(); bdView(); status(`حُذفت ${rm.length} صورة. للتراجع اضغط ↶.`); });
+    mk("إخراج من المجموعة","ck",()=>{ phPush(); p.grp=null; bdChanged(); bdView(); });
+    f.appendChild(cap); st.appendChild(f); });
+  const gi=PH.groups.indexOf(g); $("#bdVPos").textContent=`${g.name} · ${list.length} صور · المجموعة ${gi+1} من ${PH.groups.length}`; $("#bdVPrev").disabled=gi<=0; $("#bdVNext").disabled=gi>=PH.groups.length-1; }
+$("#bdVClose").onclick=()=>{ BD.cmp=null; BD.one=null; $("#bdViewer").hidden=true; bdRender(); };
+$("#bdVPrev").onclick=()=>{ if(BD.one){ const L=bdList(BD.one), i=L.indexOf(BD.one); if(i>0){ BD.one=L[i-1]; bdOne(); } return; } const i=PH.groups.findIndex(g=>g.id===BD.cmp); if(i>0){ BD.cmp=PH.groups[i-1].id; bdView(); } };
+$("#bdVNext").onclick=()=>{ if(BD.one){ const L=bdList(BD.one), i=L.indexOf(BD.one); if(i<L.length-1){ BD.one=L[i+1]; bdOne(); } return; } const i=PH.groups.findIndex(g=>g.id===BD.cmp); if(i<PH.groups.length-1){ BD.cmp=PH.groups[i+1].id; bdView(); } };
+document.addEventListener("keydown",e=>{ if(!bdDlg.open) return; if(BD.cmp||BD.one){ if(e.key==="ArrowLeft"){ e.preventDefault(); $("#bdVNext").click(); } else if(e.key==="ArrowRight"){ e.preventDefault(); $("#bdVPrev").click(); } else if(e.key==="Escape"){ e.preventDefault(); e.stopPropagation(); $("#bdVClose").click(); } } },true);
+bdDlg.addEventListener("cancel",e=>{ if(BD.cmp||BD.one){ e.preventDefault(); $("#bdVClose").click(); } });
+/* toolbar */
+$("#phBoard").onclick=bdOpen; $("#bdClose").onclick=()=>bdDlg.close();
+document.querySelectorAll("#bdSize button").forEach(b=>b.onclick=()=>{ BD.size=b.dataset.v; try{ localStorage.setItem("rw_boardSize",BD.size); }catch(e){} bdSyncSize(); });
+$("#bdMoveNew").onclick=()=>bdMove([...BD.sel],"@new");
+$("#bdUngroup").onclick=()=>bdMove([...BD.sel],null);
+$("#bdClearSel").onclick=()=>{ BD.sel.clear(); bdRender(); };
+$("#bdMoveTo").onchange=e=>{ const v=e.target.value; if(v) bdMove([...BD.sel],v); };
+$("#bdAuto").onclick=()=>{ const items=posts.photos.map(p=>({p,f:postFeat(p)})).filter(x=>x.f); if(items.length<2) return;
+  const th=DUP.TH[DUP.sens]||0.6, n=items.length, par=items.map((_,i)=>i), find=i=>par[i]===i?i:(par[i]=find(par[i]));
+  for(let i=0;i<n;i++) for(let j=i+1;j<n;j++) if(sceneSim(items[i].f,items[j].f)>=th) par[find(i)]=find(j);
+  const m=new Map(); items.forEach((x,i)=>{ const r=find(i); if(!m.has(r)) m.set(r,[]); m.get(r).push(x.p); });
+  const clusters=[...m.values()].filter(c=>c.length>1); if(!clusters.length){ status("لم أجد صورًا متقاربة. جرّب درجة تشابه أوسع في «كشف المكرر»."); return; }
+  phPush(); let made=0, placed=0; // your own groups stay as they are; only photos without a group are placed
+  for(const c of clusters){ const free=c.filter(p=>!p.grp); if(!free.length) continue; const host=c.find(p=>p.grp); let gid=host?host.grp:null;
+    if(!gid){ if(free.length<2) continue; gid=newGroup().id; made++; } free.forEach(p=>{ p.grp=gid; placed++; }); }
+  bdChanged(); status(placed?`جُمعت ${placed} صورة${made?` في ${made} مجموعات جديدة`:""}. عدّل بالسحب إن لزم.`:"كل الصور المتقاربة في مجموعات مسبقًا."); };
+$("#bdSort").onclick=()=>{ if(!PH.groups.length) return; phPush(); const act=posts.photos[posts.active]; const order=[];
+  for(const g of PH.groups) posts.photos.forEach(p=>{ if(p.grp===g.id) order.push(p); }); posts.photos.forEach(p=>{ if(!p.grp) order.push(p); });
+  posts.photos=order; posts.active=Math.max(0,order.indexOf(act)); bdChanged(); redraw(); status("رُتّبت صور المنشور حسب المجموعات."); };
 
 /* boot */
 markChips(); fillOcc(); fillCond(); buildLib(); buildItemList(); syncEditor(); setTab(tab);
