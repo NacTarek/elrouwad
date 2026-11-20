@@ -1097,6 +1097,25 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-season textarea{width:100%;box-sizing:border-box;font:inherit;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink)}
 @media print{ .tk-side,.tk-bottom,.tk-mtop,.tk-tabs,.tk-ph .tk-btn,.tk-ph .tk-seg,.tk-toast,.tk-head,.tk-top{display:none!important} .tk-card{break-inside:avoid} body{background:#fff} }
 @media (max-width:860px){ .tk-replies,.tk-drives{grid-template-columns:1fr} }
+/* desktop side panel for details */
+@media (min-width:1100px){
+  dialog.tk-dlg.tk-panel{position:fixed;inset:0;inset-inline-start:auto;margin:0;height:100vh;max-height:100vh;width:min(460px,34vw);border-radius:0;border:0;border-inline-start:1px solid var(--line);box-shadow:-12px 0 32px rgba(16,24,40,.10);z-index:50}
+  dialog.tk-dlg.tk-panel form{max-height:100vh;height:100vh}
+  dialog.tk-dlg.tk-panel .tk-db{flex:1;overflow:auto}
+  body.tk-haspanel #tk{margin-inline-end:min(460px,34vw);transition:margin .15s}
+  .tk-r.on,.tk-kc.on{background:var(--brand-soft)!important;box-shadow:inset 3px 0 0 var(--brand)}
+}
+/* task checklist */
+.tk-items{display:flex;flex-direction:column;gap:0;margin-top:-4px}
+.tk-it{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:6px 2px}
+.tk-it input[type=checkbox]{width:17px;height:17px;flex:none;margin:0;accent-color:var(--brand)}
+.tk-it .t{flex:1;min-width:0;font:inherit;font-size:14.5px;border:0;background:transparent;color:var(--ink);padding:3px 0;cursor:text}
+.tk-it span.t{cursor:pointer}
+.tk-it .t:focus{outline:none;border-bottom:1px solid var(--brand)}
+.tk-it.done .t{text-decoration:line-through;color:var(--muted)}
+.tk-it .tk-ck{flex:none}
+.tk-itadd{font:inherit;font-size:14px;border:0;border-bottom:1px dashed var(--line);background:transparent;color:var(--ink);padding:8px 2px;width:100%;box-sizing:border-box}
+.tk-itadd:focus{outline:none;border-bottom-color:var(--brand)}
 
 </style>
 
@@ -4131,7 +4150,7 @@ function row(t,o={}){ const p=get(t.project), done=t.status==="done", open=OPENR
   const subs=subsOf(t.id); const nDone=subs.filter(x=>x.status==="done").length;
   const meta=h("span",{class:"tk-rm"},
     t.repeat&&!done?h("span",{class:"tk-ri",title:repLabel(t.repeat)},icon("repeat",13)):null,
-    subs.length?h("span",{class:"tk-rs"},nDone+"/"+subs.length):null,
+    subs.length?h("span",{class:"tk-rs"},nDone+"/"+subs.length):(t.items||[]).length?h("span",{class:"tk-rs",title:"قائمة فرعية"},"☑ "+t.items.filter(x=>x.done).length+"/"+t.items.length):null,
     t.slot&&!done?h("span",{class:"tk-rtag"},t.slot==="morning"?"صباحي":"مسائي"):null, t.status==="wait"&&!done?h("span",{class:"tk-rtag w"},"عالقة"):null, t.notes&&!done?h("span",{class:"tk-ri",title:"فيها ملاحظات"},icon("list",13)):null,
     !o.noProj?h("span",{class:"tk-rp",style:"--pc:"+pcol(p)},p?p.name:"الوارد"):null,
     pd!=null?h("span",{class:"tk-rd8"+(pd<0?" past":""),title:"يوم الإنجاز"},whenLabel(t.planned)):null,
@@ -4140,7 +4159,7 @@ function row(t,o={}){ const p=get(t.project), done=t.status==="done", open=OPENR
   const det=open? h("div",{class:"tk-rdet"},chips(t,Object.assign({},o,{noProj:true,noPlan:true,compact:true})),
       t.notes?h("p",{class:"tk-rnote",text:t.notes.length>220?t.notes.slice(0,220)+"…":t.notes}):null,
       o.why?h("div",{class:"tk-why"},o.why.map(w=>h("span",{},w)),o.score!=null?h("span",{},"درجة "+o.score):null):null) : null;
-  return h("div",{class:"tk-r"+(done?" done":"")+(open?" open":"")+(o.sub?" sub":""),style:"--prc:"+PRI[t.priority||3].c,onclick:()=>editTask(t)},
+  return h("div",{class:"tk-r"+(done?" done":"")+(open?" open":"")+(o.sub?" sub":"")+(V.panelId===t.id?" on":""),data:{id:t.id},style:"--prc:"+PRI[t.priority||3].c,onclick:()=>editTask(t)},
     h("div",{class:"tk-rl"},checkbox(t),
       h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:t.title}),meta),
       o.act||null,
@@ -4345,7 +4364,7 @@ function nextDate(r,baseIso){ const b=new Date(Math.max(parseD(baseIso)||0,today
   const days=(r.days&&r.days.length?r.days:[b.getDay()]); for(let i=1;i<=7;i++){ x.setDate(b.getDate()+i); if(days.includes(x.getDay())) return iso(x); } return iso(x); }
 function spawnNext(o){ // called from put(): a finished repeating task creates its next occurrence once
   if(o.kind!=="task"||!o.repeat||o.status!=="done"||o.repeatNext||o.deleted) return;
-  const n=newTask({title:o.title,project:o.project,main:o.main||null,priority:o.priority,effort:o.effort,minutes:o.minutes,branch:o.branch,people:[...(o.people||[])],tool:o.tool,notes:o.notes,slot:o.slot,repeat:o.repeat,planned:nextDate(o.repeat,o.planned||o.deadline||iso(new Date())),order:o.order});
+  const n=newTask({title:o.title,project:o.project,main:o.main||null,priority:o.priority,effort:o.effort,minutes:o.minutes,branch:o.branch,people:[...(o.people||[])],tool:o.tool,notes:o.notes,items:(o.items||[]).map(x=>({...x,done:false})),slot:o.slot,repeat:o.repeat,planned:nextDate(o.repeat,o.planned||o.deadline||iso(new Date())),order:o.order});
   if(o.deadline){ const gap=Math.round(((parseD(o.deadline))-(parseD(o.planned||o.deadline)))/DAY); const x=new Date(parseD(n.planned)); x.setDate(x.getDate()+gap); n.deadline=iso(x); }
   o.repeatNext=n.id; DB.items.set(n.id,Object.assign(n,{updatedAt:Date.now()})); DB.dirty.add(n.id);
   setTimeout(()=>toast("🔁 المرة القادمة: "+WDN[new Date(parseD(n.planned)).getDay()]+" "+fmtD(n.planned)),50); }
@@ -4708,7 +4727,7 @@ function vPubCal(){ const base=V.calMonth?new Date(V.calMonth+"-01T00:00"):new D
     unsched.length? h("section",{class:"tk-tg",style:"margin-top:16px"},h("div",{class:"tk-tgh"},h("b",{},"غير مبرمجة"),h("span",{class:"tk-tgn"},unsched.length),h("span",{class:"tk-muted",style:"font-size:12px"},"اضغط على منشور ثم على يوم في التقويم، أو اسحبه إليه")),
       h("div",{class:"tk-unsched"},unsched.map(p=>{ const b=h("button",{type:"button",class:"tk-cpost big"+(V.calPick===p.id?" sel":""),style:"--pc:"+PS[p.stage].c,onclick:()=>{ V.calPick=V.calPick===p.id?null:p.id; render(); }},h("span",{class:"tk-h2"},"⋮⋮"),p.title,h("small",{},PS[p.stage].n)); Q(".tk-h2",b).addEventListener("pointerdown",e=>pubDrag(e,p,b)); return b; }))) : null); }
 /* editor */
-function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
+function editPost(p,preset={}){ const isNew=!p; dlg.panel=p?p.id:"new"; p=p?{...p}:newPost(preset);
   const title=h("textarea",{rows:2,id:"tkPostTitle",placeholder:"عنوان المنشور أو الفيديو"},p.title||"");
   const st=opts(Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}])),p.stage,{color:true});
   const ty=opts(Object.fromEntries(PTYPE.map(([k,n])=>[k,{n:PTYPE_LOOK[k][0]+" "+n,c:PTYPE_LOOK[k][1]}])),p.type||"video",{color:true});
@@ -5317,8 +5336,17 @@ function newTask(o){ return Object.assign({id:uid(),kind:"task",title:"",status:
 function migrateDates(){ let n=0; for(const o of DB.items.values()){ if(o.kind!=="task"||o.deleted||o.v>=2) continue;
   if(o.status!=="done"&&o.deadline&&!o.planned){ o.planned=o.deadline; o.deadline=null; } o.v=2; o.updatedAt=Date.now(); DB.dirty.add(o.id); n++; }
   if(n){ persist(); Sync.soon(); } return n; }
-function dlg(title,body,foot){ const d=h("dialog",{class:"tk-dlg"}); const f=h("form",{method:"dialog"},h("div",{class:"tk-dh"},h("h3",{},title),h("button",{type:"button",class:"tk-btn sm","aria-label":"إغلاق",onclick:()=>d.close()},"✕")),h("div",{class:"tk-db"},body),h("div",{class:"tk-df"},foot));
-  d.append(f); document.body.append(d); d.addEventListener("close",()=>setTimeout(()=>d.remove(),50)); d.showModal(); return d; }
+// on wide screens task/post details open in a side panel (non-modal) instead of a centred sheet
+const wantsPanel=()=>matchMedia("(min-width:1100px)").matches;
+document.addEventListener("keydown",e=>{ if(e.key!=="Escape"||e.defaultPrevented) return; if(Q("dialog.tk-dlg[open]:not(.tk-panel)")) return; const pn=[...QA("dialog.tk-panel[open]")].pop(); if(pn){ e.preventDefault(); pn.close(); } });
+function dlg(title,body,foot){ const panelId=dlg.panel; dlg.panel=null; const asPanel=panelId&&wantsPanel();
+  if(asPanel) QA("dialog.tk-panel[open]").forEach(x=>x.close());
+  const d=h("dialog",{class:"tk-dlg"+(asPanel?" tk-panel":"")}); const f=h("form",{method:"dialog"},h("div",{class:"tk-dh"},h("h3",{},title),h("button",{type:"button",class:"tk-btn sm","aria-label":"إغلاق",onclick:()=>d.close()},"✕")),h("div",{class:"tk-db"},body),h("div",{class:"tk-df"},foot));
+  d.append(f); document.body.append(d); d.addEventListener("close",()=>setTimeout(()=>d.remove(),50));
+  if(asPanel){ V.panelId=panelId; document.body.classList.add("tk-haspanel"); 
+    d.addEventListener("close",()=>{ if(!QA("dialog.tk-panel[open]").length){ document.body.classList.remove("tk-haspanel"); V.panelId=null; } QA(".tk-r.on,.tk-kc.on").forEach(x=>x.classList.remove("on")); });
+    d.show(); QA(".tk-r.on,.tk-kc.on").forEach(x=>x.classList.remove("on")); QA('[data-id="'+panelId+'"]').forEach(x=>x.classList.add("on")); }
+  else d.showModal(); return d; }
 function opts(map,val,{color}={}){ const box=h("div",{class:"tk-opts"}); box.value=val;
   for(const [k,o] of Object.entries(map)){ const b=h("button",{type:"button","aria-pressed":String(String(val)===String(k)),style:color&&o.c?"--oc:"+o.c:"",title:o.h||"",onclick:()=>{ box.value=(String(box.value)===String(k)&&box.dataset.clear)?"":k; QA("button",box).forEach(x=>x.setAttribute("aria-pressed",String(x===b&&box.value!==""))); box.dispatchEvent(new Event("change")); }},o.n); box.append(b); }
   return box; }
@@ -5327,7 +5355,22 @@ function tagInput(vals,list){ const box=h("div",{class:"tk-tags"}); let cur=[...
   function add(v){ v=v.trim().replace(/[،,]$/,""); if(v&&!cur.includes(v)) cur.push(v); inp.value=""; draw(); }
   function draw(){ QA("span",box).forEach(s=>s.remove()); cur.forEach((v,i)=>box.insertBefore(h("span",{},v,h("button",{type:"button","aria-label":"حذف",onclick:()=>{ cur.splice(i,1); draw(); }},"×")),inp)); }
   box.append(inp,dl); draw(); box.values=()=>{ if(inp.value.trim()) add(inp.value); return cur; }; return box; }
-function editTask(t,preset={}){ const isNew=!t; t=t?{...t}:newTask(preset);
+/* small checklist inside a task (TickTick style): tick, edit, delete, add with Enter */
+function itemsBlock(t,isNew){ const box=h("div",{class:"f full tk-items"});
+  const save=items=>{ t.items=items; if(!isNew){ const x=get(t.id); if(x){ x.items=items; put(x,{silent:true}); Sync.soon(); render(); } } };
+  const subs=isNew?[]:subsOf(t.id);
+  const draw=(focusNew)=>{ const items=t.items||[];
+    const add=h("input",{type:"text",class:"tk-itadd",placeholder:"＋ عنصر فرعي ثم Enter",onkeydown:e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); e.stopPropagation(); const v=e.target.value.trim(); if(!v) return; save([...(t.items||[]),{id:uid().slice(0,8),t:v,done:false}]); draw(true); } }});
+    box.replaceChildren(
+      subs.length? h("div",{class:"tk-itsubs"},subs.map(sb=>h("div",{class:"tk-it"+(sb.status==="done"?" done":"")},checkbox(sb),h("span",{class:"t",text:sb.title,onclick:()=>editTask(sb)})))) : null,
+      items.map(it=>h("div",{class:"tk-it"+(it.done?" done":"")},
+        h("input",{type:"checkbox",checked:it.done||undefined,onchange:e=>{ save((t.items||[]).map(y=>y.id===it.id?{...y,done:e.target.checked}:y)); draw(); }}),
+        h("input",{type:"text",class:"t",value:it.t,onchange:e=>{ const v=e.target.value.trim(); save(v?(t.items||[]).map(y=>y.id===it.id?{...y,t:v}:y):(t.items||[]).filter(y=>y.id!==it.id)); draw(); },onkeydown:e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } }}),
+        h("button",{type:"button",class:"tk-clx",title:"حذف",onclick:()=>{ save((t.items||[]).filter(y=>y.id!==it.id)); draw(); }},"×"))),
+      add);
+    if(focusNew) setTimeout(()=>add.focus(),0); };
+  draw(); return box; }
+function editTask(t,preset={}){ const isNew=!t; dlg.panel=t?t.id:"new"; t=t?{...t}:newTask(preset);
   const title=h("textarea",{rows:2,id:"tkTitle",required:true,placeholder:"ماذا تريد أن تنجز؟"},t.title||"");
   const proj=projSelect(t.project,()=>{ fillMain(); },{empty:"— بدون مشروع —",id:"tkProj"});
   const mainSel=h("select",{id:"tkMainSel"}); const mainWrap=h("label",{class:"f"},"المهمة الرئيسية",mainSel);
@@ -5370,6 +5413,7 @@ function editTask(t,preset={}){ const isNew=!t; t=t?{...t}:newTask(preset);
   const hasMore=!!(t.notes||t.effort||t.branch||(t.people||[]).length||t.tool);
   const d=dlg(isNew?(preset.main?"مهمة فرعية جديدة":"مهمة جديدة"):"تعديل المهمة",[
       h("div",{class:"f full tk-trow"},h("div",{class:"tk-tcol"},title),h("div",{class:"tk-flagw"},prBtn,prMenu)),
+      itemsBlock(t,isNew),
       h("div",{class:"f full"},h("label",{class:"f"},"متى ستنجزها؟"),dchips,dl,repRow,h("div",{class:"tk-ddrow"},ddAdd,ddWrap)),
       h("label",{class:"f"},"المشروع",proj), mainWrap,
       h("details",{class:"tk-more full",open:hasMore||null},h("summary",{},"خيارات أكثر",h("small",{},"الجهد، الفرع، الأشخاص، القالب، ملاحظات")),h("div",{class:"tk-moreb"},
@@ -5386,7 +5430,7 @@ function editTask(t,preset={}){ const isNew=!t; t=t?{...t}:newTask(preset);
       if(!proj.value&&g.project){ proj.value=g.project; t.guessed={project:g.src.project==="guess"}; }
       if(!br.value&&g.branch) br.value=g.branch; if(g.planned&&(!dl.value||!dl.dataset.touched)) dl.value=g.planned; if(!dd.value&&g.deadline) dd.value=g.deadline;
       if(prio===3&&g.priority<3) prio=g.priority; const pv=ppl.values(); for(const x of g.people) if(!pv.includes(x)) pv.push(x); }
-    const was=get(t.id);
+    const was=get(t.id); if(was&&was.items) t.items=was.items;
     Object.assign(t,{title:v,project:proj.value||null,main:mainWrap.hidden?null:(mainSel.value||null),priority:prio,planned:dl.value||null,deadline:dd.value||null,v:2,effort:ef.value||"",minutes:+mins.value||null,branch:br.value||null,tool:tool.value||null,people:ppl.values(),notes:notes.value.trim()});
     const rv=repOpen?rsel.value:""; t.repeat=!rv?null:rv==="wd"?{f:"w",days:[0,1,2,3,4]}:rv==="w"?{f:"w",days:rdays.length?rdays:[new Date().getDay()]}:{f:rv};
     if(t.repeat&&!t.planned){ const td=iso(new Date()); const ok=t.repeat.f!=="w"||t.repeat.days.includes(new Date().getDay()); t.planned=ok?td:nextDate(t.repeat,td); }
