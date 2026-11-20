@@ -898,6 +898,15 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
   .tk-tpi input[type=text]{flex-basis:calc(100% - 70px);order:-1}
   .tk-tpi input[type=text],.tk-tpi select{font-size:16px}
 }
+/* ideas column */
+.tk-pkb{grid-template-columns:minmax(150px,.85fr) repeat(5,minmax(165px,1fr))}
+.tk-quickidea{width:100%;box-sizing:border-box;font:inherit;font-size:13px;padding:8px 10px;border:1px dashed var(--line);border-radius:10px;background:transparent;color:var(--ink);margin-bottom:8px}
+.tk-quickidea:focus{outline:none;border-style:solid;border-color:#C9A227;background:var(--surface)}
+.tk-ideacol .tk-pc2{padding-block:8px}
+.tk-ideacol .tk-tt{font-size:13.5px}
+.tk-rtag.pur{background:color-mix(in srgb,#C9A227 16%,transparent);color:#8A6D12}
+:root[data-theme="dark"] .tk-rtag.pur{color:#E3C766}
+@media (max-width:860px){ .tk-pkb{grid-template-columns:repeat(6,minmax(230px,80vw))} .tk-quickidea{font-size:16px} }
 
 </style>
 
@@ -4217,9 +4226,10 @@ function editIdea(i,preset={}){ const isNew=!i; i=i?{...i}:newIdea(preset);
   setTimeout(()=>(isNew&&!i.title?title:note).focus(),30); }
 
 /* ===================== غرفة النشر: content pipeline, calendar, cadence ===================== */
-const PSTAGE=[["toshoot","للتصوير","#98A2B3"],["shot","مصوَّر","#7A4FC8"],["edit","مونتاج","#E8701E"],["review","مراجعة","#3E8EF7"],["published","منشور","#2BA14A"]];
+const PSTAGE=[["idea","أفكار","#C9A227"],["toshoot","للتصوير","#98A2B3"],["shot","مصوَّر","#7A4FC8"],["edit","مونتاج","#E8701E"],["review","مراجعة","#3E8EF7"],["published","منشور","#2BA14A"]];
 const PS=Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}]));
 const PTYPE=[["video","فيديو"],["reel","ريلز"],["photos","صور"],["post","منشور"],["story","ستوري"]];
+const PURPOSE=["تسويق بالمحتوى","إبراز قيمة مضافة","توثيق نشاط","إعلان","مناسبة"];
 const STAGE_FROM_TT={"للتصوير":"toshoot","مصور":"shot","مونتاج":"edit","مراجعة":"review","منشور":"published"};
 const posts=()=>all("post");
 const pubCfg=()=>Object.assign({perWeek:2,days:[0,3]},get("pubcfg")||{});
@@ -4305,14 +4315,16 @@ function pubHeader(){ const s=pubStats(), cfg=s.cfg; const lastD=s.last?Math.flo
 function vPubBoard(){ const ps=posts();
   const cols=h("div",{class:"tk-kb tk-pkb"},PSTAGE.map(([k,n,c])=>{ let items=ps.filter(p=>p.stage===k);
       items=k==="published"? items.sort((a,b)=>(b.publishedAt||0)-(a.publishedAt||0)).slice(0,12) : items.sort((a,b)=>(a.schedDate||"9999").localeCompare(b.schedDate||"9999")||(a.kOrder??a.createdAt)-(b.kOrder??b.createdAt));
-      return h("div",{class:"tk-col",data:{st:k}},h("h4",{style:"--sc:"+c},h("i"),n,h("small",{},ps.filter(p=>p.stage===k).length),h("span",{class:"tk-sp"}),k!=="published"?h("button",{type:"button",class:"tk-ib sm",title:"إضافة",onclick:()=>editPost(null,{stage:k})},icon("plus",15)):null),
+      return h("div",{class:"tk-col"+(k==="idea"?" tk-ideacol":""),data:{st:k}},h("h4",{style:"--sc:"+c},h("i"),n,h("small",{},ps.filter(p=>p.stage===k).length),h("span",{class:"tk-sp"}),k!=="published"?h("button",{type:"button",class:"tk-ib sm",title:"إضافة",onclick:()=>editPost(null,{stage:k})},icon("plus",15)):null),
+        k==="idea"? h("input",{type:"text",class:"tk-quickidea",placeholder:"＋ فكرة سريعة…",title:"اكتب الفكرة ثم Enter",onkeydown:e=>{ if(e.key!=="Enter"||e.isComposing) return; const v=e.target.value.trim(); if(!v) return; put(newPost({title:v,stage:"idea",type:null})); V.focusQI=1; render(); Sync.soon(); }}) : null,
         items.map(p=>postCard(p))); }));
+  if(V.focusQI){ V.focusQI=0; setTimeout(()=>{ const q=Q(".tk-quickidea"); q&&q.focus(); },0); }
   return h("div",{},pubHeader(),cols); }
 function postCard(p){ const d=p.schedDate?daysLeft(p.schedDate):null, notReady=p.schedDate&&["toshoot","shot"].includes(p.stage)&&d!=null&&d<=3;
   const c=h("div",{class:"tk-kc tk-pc2",style:"--pc:"+PS[p.stage].c,data:{id:p.id},onclick:()=>editPost(p)},
     h("span",{class:"tk-h","aria-hidden":"true",title:"اسحب لتغيير المرحلة"},"⋮⋮"),
     h("div",{class:"tk-tt",text:p.title}),
-    h("div",{class:"tk-rm"},h("span",{class:"tk-rtag"},(PTYPE.find(x=>x[0]===p.type)||PTYPE[0])[1]),p.branch?h("span",{class:"tk-rp",style:"--pc:"+BRANCHES[p.branch].c},BRANCHES[p.branch].n):null,
+    h("div",{class:"tk-rm"},p.type||p.stage!=="idea"?h("span",{class:"tk-rtag"},(PTYPE.find(x=>x[0]===p.type)||PTYPE[0])[1]):null,p.purpose?h("span",{class:"tk-rtag pur"},p.purpose):null,p.branch?h("span",{class:"tk-rp",style:"--pc:"+BRANCHES[p.branch].c},BRANCHES[p.branch].n):null,
       p.stage==="published"&&p.publishedAt?h("span",{class:"tk-rd8"},"✓ "+whenLabel(iso(new Date(p.publishedAt)))+(p.stats?" · 👁 "+kfmt(p.stats.views):"")):p.schedDate?h("span",{class:"tk-rd8"+(d<0?" past":""),title:"موعد النشر"},"📅 "+whenLabel(p.schedDate)):null,
       notReady?h("span",{class:"tk-rdl past",title:"موعد نشرها قريب ولم تُجهَّز بعد"},"⚠"):null,
       (()=>{ if(p.source==="facebook"&&!p.cl) return null; const g=clProgress(p); return g.n?h("span",{class:"tk-clp"+(g.done===g.n?" ok":""),title:"قائمة التحقق لهذه المرحلة"},"☑ "+g.done+"/"+g.n):null; })()));
@@ -4330,7 +4342,7 @@ function vPubCal(){ const base=V.calMonth?new Date(V.calMonth+"-01T00:00"):new D
   const first=new Date(base); first.setDate(1-first.getDay()); // start on Sunday
   const ps=posts(); const byDay=new Map(); for(const p of ps){ const k=p.stage==="published"&&p.publishedAt?iso(new Date(p.publishedAt)):p.schedDate; if(!k) continue; if(!byDay.has(k)) byDay.set(k,[]); byDay.get(k).push(p); }
   const cfg=pubCfg(); const pick=V.calPick&&get(V.calPick);
-  const unsched=ps.filter(p=>p.stage!=="published"&&!p.schedDate).sort((a,b)=>PSTAGE.findIndex(x=>x[0]===b.stage)-PSTAGE.findIndex(x=>x[0]===a.stage));
+  const unsched=ps.filter(p=>p.stage!=="published"&&p.stage!=="idea"&&!p.schedDate).sort((a,b)=>PSTAGE.findIndex(x=>x[0]===b.stage)-PSTAGE.findIndex(x=>x[0]===a.stage));
   const mv=n=>{ const x=new Date(base); x.setMonth(x.getMonth()+n); V.calMonth=x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0"); render(); };
   const cells=[]; for(let i=0;i<42;i++){ const x=new Date(first); x.setDate(first.getDate()+i); const k=iso(x); const inM=x.getMonth()===base.getMonth(); if(i>=35&&!inM) break;
     const items=byDay.get(k)||[]; const isPubDay=(cfg.days||[]).includes(x.getDay());
@@ -4349,6 +4361,7 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
   const title=h("textarea",{rows:2,id:"tkPostTitle",placeholder:"عنوان المنشور أو الفيديو"},p.title||"");
   const st=opts(Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}])),p.stage,{color:true});
   const ty=opts(Object.fromEntries(PTYPE.map(([k,n])=>[k,{n}])),p.type||"video");
+  const pur=opts(Object.fromEntries(PURPOSE.map(x=>[x,{n:x}])),p.purpose||""); pur.dataset.clear="1";
   const sd=h("input",{type:"date",id:"tkPostDate",value:p.schedDate||""});
   const slots=nextSlots(3);
   const sdChips=h("div",{class:"tk-opts"},slots.map(v=>h("button",{type:"button",onclick:()=>{ sd.value=v; }},WDN[new Date(parseD(v)).getDay()]+" "+fmtD(v))),h("button",{type:"button",onclick:()=>{ sd.value=""; }},"بدون"));
@@ -4360,6 +4373,7 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
       h("div",{class:"f full"},h("label",{class:"f"},"المرحلة"),st),
       p.source==="facebook"&&!p.cl?null:clBlock(p,isNew),
       h("div",{class:"f full"},h("label",{class:"f"},"النوع"),ty),
+      h("div",{class:"f full"},h("label",{class:"f"},"الغرض"),pur),
       h("div",{class:"f full"},h("label",{class:"f"},"موعد النشر (المقترح حسب أيام النشر)"),sdChips,h("div",{style:"margin-top:8px"},sd)),
       h("label",{class:"f"},"الفرع",br), h("label",{class:"f"},"نُشر فعلًا يوم",pubd),
       h("div",{class:"f full"},h("label",{class:"f"},"الأشخاص"),ppl),
@@ -4371,7 +4385,7 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
      h("span",{class:"tk-sp"}),
      !isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(p.id); remove(p.id); d.close(); toast("حُذف",()=>{ old.deleted=false; put(old); }); }},"حذف")]);
   Q("form",d).addEventListener("submit",e=>{ const v=title.value.trim(); if(!v){ e.preventDefault(); title.focus(); return; }
-    Object.assign(p,{title:v,type:ty.value||"video",schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
+    Object.assign(p,{title:v,type:ty.value||"video",purpose:pur.value||null,schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
     const ns=st.value||p.stage; if(ns!==p.stage){ if(!isNew&&ns!=="published") warnMissing(p,ns); p.stage=ns; if(ns!=="published") p.publishedAt=null; }
     if(pubd.value){ p.publishedAt=parseD(pubd.value)+12*3600e3; p.stage="published"; } else if(p.stage==="published"&&!p.publishedAt) p.publishedAt=Date.now();
     if(isNew) p.createdAt=Date.now(); put(p); toast(isNew?"أُضيف إلى غرفة النشر":"حُفظ"); });
