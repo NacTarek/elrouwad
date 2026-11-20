@@ -859,6 +859,8 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-tto small{opacity:.75;font-weight:600}
 .tk-toast .tk-tchip{background:rgba(255,255,255,.14);color:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px}
 .tk-toast .tk-tchip:hover{background:rgba(255,255,255,.28)}
+.tk-fbinfo{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px;color:var(--muted);background:var(--sunken);border-radius:10px;padding:8px 12px}
+.tk-fbinfo a{color:var(--brand);font-weight:700;text-decoration:none}
 
 </style>
 
@@ -4191,6 +4193,35 @@ function migratePosts(){ let n=0; for(const o of DB.items.values()){ if(o.kind!=
   for(const k of ["project","status","priority","effort","planned","deadline","inbox","guessed","main","prev","doneAt","order","kOrder","tool"]) delete o[k];
   o.updatedAt=Date.now(); DB.dirty.add(o.id); n++; }
   if(n){ persist(); Sync.soon(); } return n; }
+/* ---------- Facebook (Meta Business Suite CSV export) → published posts ---------- */
+function parseCSV(t){ const rows=[]; let row=[], f="", q=false; t=t.replace(/^﻿/,"");
+  for(let i=0;i<t.length;i++){ const c=t[i];
+    if(q){ if(c==='"'){ if(t[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
+    else if(c==='"') q=true; else if(c===","){ row.push(f); f=""; } else if(c==="\n"||c==="\r"){ if(c==="\r"&&t[i+1]==="\n") i++; row.push(f); rows.push(row); row=[]; f=""; } else f+=c; }
+  if(f||row.length){ row.push(f); rows.push(row); }
+  const hd=rows.shift()||[]; return rows.filter(r=>r.length>1).map(r=>Object.fromEntries(hd.map((k,i)=>[k.trim(),r[i]||""]))); }
+// Meta exports "Publish time" in Pacific time (MM/DD/YYYY HH:MM)
+function ptToMs(s){ const m=/(\d+)\/(\d+)\/(\d{4})\s+(\d+):(\d+)/.exec(s||""); if(!m) return null;
+  const guess=Date.UTC(+m[3],+m[1]-1,+m[2],+m[4],+m[5]);
+  const parts=Object.fromEntries(new Intl.DateTimeFormat("en-US",{timeZone:"America/Los_Angeles",hourCycle:"h23",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit"}).formatToParts(new Date(guess)).map(x=>[x.type,x.value]));
+  const asPT=Date.UTC(+parts.year,+parts.month-1,+parts.day,+parts.hour,+parts.minute); return guess+(guess-asPT); }
+function guessBranch(t){ const p=/ابتدائ|روضة|تحضيري/.test(t), m=/متوسط|ثانوي/.test(t), a=/مخيم|رواد الصيف|رائدات|رواد القرآن|رواد الإنجليزية|نادي|خرجة/.test(t);
+  return p&&!m?"primary":m&&!p?"midsec":a?"activities":"foundation"; }
+function importFbCsv(text){ const rows=parseCSV(text); if(!rows.length||!("Post ID" in rows[0])) throw new Error("ليس ملف تصدير منشورات من Meta Business Suite");
+  const n=v=>parseInt(v,10)||0; let add=0, upd=0, lo=Infinity, hi=0;
+  for(const x of rows){ const id="fb-"+x["Post ID"], at=ptToMs(x["Publish time"]); if(!x["Post ID"]||!at) continue; lo=Math.min(lo,at); hi=Math.max(hi,at);
+    const cap=(x["Title"]||x["Description"]||"").trim(); const first=(cap.split("\n").find(l=>l.trim())||"(بدون نص)").replace(/\s+/g," ").trim().slice(0,140);
+    const stats={views:n(x["Views"]),reach:n(x["Viewers"]),reactions:n(x["Reactions"]),comments:n(x["Comments"]),shares:n(x["Shares"]),clicks:n(x["Total clicks"]),at:Date.now()};
+    const old=get(id);
+    if(old&&!old.deleted){ Object.assign(old,{stats,url:x["Permalink"]||old.url,publishedAt:at}); put(old,{silent:true}); upd++; }
+    else { put({id,kind:"post",v:3,title:first,stage:"published",type:x["Post type"]==="Photos"?"photos":"video",branch:guessBranch(cap.slice(0,400)),publishedAt:at,createdAt:at,url:x["Permalink"],fbId:x["Post ID"],caption:cap.slice(0,1500),source:"facebook",stats},{silent:true}); add++; } }
+  // approximate history (from ticked tasks) inside the exported period is now replaced by the real posts
+  let rm=0; for(const o of posts()) if(/^pubh-/.test(o.id)&&o.publishedAt>=lo-DAY&&o.publishedAt<=hi+2*DAY){ o.deleted=true; put(o,{silent:true}); rm++; }
+  render(); Sync.soon(); return {add,upd,rm}; }
+function fbImportBtn(){ const inp=h("input",{type:"file",accept:".csv,text/csv",class:"sr",onchange:async e=>{ const f=e.target.files[0]; if(!f) return;
+    try{ const r=importFbCsv(await f.text()); toast("فيسبوك: أُضيف "+r.add+(r.upd?"، حُدّث "+r.upd:"")+(r.rm?"، واستُبدل "+r.rm+" تقديري":"")); }catch(err){ toast("تعذّر الاستيراد: "+err.message); } e.target.value=""; }});
+  return h("label",{class:"tk-link",style:"cursor:pointer",title:"Meta Business Suite ← الرؤى ← المحتوى ← تصدير (Published, Lifetime, Post)"},inp,"⤓ استيراد من فيسبوك"); }
+const kfmt=v=>v>=1e4?Math.round(v/1e3)+"k":v>=1e3?(v/1e3).toFixed(1)+"k":String(v||0);
 /* cadence */
 function pubStats(){ const cfg=pubCfg(), ps=posts(), now=Date.now();
   const pub=ps.filter(p=>p.stage==="published"&&p.publishedAt).sort((a,b)=>b.publishedAt-a.publishedAt);
@@ -4226,7 +4257,7 @@ function pubHeader(){ const s=pubStats(), cfg=s.cfg; const lastD=s.last?Math.flo
       h("div",{class:"tk-pspark",title:"المنشور أسبوعيًا (آخر 8 أسابيع)"},s.weeksBars.map(w=>h("i",{style:"height:"+(4+w.n/max*26)+"px",title:w.n+""}))),
       h("div",{class:"tk-pgoal"},h("span",{},"الوتيرة المطلوبة"),h("div",{class:"tk-opts tk-days"},[1,2,3,4,5].map(n=>h("button",{type:"button","aria-pressed":String(cfg.perWeek===n),onclick:()=>savePubCfg({perWeek:n,days:DEF_DAYS[n]})},String(n)))),h("span",{},"في الأسبوع")),
       h("div",{class:"tk-pgoal"},h("span",{},"أيام النشر"),h("div",{class:"tk-opts tk-days"},WDN.map((n,i)=>h("button",{type:"button","aria-pressed":String(cfg.days.includes(i)),onclick:()=>{ const d=cfg.days.includes(i)?cfg.days.filter(x=>x!==i):[...cfg.days,i]; if(!d.length) return; savePubCfg({days:d,perWeek:d.length}); }},n.replace("ال",""))))),
-      h("div",{class:"tk-pbtns"},h("button",{type:"button",class:"tk-btn pri",id:"tkAutoSched",onclick:autoSchedule},"برمج المحتوى الجاهز تلقائيًا"),h("button",{type:"button",class:"tk-link",onclick:unscheduleAll},"إلغاء البرمجة")))); }
+      h("div",{class:"tk-pbtns"},h("button",{type:"button",class:"tk-btn pri",id:"tkAutoSched",onclick:autoSchedule},"برمج المحتوى الجاهز تلقائيًا"),h("button",{type:"button",class:"tk-link",onclick:unscheduleAll},"إلغاء البرمجة"),fbImportBtn()))); }
 /* board (kanban) */
 function vPubBoard(){ const ps=posts();
   const cols=h("div",{class:"tk-kb tk-pkb"},PSTAGE.map(([k,n,c])=>{ let items=ps.filter(p=>p.stage===k);
@@ -4239,7 +4270,7 @@ function postCard(p){ const d=p.schedDate?daysLeft(p.schedDate):null, notReady=p
     h("span",{class:"tk-h","aria-hidden":"true",title:"اسحب لتغيير المرحلة"},"⋮⋮"),
     h("div",{class:"tk-tt",text:p.title}),
     h("div",{class:"tk-rm"},h("span",{class:"tk-rtag"},(PTYPE.find(x=>x[0]===p.type)||PTYPE[0])[1]),p.branch?h("span",{class:"tk-rp",style:"--pc:"+BRANCHES[p.branch].c},BRANCHES[p.branch].n):null,
-      p.stage==="published"&&p.publishedAt?h("span",{class:"tk-rd8"},"✓ "+whenLabel(iso(new Date(p.publishedAt)))):p.schedDate?h("span",{class:"tk-rd8"+(d<0?" past":""),title:"موعد النشر"},"📅 "+whenLabel(p.schedDate)):null,
+      p.stage==="published"&&p.publishedAt?h("span",{class:"tk-rd8"},"✓ "+whenLabel(iso(new Date(p.publishedAt)))+(p.stats?" · 👁 "+kfmt(p.stats.views):"")):p.schedDate?h("span",{class:"tk-rd8"+(d<0?" past":""),title:"موعد النشر"},"📅 "+whenLabel(p.schedDate)):null,
       notReady?h("span",{class:"tk-rdl past",title:"موعد نشرها قريب ولم تُجهَّز بعد"},"⚠"):null));
   Q(".tk-h",c).addEventListener("pointerdown",e=>pubDrag(e,p,c)); return c; }
 function setStage(p,s){ if(s===p.stage) return; p.stage=s; if(s==="published"&&!p.publishedAt){ p.publishedAt=Date.now(); } if(s!=="published") p.publishedAt=null; put(p,{silent:true}); }
@@ -4287,7 +4318,8 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
       h("div",{class:"f full"},h("label",{class:"f"},"موعد النشر (المقترح حسب أيام النشر)"),sdChips,h("div",{style:"margin-top:8px"},sd)),
       h("label",{class:"f"},"الفرع",br), h("label",{class:"f"},"نُشر فعلًا يوم",pubd),
       h("div",{class:"f full"},h("label",{class:"f"},"الأشخاص"),ppl),
-      h("label",{class:"f full"},"ملاحظات",notes)],
+      h("label",{class:"f full"},"ملاحظات",notes),
+      p.url||p.stats? h("div",{class:"f full tk-fbinfo"},p.stats?h("span",{},"👁 "+kfmt(p.stats.views)+" مشاهدة · ❤ "+kfmt(p.stats.reactions)+" · 💬 "+kfmt(p.stats.comments)+" · ↗ "+kfmt(p.stats.shares)):null,p.url?h("a",{href:p.url,target:"_blank",rel:"noopener"},"فتح على فيسبوك ↗"):null) : null],
     [h("button",{type:"submit",class:"tk-btn pri",id:"tkPostSave"},isNew?"إضافة":"حفظ"),
      !isNew&&p.stage!=="published"&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ const x=get(p.id); setStage(x,"published"); d.close(); render(); Sync.soon(); askTime(x,"✓ سُجّل كمنشور اليوم"); }},"✓ نُشر اليوم"),
      !isNew&&h("button",{type:"button",class:"tk-btn",title:"افتح قوالب الاستوديو",onclick:()=>{ d.close(); openTool(p.type==="photos"||p.type==="post"?"posts":"reel"); }},"✎ الاستوديو"),
@@ -4700,7 +4732,7 @@ function installBtn(){ if(standalone()) return null;
   if(q.has("share")){ const txt=[q.get("title"),q.get("text"),q.get("url")].filter(Boolean).join(" "); const url=(txt.match(URL_RX)||[""])[0]; const title=(q.get("title")||"").replace(url,"").trim()||(q.get("text")||"").replace(url,"").trim();
     V.view="ideas"; try{ history.replaceState(null,"",location.pathname); }catch(e){} setTimeout(()=>editIdea(null,{url,title:title.slice(0,140)}),400); } })();
 /* expose for tests */
-window.rouwadTasks={posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+window.rouwadTasks={importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
 migrateDates(); migratePosts(); setMode(mode); render(); if(Sync.on()) Sync.run();
 })();
 </script>
