@@ -749,6 +749,53 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-reprow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px;color:var(--muted)}
 .tk-reprow select{width:auto;flex:0 1 220px;padding:8px 10px}
 
+/* ===== v8: TickTick density — one line per task, no cards ===== */
+.tk-list{background:transparent;border:0;border-radius:0;overflow:visible}
+.tk-r{border-bottom:0;border-radius:8px}
+.tk-r:hover{background:var(--sunken)}
+.tk-rl{min-height:38px;padding:4px 8px;gap:10px;position:relative}
+.tk-rl:after{content:"";position:absolute;bottom:0;inset-inline-start:37px;inset-inline-end:8px;height:1px;background:var(--line);opacity:.7}
+.tk-r:last-child .tk-rl:after,.tk-r:hover .tk-rl:after,.tk-r.open .tk-rl:after{display:none}
+.tk-r .tk-ck{width:17px;height:17px;border-radius:4px;border-width:1.8px}
+.tk-rmain{flex-wrap:nowrap;gap:10px}
+.tk-rt{flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px;font-weight:400}
+.tk-rm{flex:none;gap:8px;font-size:12.5px}
+.tk-rp{max-width:140px}
+.tk-rtag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px;background:color-mix(in srgb,#7A4FC8 22%,transparent);color:#9E77ED}
+.tk-rtag.w{background:color-mix(in srgb,#E8701E 20%,transparent);color:#E8701E}
+.tk-rx{width:22px;height:22px;opacity:0}
+.tk-r:hover .tk-rx,.tk-r.open .tk-rx,.tk-rx:focus-visible{opacity:1}
+.tk-r .tk-btn.sm{padding:2px 7px;font-size:11px}
+.tk-rdet{padding:2px 37px 10px 8px}
+.tk-pg{margin-bottom:14px}
+.tk-pgh{padding:4px 0 6px}
+.tk-pgh b{font-size:15px;font-weight:700}
+.tk-tg{margin-bottom:18px}
+@media (hover:none){ .tk-rx{opacity:.45} }
+@media (max-width:860px){
+  .tk-rl{min-height:44px;padding:6px 4px;gap:10px}
+  .tk-rl:after{inset-inline-start:31px;inset-inline-end:4px}
+  .tk-rmain{flex-wrap:nowrap;gap:8px}
+  .tk-rt{flex:1 1 auto;flex-basis:auto;font-size:15px}
+  .tk-rm{font-size:12px;gap:6px}
+  .tk-rp{max-width:90px}
+  .tk-rtag{display:none}
+  .tk-rdet{padding:2px 31px 10px 4px}
+}
+.tk-tabs{align-items:center}
+.tk-ltools{display:inline-flex;gap:6px}
+.tk-ltb .tk-qin{width:100%;max-width:420px;margin-bottom:6px}
+.tk-menu{top:4px}
+.tk-ltb{min-height:0}
+@media (max-width:860px){
+  .tk-tabs .tk-ib{min-width:34px;height:34px}
+  .tk-tabs button[role=tab]{padding:7px 12px;font-size:13.5px}
+  .tk-mtop{margin-bottom:8px}
+  .tk-mtop b{font-size:18px}
+  .tk-mtop .tk-ib{min-width:32px;height:32px}
+}
+@media (max-width:860px){.tk-tabs button[role=tab] svg{display:none}.tk-tabs{gap:5px}}
+
 </style>
 
 <div class="app" dir="rtl" lang="ar">
@@ -3749,6 +3796,7 @@ function row(t,o={}){ const p=get(t.project), done=t.status==="done", open=OPENR
   const meta=h("span",{class:"tk-rm"},
     t.repeat&&!done?h("span",{class:"tk-ri",title:repLabel(t.repeat)},icon("repeat",13)):null,
     subs.length?h("span",{class:"tk-rs"},nDone+"/"+subs.length):null,
+    t.slot&&!done?h("span",{class:"tk-rtag"},t.slot==="morning"?"صباحي":"مسائي"):null, t.status==="wait"&&!done?h("span",{class:"tk-rtag w"},"عالقة"):null, t.notes&&!done?h("span",{class:"tk-ri",title:"فيها ملاحظات"},icon("list",13)):null,
     !o.noProj?h("span",{class:"tk-rp",style:"--pc:"+pcol(p)},p?p.name:"الوارد"):null,
     pd!=null?h("span",{class:"tk-rd8"+(pd<0?" past":""),title:"يوم الإنجاز"},whenLabel(t.planned)):null,
     ddn!=null?h("span",{class:"tk-rdl"+(ddn<0?" past":ddn<=2?" soon":""),title:"آخر أجل "+dd},"⏱ "+whenLabel(dd)):null,
@@ -3940,7 +3988,8 @@ function bottomNav(){ const c=counts(), cur=sectionOf(V.view).k;
     h("button",{type:"button",class:"tk-bplus","aria-label":"إضافة",onclick:()=>{ if(V.view==="ideas"){ editIdea(null); return; } editTask(null,V.view==="home"?{planned:iso(new Date())}:V.view==="proj"&&V.proj?{project:V.proj}:{}); }},icon("plus",26)),
     b("ideas","الاستلهام","ideas",c.nid||null),b("projects","المشاريع","projects")); }
 function sectionTabs(){ const s=sectionOf(V.view); const vs=s.views.filter(v=>VIEW_LABEL[v]); if(vs.length<2) return null; const c=counts();
-  return h("div",{class:"tk-tabs",role:"tablist"},vs.map(v=>h("button",{type:"button",role:"tab","aria-selected":String(V.view===v||(v==="big"&&V.view==="proj")),onclick:()=>go(v,{proj:null})},icon(VIEW_LABEL[v][1],16),VIEW_LABEL[v][0],v==="inbox"&&c.ib?h("b",{class:"tk-nb"},c.ib):null))); }
+  return h("div",{class:"tk-tabs",role:"tablist"},vs.map(v=>h("button",{type:"button",role:"tab","aria-selected":String(V.view===v||(v==="big"&&V.view==="proj")),onclick:()=>go(v,{proj:null})},icon(VIEW_LABEL[v][1],16),VIEW_LABEL[v][0],v==="inbox"&&c.ib?h("b",{class:"tk-nb"},c.ib):null)),
+    V.view==="list"?h("span",{class:"tk-sp"}):null, V.view==="list"?listTools():null); }
 function mobileTop(){ return h("div",{class:"tk-mtop"},h("b",{},sectionOf(V.view).n),h("span",{class:"tk-sp"}),themeBtn(false),installBtn(),!navigator.onLine&&h("span",{class:"tk-sync"},"✈︎"),h("button",{type:"button",class:"tk-sync",onclick:syncDialog},h("i"),h("span",{},Sync.on()?"متزامن":"محلي"))); }
 
 /* ---------- repeating tasks ---------- */
@@ -4110,17 +4159,17 @@ function groupBy(list,keyOf,defs,ro){ const m=new Map(); for(const t of list){ c
       c?null:h("div",{class:"tk-list"},g.map(t=>row(t,ro(t))))); }); }
 /* toolbar: search + one "view options" menu (group / sort / show / filter), like TickTick */
 const GB=[["project","المشروع"],["priority","الأولوية"],["date","التاريخ"],["none","بدون"]], SB=[["smart","ذكي"],["date","التاريخ"],["priority","الأولوية"],["recent","الأحدث"]], SHOW=[["open","المفتوحة"],["","الكل"],["done","المنجزة"]];
-function listToolbar(){ const f=V.f; const active=[];
+function listActive(){ const f=V.f, active=[];
   if(f.project&&get(f.project)) active.push(["project",get(f.project).name]); if(f.pri) active.push(["pri","أولوية "+PRI[f.pri].n]); if(f.branch) active.push(["branch",BRANCHES[f.branch].n]); if(f.person) active.push(["person",f.person]); if(f.status&&f.status!=="open") active.push(["status",(SHOW.find(x=>x[0]===f.status)||[0,ST[f.status]?ST[f.status].n:f.status])[1]]);
-  const searchOpen=V.searchOpen||!!f.q;
-  const lbl=(arr,v)=>(arr.find(x=>x[0]===v)||arr[0])[1];
+  return active; }
+function listTools(){ const searchOpen=V.searchOpen||!!V.f.q;
+  return h("span",{class:"tk-ltools"},
+    h("button",{type:"button",class:"tk-ib"+(searchOpen?" on":""),title:"بحث","aria-label":"بحث",onclick:()=>{ V.searchOpen=!searchOpen; if(!V.searchOpen) V.f.q=""; render(); setTimeout(()=>{ const q=Q("#tkQ"); q&&q.focus(); },20); }},icon("search",17)),
+    h("button",{type:"button",class:"tk-ib"+(V.menuOpen?" on":""),id:"tkViewMenu",title:"العرض والترتيب","aria-label":"العرض والترتيب","aria-expanded":String(!!V.menuOpen),onclick:()=>{ V.menuOpen=!V.menuOpen; render(); }},icon("sort",17),listActive().length?h("b",{class:"tk-dot"}):null)); }
+function listToolbar(){ const f=V.f, active=listActive(), searchOpen=V.searchOpen||!!f.q;
+  if(!searchOpen&&!V.menuOpen&&!active.length) return null;
   return h("div",{class:"tk-ltb"},
-    h("div",{class:"tk-ltbr"},
-      searchOpen? h("input",{type:"search",id:"tkQ",class:"tk-qin",placeholder:"بحث في المهام…",value:f.q,oninput:e=>{ f.q=e.target.value; render(); },onblur:e=>{ if(!e.target.value){ V.searchOpen=false; setTimeout(render,120); } }})
-        : h("button",{type:"button",class:"tk-ib",title:"بحث","aria-label":"بحث",onclick:()=>{ V.searchOpen=true; render(); setTimeout(()=>{ const q=Q("#tkQ"); q&&q.focus(); },20); }},icon("search",18)),
-      h("span",{class:"tk-sp"}),
-      h("span",{class:"tk-ltbsum"},"تجميع: "+lbl(GB,V.groupBy)+" · ترتيب: "+lbl(SB,V.sort==="deadline"?"date":V.sort)),
-      h("button",{type:"button",class:"tk-ib"+(V.menuOpen?" on":""),id:"tkViewMenu",title:"العرض والترتيب","aria-label":"العرض والترتيب","aria-expanded":String(!!V.menuOpen),onclick:()=>{ V.menuOpen=!V.menuOpen; render(); }},icon("sort",18),active.length?h("b",{class:"tk-dot"}):null)),
+    searchOpen? h("input",{type:"search",id:"tkQ",class:"tk-qin",placeholder:"بحث في المهام…",value:f.q,oninput:e=>{ f.q=e.target.value; render(); }}) : null,
     V.menuOpen? viewMenu() : null,
     active.length? h("div",{class:"tk-actf"},active.map(([k,n])=>h("button",{type:"button",class:"tk-fch",onclick:()=>{ f[k]=k==="status"?"open":""; saveUI(); render(); }},n," ×"))) : null); }
 function viewMenu(){ const f=V.f;
