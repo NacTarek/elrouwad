@@ -1116,6 +1116,17 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-it .tk-ck{flex:none}
 .tk-itadd{font:inherit;font-size:14px;border:0;border-bottom:1px dashed var(--line);background:transparent;color:var(--ink);padding:8px 2px;width:100%;box-sizing:border-box}
 .tk-itadd:focus{outline:none;border-bottom-color:var(--brand)}
+.tk-chgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.tk-chc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.tk-chh{display:flex;align-items:center;gap:6px;cursor:pointer}
+.tk-chh b{font-size:15px;line-height:1.4}
+.tk-chl{display:flex;flex-direction:column;gap:1px;font-size:13px;line-height:1.6}
+.tk-chl small{font-size:11px;font-weight:700;color:var(--muted)}
+.tk-chf{display:flex;align-items:center;gap:6px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:8px;margin-top:auto}
+.tk-chst{font-size:12px;font-weight:700;border-radius:999px;padding:2px 9px}
+.tk-chst.ok{color:#2BA14A;background:color-mix(in srgb,#2BA14A 10%,transparent)}
+.tk-chst.late{color:#E5484D;background:color-mix(in srgb,#E5484D 10%,transparent)}
+.tk-chh .tk-ib,.tk-replyh .tk-ib,.tk-gr .tk-ib{min-width:28px;width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
 
 </style>
 
@@ -4982,13 +4993,21 @@ function vReplies(){ const q=V.rq||""; const list=all("reply").sort(byOrd); cons
     : h("div",{class:"tk-empty"},q?"لا نتائج.":"أضف أول رد جاهز.")); }
 
 /* 2. channels & groups: last cleaning + message */
-const CH_F=[{k:"name",l:"الاسم"},{k:"desc",l:"من يجمع؟",t:"area",rows:2},{k:"lastClean",l:"آخر تصفية",t:"date",half:1},{k:"msg",l:"رسالة التصفية / الترحيب",t:"area",rows:8}];
+const CH_F=[{k:"name",l:"الاسم"},{k:"desc",l:"من تجمع؟ (وفي سطر «ما يُشارك فيها: …»)",t:"area",rows:3},{k:"lastClean",l:"آخر تصفية",t:"date",half:1},{k:"msg",l:"رسالة التصفية / الترحيب",t:"area",rows:8}];
 function vChannels(){ const list=all("channel").sort(byOrd); const t=today0();
+  const parse=c=>{ const d=c.desc||""; const [who,...rest]=d.split(/\nما يُشارك فيها:\s*/); const what=(rest.join(" ").split("\n")[0]||"").trim(); const noClean=/لا تستدعي التصفية/.test(d);
+    const kind=/^قناة|قناة واتساب/.test(who)?"ch":/الودية|النكت|المزاح/.test(d)?"fun":"work"; return {who:who.split("\n")[0].replace(/^(مجموعة|قناة) واتساب تجمع\s*/,""),what,noClean,kind}; };
+  const G=[["ch","📣 القنوات العامة","للمتابعين وأحباب المؤسسة — لا تحتاج تصفية"],["work","🏫 مجموعات الإطار (العمل)","تُصفّى في بداية كل موسم حسب الإطار الحالي"],["fun","☕ المجموعات الودية","تُصفّى مع مجموعات الإطار"]];
+  const card=c=>{ const x=parse(c); const dd=c.lastClean?Math.round((t-parseD(c.lastClean))/DAY):null; const st=x.noClean?["لا تحتاج تصفية","ok"]:dd==null?["لم تُصفَّ بعد","late"]:dd>200?["آخر تصفية قبل "+dd+" يوم","late"]:["صُفّيت "+longD(c.lastClean)+" · قبل "+dd+" يوم","ok"];
+    return h("div",{class:"tk-chc"},
+      h("div",{class:"tk-chh",onclick:()=>recEdit("channel",c,CH_F,"مجموعة")},h("b",{},c.name),h("span",{class:"tk-sp"}),h("span",{class:"tk-ib sm",title:"تعديل"},"✎")),
+      x.who?h("div",{class:"tk-chl"},h("small",{},"تجمع"),h("span",{},x.who)):null,
+      x.what?h("div",{class:"tk-chl"},h("small",{},"يُشارك فيها"),h("span",{},x.what)):null,
+      h("div",{class:"tk-chf"},h("span",{class:"tk-chst "+st[1]},st[0]),h("span",{class:"tk-sp"}),
+        c.msg?h("button",{type:"button",class:"tk-btn sm",onclick:()=>copyText(c.msg,"✓ نُسخت الرسالة")},"⧉ رسالة التصفية"):null,
+        x.noClean?null:h("button",{type:"button",class:"tk-btn sm",title:"سجّل أنك صفّيتها اليوم",onclick:()=>{ const y=get(c.id); y.lastClean=iso(new Date()); put(y); toast("✓ سُجّلت التصفية"); }},"✓ صُفّيت اليوم"))); };
   return h("div",{},toolHead("القنوات والمجموعات","صفِّ مجموعات الإطار في بداية كل موسم، والرسالة جاهزة للنسخ.",h("button",{type:"button",class:"tk-btn pri",onclick:()=>recEdit("channel",null,CH_F,"مجموعة")},"+ مجموعة")),
-    list.length? h("div",{class:"tk-list"},list.map(c=>{ const dd=c.lastClean?Math.round((t-parseD(c.lastClean))/DAY):null; const old=dd==null||dd>200;
-      return h("div",{class:"tk-r tk-chr"},h("div",{class:"tk-rl"},h("div",{class:"tk-rmain",onclick:()=>recEdit("channel",c,CH_F,"مجموعة")},h("span",{class:"tk-rt",text:c.name}),h("span",{class:"tk-rm"},h("span",{class:"tk-rd8"+(old?" past":"")},c.lastClean?"آخر تصفية قبل "+dd+" يوم":"لم تُصفَّ بعد"),c.desc?h("span",{class:"tk-muted",style:"white-space:normal"},c.desc):null)),
-        h("span",{class:"tk-plend"},c.msg?h("button",{type:"button",class:"tk-btn sm",onclick:()=>copyText(c.msg,"✓ نُسخت الرسالة")},"⧉ الرسالة"):null,
-          h("button",{type:"button",class:"tk-btn sm",title:"سجّل أنك صفّيتها اليوم",onclick:()=>{ const x=get(c.id); x.lastClean=iso(new Date()); put(x); toast("✓ سُجّلت التصفية"); }},"✓ صُفّيت اليوم")))); }))
+    list.length? G.map(([k,n,sub])=>{ const xs=list.filter(c=>parse(c).kind===k); return xs.length? h("section",{class:"tk-tg",style:"margin-bottom:16px"},h("div",{class:"tk-tgh"},h("b",{},n),h("span",{class:"tk-tgn"},xs.length),h("span",{class:"tk-muted",style:"font-size:12px"},sub)),h("div",{class:"tk-chgrid"},xs.map(card))) : null; })
     : h("div",{class:"tk-empty"},"أضف مجموعاتك وقنواتك.")); }
 
 /* 3. hard drives */
