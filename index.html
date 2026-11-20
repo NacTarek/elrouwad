@@ -1127,6 +1127,49 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-chst.ok{color:#2BA14A;background:color-mix(in srgb,#2BA14A 10%,transparent)}
 .tk-chst.late{color:#E5484D;background:color-mix(in srgb,#E5484D 10%,transparent)}
 .tk-chh .tk-ib,.tk-replyh .tk-ib,.tk-gr .tk-ib{min-width:28px;width:28px;height:28px;padding:0;display:inline-flex;align-items:center;justify-content:center;flex:none}
+/* ===== simplified task sheet ===== */
+.tk-tdlg .tk-dh{padding:10px 12px;gap:6px}
+.tk-tdlg .tk-dh h3{flex:1;min-width:0;margin:0;font-size:inherit;font-weight:inherit}
+.tk-tbar{display:flex;align-items:center;gap:8px}
+.tk-tbck .tk-ck{width:20px;height:20px}
+.tk-when{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:14px;font-weight:700;color:var(--brand);background:var(--brand-soft);border:0;border-radius:999px;padding:6px 12px;cursor:pointer;white-space:nowrap;max-width:100%;overflow:hidden}
+.tk-when .rep{font-weight:600;opacity:.8}
+.tk-when.empty{background:var(--sunken);color:var(--muted)}
+.tk-tdlg .tk-flag{width:34px;height:34px;padding:0;border:0;background:transparent}
+.tk-morew,.tk-flagw{position:relative}
+.tk-moremenu{position:absolute;inset-inline-end:0;top:calc(100% + 4px);z-index:20;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 30px rgba(16,24,40,.14);padding:6px;display:flex;flex-direction:column;min-width:180px}
+.tk-moremenu button{font:inherit;font-size:14px;text-align:start;border:0;background:none;color:var(--ink);padding:9px 10px;border-radius:8px;cursor:pointer}
+.tk-moremenu button:hover{background:var(--sunken)}
+.tk-moremenu .dng{color:#D92D20}
+.tk-tdlg .tk-db{gap:6px 14px;padding-top:14px}
+.tk-tmain{display:flex;flex-direction:column;gap:4px}
+.tk-tdlg textarea.tk-ttl{font:inherit;font-size:20px;font-weight:800;line-height:1.5;border:0!important;background:transparent!important;padding:0!important;resize:none;overflow:hidden;box-shadow:none!important;color:var(--ink)}
+.tk-tdlg textarea.tk-tnotes{font:inherit;font-size:14.5px;line-height:1.7;border:0!important;background:transparent!important;padding:0!important;resize:none;overflow:hidden;box-shadow:none!important;color:var(--ink);min-height:24px}
+.tk-tdlg textarea.tk-ttl:focus,.tk-tdlg textarea.tk-tnotes:focus{outline:none}
+.tk-tdlg .tk-itadd{border:0!important;border-bottom:1px dashed var(--line)!important;background:transparent!important;border-radius:0!important;padding:8px 2px!important}
+.tk-pills{display:flex;flex-wrap:wrap;gap:7px;padding-top:6px}
+.tk-pill{display:inline-flex;align-items:center;gap:6px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:6px 11px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-pill i{width:8px;height:8px;border-radius:50%;flex:none}
+.tk-pill.empty{border-style:dashed;color:var(--muted);font-weight:500}
+.tk-pill.open{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-soft)}
+.tk-popbox{margin-top:10px;border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--sunken)}
+.tk-popf{display:flex;flex-direction:column;gap:8px}
+.tk-datepop{display:flex;flex-direction:column;gap:10px}
+.tk-prow{display:flex;align-items:center;gap:8px;font-size:13.5px;border-top:1px solid var(--line);padding-top:10px}
+.tk-prow select,.tk-prow input{width:auto!important;max-width:200px}
+.tk-mcal{background:var(--surface);border-radius:12px;padding:8px}
+.tk-mcalh{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.tk-mcalh b{font-size:13.5px}
+.tk-mcalg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;text-align:center}
+.tk-mcalg .wd{font-size:11px;font-weight:700;color:var(--muted);padding:4px 0}
+.tk-mcalg button{font:inherit;font-size:13px;border:0;background:none;color:var(--ink);padding:6px 0;border-radius:8px;cursor:pointer}
+.tk-mcalg button:hover{background:var(--sunken)}
+.tk-mcalg button.out{color:var(--muted);opacity:.5}
+.tk-mcalg button.td{color:var(--brand);font-weight:800}
+.tk-mcalg button.on{background:var(--brand);color:#fff;font-weight:800}
+.tk-created{font-size:12px}
+@media (max-width:860px){ .tk-tdlg textarea.tk-ttl{font-size:19px} .tk-pill{font-size:14px} }
+.tk-tbar .tk-ib{border:0;background:transparent;width:34px;height:34px;padding:0;font-size:18px}
 
 </style>
 
@@ -5389,73 +5432,96 @@ function itemsBlock(t,isNew){ const box=h("div",{class:"f full tk-items"});
       add);
     if(focusNew) setTimeout(()=>add.focus(),0); };
   draw(); return box; }
+/* small month calendar used by the date popover */
+function miniCal(getVal,setVal){ const box=h("div",{class:"tk-mcal"}); let base=null;
+  const draw=()=>{ const v=getVal(); const ref=base||(v?new Date(parseD(v)):new Date()); const m0=new Date(ref.getFullYear(),ref.getMonth(),1); const first=new Date(m0); first.setDate(1-m0.getDay()); const td=iso(new Date());
+    box.replaceChildren(h("div",{class:"tk-mcalh"},h("button",{type:"button",class:"tk-ib sm",onclick:()=>{ base=new Date(m0.getFullYear(),m0.getMonth()-1,1); draw(); }},"›"),h("b",{},MON[m0.getMonth()]+" "+m0.getFullYear()),h("button",{type:"button",class:"tk-ib sm",onclick:()=>{ base=new Date(m0.getFullYear(),m0.getMonth()+1,1); draw(); }},"‹")),
+      h("div",{class:"tk-mcalg"},["ح","ن","ث","ر","خ","ج","س"].map(x=>h("span",{class:"wd"},x)),[...Array(42)].map((_,i)=>{ const x=new Date(first); x.setDate(first.getDate()+i); const k=iso(x);
+        return h("button",{type:"button",class:(x.getMonth()!==m0.getMonth()?"out ":"")+(k===td?"td ":"")+(k===v?"on":""),onclick:()=>{ setVal(k); draw(); }},x.getDate()); }))); };
+  draw(); box.redraw=()=>{ base=null; draw(); }; return box; }
 function editTask(t,preset={}){ const isNew=!t; dlg.panel=t?t.id:"new"; t=t?{...t}:newTask(preset);
-  const title=h("textarea",{rows:2,id:"tkTitle",required:true,placeholder:"ماذا تريد أن تنجز؟"},t.title||"");
-  const proj=projSelect(t.project,()=>{ fillMain(); },{empty:"— بدون مشروع —",id:"tkProj"});
-  const mainSel=h("select",{id:"tkMainSel"}); const mainWrap=h("label",{class:"f"},"المهمة الرئيسية",mainSel);
+  const grow=el=>{ const f=()=>{ el.style.height="auto"; el.style.height=Math.max(el.scrollHeight,24)+"px"; }; el.addEventListener("input",f); setTimeout(f,0); return el; };
+  const title=grow(h("textarea",{rows:1,id:"tkTitle",class:"tk-ttl",required:true,placeholder:"ماذا تريد أن تنجز؟"},t.title||""));
+  const notes=grow(h("textarea",{rows:1,id:"tkNotes",class:"tk-tnotes",placeholder:"ملاحظات، روابط…"},t.notes||""));
+  const proj=projSelect(t.project,()=>{ fillMain(); pills(); },{empty:"— بدون مشروع —",id:"tkProj"});
+  const mainSel=h("select",{id:"tkMainSel",onchange:()=>pills()}); const mainWrap=h("label",{class:"f"},"المهمة الرئيسية",mainSel);
   function fillMain(){ const p=get(proj.value); const show=p&&p.type==="big"&&!subsOf(t.id).length; mainWrap.hidden=!show; mainSel.replaceChildren(h("option",{value:""},"— هذه مهمة رئيسية —"),...(show?tasks().filter(x=>x.project===p.id&&!x.main&&x.id!==t.id).sort(byOrder).map(x=>h("option",{value:x.id},x.title)):[])); mainSel.value=show&&t.main&&get(t.main)&&get(t.main).project===p.id?t.main:""; }
   fillMain();
-  const ef=opts(EFF,t.effort||""); ef.dataset.clear="1";
-  // priority = a coloured flag; tap it to pick another colour
+  const ef=opts(EFF,t.effort||""); ef.dataset.clear="1"; ef.addEventListener("change",()=>pills());
   let prio=t.priority||3; const prMenu=h("div",{class:"tk-flagmenu",hidden:true});
   const prBtn=h("button",{type:"button",class:"tk-flag",id:"tkPrio","aria-haspopup":"true",onclick:()=>{ prMenu.hidden=!prMenu.hidden; }});
-  const drawPr=()=>{ prBtn.style.setProperty("--fc",PRI[prio].c); prBtn.replaceChildren(icon("flag",20)); prBtn.title="الأولوية: "+PRI[prio].n; prBtn.setAttribute("aria-label","الأولوية: "+PRI[prio].n);
+  const drawPr=()=>{ prBtn.style.setProperty("--fc",PRI[prio].c); prBtn.replaceChildren(icon("flag",19)); prBtn.title="الأولوية: "+PRI[prio].n; prBtn.setAttribute("aria-label","الأولوية: "+PRI[prio].n);
     prMenu.replaceChildren(...[1,2,3,4].map(k=>h("button",{type:"button",class:"tk-flagopt"+(k===prio?" on":""),style:"--fc:"+PRI[k].c,onclick:()=>{ prio=k; prMenu.hidden=true; drawPr(); }},icon("flag",18),h("span",{},PRI[k].n)))); };
   drawPr();
-  const mins=h("input",{type:"number",min:5,step:5,id:"tkMin",placeholder:"تلقائي",value:t.minutes||""});
-  const dl=h("input",{type:"date",id:"tkDate",value:t.planned||""});
-  const dd=h("input",{type:"date",id:"tkDeadline",value:t.deadline||""});
-  const ddWrap=h("div",{class:"tk-ddw"},h("b",{class:"tk-ddl"},"⏱ آخر أجل"),dd,h("button",{type:"button",class:"tk-btn sm",onclick:()=>{ dd.value=""; ddWrap.hidden=true; ddAdd.hidden=false; }},"إزالة"));
-  const ddAdd=h("button",{type:"button",class:"tk-link",id:"tkAddDeadline",onclick:()=>{ ddWrap.hidden=false; ddAdd.hidden=true; try{ dd.showPicker&&dd.showPicker(); }catch(e){} }},"＋ موعد نهائي (آخر أجل)");
-  ddWrap.hidden=!t.deadline; ddAdd.hidden=!!t.deadline;
-  const r0=t.repeat||null; let rdays=[...((r0&&r0.days)||[])];
+  const mins=h("input",{type:"number",min:5,step:5,id:"tkMin",placeholder:"دقائق",value:t.minutes||"",style:"width:90px",oninput:()=>pills()});
+  const dl=h("input",{type:"date",id:"tkDate",value:t.planned||"",class:"sr"});
+  const dd=h("input",{type:"date",id:"tkDeadline",value:t.deadline||"",onchange:()=>{ drawWhen(); pills(); }});
+  const r0=t.repeat||null; let rdays=[...((r0&&r0.days)||[])]; let repOpen=!!r0;
   const rsel=h("select",{id:"tkRep"},[["","لا تتكرر"],["d","يوميًا"],["wd","أيام العمل (الأحد–الخميس)"],["w","أسبوعيًا…"],["m","شهريًا"]].map(([k,n])=>h("option",{value:k},n)));
   rsel.value=!r0?"":r0.f==="w"&&rdays.slice().sort().join()==="0,1,2,3,4"?"wd":r0.f;
-  const rchips=h("div",{class:"tk-opts",id:"tkRepDays"}); const drawR=()=>{ rchips.hidden=rsel.value!=="w"; rchips.replaceChildren(...WDN.map((n,i)=>h("button",{type:"button","aria-pressed":String(rdays.includes(i)),onclick:()=>{ rdays=rdays.includes(i)?rdays.filter(x=>x!==i):[...rdays,i]; drawR(); }},n))); };
-  rsel.onchange=()=>{ if(rsel.value==="w"&&!rdays.length) rdays=[parseD(dl.value)?new Date(parseD(dl.value)).getDay():new Date().getDay()]; drawR(); drawD(); }; drawR();
-  const repRow=h("div",{class:"tk-reprow"},icon("repeat",16),rsel,rchips); let repOpen=!!r0;
-  const br=h("select",{id:"tkBr"},h("option",{value:""},"— بدون —"),Object.entries(BRANCHES).map(([k,b])=>h("option",{value:k},b.n))); br.value=t.branch||"";
-  const tool=h("select",{id:"tkTool"},h("option",{value:""},"— بدون —"),Object.entries(TOOLS).map(([k,n])=>h("option",{value:k},n))); tool.value=t.tool||"";
-  const ppl=tagInput(t.people,people()); const notes=h("textarea",{rows:3,id:"tkNotes",placeholder:"تفاصيل، روابط، ملاحظات…"},t.notes||"");
-  const save=h("button",{type:"submit",class:"tk-btn pri",id:"tkSave"},isNew?"إضافة المهمة":"حفظ");
-  // date as quick chips; the calendar input only when a custom date is needed
+  const rchips=h("div",{class:"tk-opts",id:"tkRepDays"}); const drawR=()=>{ rchips.hidden=rsel.value!=="w"; rchips.replaceChildren(...WDN.map((n,i)=>h("button",{type:"button","aria-pressed":String(rdays.includes(i)),onclick:()=>{ rdays=rdays.includes(i)?rdays.filter(x=>x!==i):[...rdays,i]; drawR(); drawWhen(); }},n.replace("ال","")))); };
+  rsel.onchange=()=>{ repOpen=!!rsel.value; if(rsel.value==="w"&&!rdays.length) rdays=[parseD(dl.value)?new Date(parseD(dl.value)).getDay():new Date().getDay()]; drawR(); drawWhen(); }; drawR();
+  const br=h("select",{id:"tkBr",onchange:()=>pills()},h("option",{value:""},"— بدون —"),Object.entries(BRANCHES).map(([k,b])=>h("option",{value:k},b.n))); br.value=t.branch||"";
+  const tool=h("select",{id:"tkTool",onchange:()=>pills()},h("option",{value:""},"— بدون —"),Object.entries(TOOLS).map(([k,n])=>h("option",{value:k},n))); tool.value=t.tool||"";
+  const ppl=tagInput(t.people,people()); ppl.addEventListener("click",()=>setTimeout(pills,0)); ppl.addEventListener("keyup",()=>setTimeout(pills,0));
+  // date popover: quick chips, month, repeat, deadline
   const dOff=n=>{ const x=new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate()+n); return iso(x); };
   const nextSun=(()=>{ const x=new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate()+((7-x.getDay())%7||7)); return iso(x); })();
   const DCH=[["اليوم",dOff(0)],["غدًا",dOff(1)],["الأحد القادم",nextSun],["بدون",""]];
-  const dchips=h("div",{class:"tk-opts tk-dch",id:"tkDateChips"}); dl.classList.add("tk-dlin");
-  let customOpen=false;
-  const drawD=(custom)=>{ if(custom!==undefined) customOpen=custom; const v=dl.value; const known=DCH.some(([,x])=>x===v); dl.hidden=!(customOpen||(v&&!known)); repRow.hidden=!repOpen;
-    dchips.replaceChildren(...DCH.map(([n,x])=>h("button",{type:"button","aria-pressed":String(!dl.hidden?false:v===x),onclick:()=>{ dl.value=x; dl.dataset.touched="1"; drawD(false); }},n)),
-      h("button",{type:"button","aria-pressed":String(!dl.hidden),onclick:()=>{ dl.dataset.touched="1"; drawD(true); try{ dl.showPicker&&dl.showPicker(); }catch(e){} }},v&&!known?"📅 "+fmtD(v):"📅 تاريخ…"),
-      h("button",{type:"button",class:"tk-repch","aria-pressed":String(!!rsel.value),onclick:()=>{ repOpen=!repOpen; if(repOpen&&!rsel.value){ rsel.value="w"; rsel.onchange(); } drawD(); }},icon("repeat",14),rsel.value?repLabel(rsel.value==="wd"?{f:"w",days:[0,1,2,3,4]}:rsel.value==="w"?{f:"w",days:rdays}:{f:rsel.value}):"تكرار")); };
-  dl.addEventListener("change",()=>{ dl.dataset.touched="1"; drawD(true); }); drawD(false);
-  const hasMore=!!(t.notes||t.effort||t.branch||(t.people||[]).length||t.tool);
-  const d=dlg(isNew?(preset.main?"مهمة فرعية جديدة":"مهمة جديدة"):"تعديل المهمة",[
-      h("div",{class:"f full tk-trow"},h("div",{class:"tk-tcol"},title),h("div",{class:"tk-flagw"},prBtn,prMenu)),
-      itemsBlock(t,isNew),
-      h("div",{class:"f full"},h("label",{class:"f"},"متى ستنجزها؟"),dchips,dl,repRow,h("div",{class:"tk-ddrow"},ddAdd,ddWrap)),
-      h("label",{class:"f"},"المشروع",proj), mainWrap,
-      h("details",{class:"tk-more full",open:hasMore||null},h("summary",{},"خيارات أكثر",h("small",{},"الجهد، الفرع، الأشخاص، القالب، ملاحظات")),h("div",{class:"tk-moreb"},
-      h("label",{class:"f"},"الفرع",br),
-      h("div",{class:"f full"},h("label",{class:"f"},"الجهد المتوقع (يساعد في التوازن والاختيار اليومي)"),h("div",{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap"},ef,h("span",{class:"tk-muted"},"أو بالدقائق:"),h("span",{style:"width:110px"},mins))),
-      h("div",{class:"f full"},h("label",{class:"f"},"الأشخاص (من طلبها أو من تخدمه)"),ppl),
-      h("label",{class:"f"},"قالب مرتبط في الاستوديو",tool),
-      h("label",{class:"f full"},"ملاحظات",notes)))],
-    [save,h("span",{class:"tk-sp"}),!isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(t.id); const kids=subsOf(t.id); remove(t.id); kids.forEach(k=>remove(k.id)); d.close(); toast("حُذفت المهمة",()=>{ old.deleted=false; put(old); kids.forEach(k=>{ k.deleted=false; put(k); }); }); }},"حذف"),
-      !isNew&&isMain(t)&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ d.close(); editTask(null,{project:t.project,main:t.id}); }},"+ فرعية")]);
-  if(preset.main) mainSel.value=preset.main;
+  const setDate=v=>{ dl.value=v; dl.dataset.touched="1"; dl.dispatchEvent(new Event("change",{bubbles:true})); drawWhen(); };
+  const dchips=h("div",{class:"tk-opts tk-dch",id:"tkDateChips"});
+  const cal=miniCal(()=>dl.value,setDate);
+  const ddRow=h("div",{class:"tk-prow"},h("span",{},"⏱ آخر أجل"),h("span",{class:"tk-sp"}),dd,h("button",{type:"button",class:"tk-link",onclick:()=>{ dd.value=""; drawWhen(); pills(); }},"إزالة"));
+  const datePop=h("div",{class:"tk-datepop"},dchips,cal,h("div",{class:"tk-prow"},icon("repeat",15),h("span",{},"التكرار"),h("span",{class:"tk-sp"}),rsel),rchips,ddRow);
+  const whenBtn=h("button",{type:"button",class:"tk-when",id:"tkWhen",onclick:()=>openPop("date")});
+  const repText=()=>rsel.value?repLabel(rsel.value==="wd"?{f:"w",days:[0,1,2,3,4]}:rsel.value==="w"?{f:"w",days:rdays}:{f:rsel.value}):"";
+  function drawWhen(){ const v=dl.value; dchips.replaceChildren(...DCH.map(([n,x])=>h("button",{type:"button","aria-pressed":String(v===x),onclick:()=>{ setDate(x); cal.redraw(); }},n)));
+    whenBtn.classList.toggle("empty",!v&&!rsel.value); whenBtn.replaceChildren(icon("today",15),h("span",{},v?(whenLabel(v)||fmtD(v)):"بلا تاريخ"),rsel.value?h("span",{class:"rep"},"↻ "+repText()):null); }
+  // properties as pills, each opening its own small panel below
+  const popBox=h("div",{class:"tk-popbox",hidden:true}); let popKey=null;
+  const POPS={date:()=>datePop,proj:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"المشروع",proj),mainWrap),ppl:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"من طلبها أو من تخدمه"),ppl),
+    eff:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"الجهد المتوقع"),h("div",{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap"},ef,h("span",{class:"tk-muted"},"أو"),mins)),
+    br:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"الفرع",br)),dl:()=>h("div",{class:"tk-popf"},ddRow),tool:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"قالب مرتبط في الاستوديو",tool))};
+  function openPop(k){ if(popKey===k){ popBox.hidden=true; popKey=null; pills(); return; } popKey=k; popBox.replaceChildren(POPS[k]()); popBox.hidden=false; pills(); if(k==="date") cal.redraw(); }
+  const pillRow=h("div",{class:"tk-pills"});
+  function pills(){ const p=get(proj.value), m=mainWrap.hidden?null:get(mainSel.value); const pv=ppl.values?ppl.values():[]; const e=ef.value&&EFF[ef.value];
+    const pill=(k,on,label,extra)=>h("button",{type:"button",class:"tk-pill"+(on?"":" empty")+(popKey===k?" open":""),style:extra||"",onclick:()=>openPop(k)},label);
+    pillRow.replaceChildren(
+      pill("proj",!!p,p?[h("i",{style:"background:"+pcol(p)}),p.name+(m?" › "+m.title.slice(0,24):"")]:"＋ مشروع"),
+      pill("ppl",pv.length,pv.length?"👤 "+pv.join("، "):"＋ أشخاص"),
+      pill("eff",!!(e||mins.value),e?"⚡ "+e.n:mins.value?"⚡ "+mins.value+" د":"＋ الجهد"),
+      pill("br",!!br.value,br.value?"🏫 "+BRANCHES[br.value].n:"＋ الفرع"),
+      pill("dl",!!dd.value,dd.value?"⏱ "+fmtD(dd.value):"⏱ آخر أجل",dd.value&&daysLeft(dd.value)<=2?"color:var(--late)":""),
+      pill("tool",!!tool.value,tool.value?"🎨 "+TOOLS[tool.value]:"🎨 قالب")); }
+  drawWhen(); pills();
+  // header: done box · when · flag · more · close
+  const live=!isNew&&get(t.id);
+  const more=h("div",{class:"tk-moremenu",hidden:true});
+  const moreBtn=h("button",{type:"button",class:"tk-ib",title:"المزيد",onclick:()=>{ more.hidden=!more.hidden; }},"⋯");
+  const head=h("div",{class:"tk-tbar"},live?h("span",{class:"tk-tbck"},checkbox(live)):null,whenBtn,h("span",{class:"tk-sp"}),h("span",{class:"tk-flagw"},prBtn,prMenu),!isNew?h("span",{class:"tk-morew"},moreBtn,more):null);
+  const d=dlg(head,[h("div",{class:"f full tk-tmain"},title,notes),itemsBlock(t,isNew),h("div",{class:"f full"},pillRow,popBox)],
+    isNew? [h("button",{type:"submit",class:"tk-btn pri",id:"tkSave"},preset.main?"إضافة المهمة الفرعية":"إضافة المهمة"),h("span",{class:"tk-sp"}),h("span",{class:"tk-muted",style:"font-size:12px"},"Enter في العنوان للإضافة")]
+          : [h("span",{class:"tk-muted tk-created"},t.createdAt?"أُنشئت "+longD(iso(new Date(t.createdAt))):"")]);
+  d.classList.add("tk-tdlg");
+  if(!isNew) more.replaceChildren(
+    isMain(t)?h("button",{type:"button",onclick:()=>{ d.close(); editTask(null,{project:t.project,main:t.id}); }},"＋ مهمة فرعية"):null,
+    t.project&&get(t.project)?h("button",{type:"button",onclick:()=>{ d.close(); go("proj",{proj:t.project}); }},"↗ افتح المشروع"):null,
+    h("button",{type:"button",class:"dng",onclick:()=>{ const old=get(t.id); const kids=subsOf(t.id); d._footAct=true; remove(t.id); kids.forEach(k=>remove(k.id)); d.close(); toast("حُذفت المهمة",()=>{ old.deleted=false; put(old); kids.forEach(k=>{ k.deleted=false; put(k); }); }); }},"🗑 حذف"));
+  if(preset.main){ mainSel.value=preset.main; pills(); }
+  title.addEventListener("keydown",e=>{ if(e.key==="Enter"&&!e.shiftKey&&!e.isComposing){ e.preventDefault(); if(isNew) Q("form",d).requestSubmit(); else notes.focus(); } });
   Q("form",d).addEventListener("submit",e=>{ let v=title.value.trim(); if(!v){ e.preventDefault(); title.focus(); return; }
     if(isNew){ const g=parseCapture(v); v=g.title||v;
       if(!proj.value&&g.project){ proj.value=g.project; t.guessed={project:g.src.project==="guess"}; }
       if(!br.value&&g.branch) br.value=g.branch; if(g.planned&&(!dl.value||!dl.dataset.touched)) dl.value=g.planned; if(!dd.value&&g.deadline) dd.value=g.deadline;
       if(prio===3&&g.priority<3) prio=g.priority; const pv=ppl.values(); for(const x of g.people) if(!pv.includes(x)) pv.push(x); }
-    const was=get(t.id); if(was&&was.items) t.items=was.items;
+    const was=get(t.id); if(was&&was.items) t.items=was.items; if(was&&was.status!==t.status){ t.status=was.status; t.doneAt=was.doneAt; t.repeatNext=was.repeatNext; }
     Object.assign(t,{title:v,project:proj.value||null,main:mainWrap.hidden?null:(mainSel.value||null),priority:prio,planned:dl.value||null,deadline:dd.value||null,v:2,effort:ef.value||"",minutes:+mins.value||null,branch:br.value||null,tool:tool.value||null,people:ppl.values(),notes:notes.value.trim()});
     const rv=repOpen?rsel.value:""; t.repeat=!rv?null:rv==="wd"?{f:"w",days:[0,1,2,3,4]}:rv==="w"?{f:"w",days:rdays.length?rdays:[new Date().getDay()]}:{f:rv};
     if(t.repeat&&!t.planned){ const td=iso(new Date()); const ok=t.repeat.f!=="w"||t.repeat.days.includes(new Date().getDay()); t.planned=ok?td:nextDate(t.repeat,td); }
     if(isNew) t.createdAt=Date.now(); if(t.project&&!(isNew&&t.guessed&&t.guessed.project)){ t.inbox=false; t.guessed=null; } else if(isNew) t.inbox=true; put(t,{silent:true}); syncMain(t); if(was&&was.main&&was.main!==t.main){ const om=get(was.main); if(om) syncMain(subsOf(om.id)[0]||t); } render(); Sync.soon(); toast(isNew?"أُضيفت المهمة":"حُفظت التعديلات"); });
   if(!isNew) autoSave(d,t.id);
-  setTimeout(()=>title.focus(),30); }
+  setTimeout(()=>{ title.focus(); if(!isNew) title.setSelectionRange(title.value.length,title.value.length); },30); }
+
 function editProject(p,type){ const isNew=!p; p=p?{...p}:{id:uid(),kind:"project",type,name:"",color:type==="big"?"#7A4FC8":"#0B4EA2",weight:3,priority:3,status:"active",people:[],createdAt:Date.now(),order:projects().length};
   const name=h("input",{type:"text",id:"tkPName",value:p.name,required:true,placeholder:p.type==="big"?"مثال: اللقاءات الإعلامية 2027":"مثال: حيوية منصات المؤسسة"});
   let color=p.color; const cols=h("div",{class:"tk-colors"},COLORS.map(c=>h("button",{type:"button",style:"background:"+c,"aria-pressed":String(c===color),"aria-label":c,onclick:e=>{ color=c; QA("button",cols).forEach(b=>b.setAttribute("aria-pressed",String(b===e.currentTarget))); }})));
