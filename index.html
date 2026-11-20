@@ -4148,7 +4148,7 @@ function syncDialog(){ const c=Sync.cfg;
     [h("button",{type:"button",class:"tk-btn pri",id:"tkSbGo",onclick:async()=>{ Sync.cfg={url:url.value.trim().replace(/\/+$/,""),key:key.value.trim(),email:em.value.trim()}; ls.set("sb",Sync.cfg);
         if(!/^https:\/\/.+/.test(Sync.cfg.url)||!Sync.cfg.key){ state.textContent="أدخل Project URL والمفتاح."; state.className="tk-err"; return; }
         try{ if(pw.value||!Sync.ses){ state.textContent="جارٍ تسجيل الدخول…"; state.className=""; await Sync.signIn(Sync.cfg.email,pw.value); pw.value=""; } await Sync.run(); if(Sync.state==="ok") state.textContent="✓ متصل ومتزامن"; }
-        catch(e){ state.textContent="تعذّر تسجيل الدخول: "+e.message; state.className="tk-err"; } }},Sync.on()?"مزامنة الآن":"ربط ومزامنة"),
+        catch(e){ state.textContent=/invalid login/i.test(e.message)?"البريد أو كلمة المرور غير صحيحة. إن كانت هذه أول مرة ولم تنشئ حسابك بعد، اضغط «إنشاء حسابي (أول مرة)».":"تعذّر تسجيل الدخول: "+e.message; state.className="tk-err"; } }},Sync.on()?"مزامنة الآن":"ربط ومزامنة"),
      !Sync.on()&&h("button",{type:"button",class:"tk-btn",id:"tkSbNew",title:"مرة واحدة فقط، أول مرة",onclick:async()=>{ Sync.cfg={url:url.value.trim().replace(/\/+$/,""),key:key.value.trim(),email:em.value.trim()}; ls.set("sb",Sync.cfg);
         if(!em.value.trim()||pw.value.length<8){ state.textContent="أدخل بريدك وكلمة مرور من 8 أحرف على الأقل."; state.className="tk-err"; return; }
         try{ state.textContent="جارٍ إنشاء الحساب…"; state.className=""; await Sync.signUp(Sync.cfg.email,pw.value); pw.value=""; await Sync.run(); state.textContent="✓ أُنشئ حسابك وتمت المزامنة. على الأجهزة الأخرى استعمل «ربط ومزامنة»."; state.className="tk-ok"; }
