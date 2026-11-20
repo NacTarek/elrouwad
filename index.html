@@ -3509,6 +3509,8 @@ function chips(t,o={}){ const p=get(t.project), m=[]; const d=daysLeft(effDeadli
   if(t.status==="doing"||t.status==="wait") m.push(h("span",{class:"tk-ch st-"+t.status},ST[t.status].n));
   if(d!=null&&t.status!=="done") m.push(h("span",{class:"tk-ch"+(d<0?" late":d<=2?" soon":""),title:effDeadline(t)},"⏱ "+relLabel(d)+" · "+fmtD(effDeadline(t))));
   if(t.effort) m.push(h("span",{class:"tk-ch",title:EFF[t.effort].h},"◷ "+EFF[t.effort].n));
+  if(t.stage) m.push(h("span",{class:"tk-ch",title:"مرحلة النشر"},"🎬 "+t.stage));
+  if(t.slot) m.push(h("span",{class:"tk-ch"},t.slot==="morning"?"☀ صباحية":"☾ مسائية"));
   if(t.branch) m.push(h("span",{class:"tk-ch",style:"--pc:"+BRANCHES[t.branch].c},h("i",{class:"d"}),BRANCHES[t.branch].n));
   for(const x of (t.people||[]).slice(0,3)) m.push(h("span",{class:"tk-ch"},"👤 "+x));
   const s=subsOf(t.id); if(s.length) m.push(h("span",{class:"tk-ch"},"☑ "+s.filter(x=>x.status==="done").length+"/"+s.length));
@@ -3894,7 +3896,7 @@ function syncDialog(){ const c=Sync.cfg;
   const url=h("input",{type:"text",id:"tkSbUrl",dir:"ltr",placeholder:"https://xxxx.supabase.co",value:c.url}), key=h("input",{type:"text",id:"tkSbKey",dir:"ltr",placeholder:"sb_publishable_…",value:c.key});
   const em=h("input",{type:"text",id:"tkSbEm",dir:"ltr",inputmode:"email",autocomplete:"username",placeholder:"email",value:c.email}), pw=h("input",{type:"password",id:"tkSbPw",dir:"ltr",autocomplete:"current-password",placeholder:"••••••••",style:"font:inherit;color:var(--ink);background:var(--sunken);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;box-sizing:border-box"});
   const state=h("div",{id:"tkSbState",class:"full"},Sync.on()?(Sync.msg||"متصل"):"غير متصل — البيانات في هذا المتصفح فقط");
-  const imp=h("input",{type:"file",accept:".json,application/json",class:"sr",onchange:async e=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); const items=j.rouwadMediaItems||j.items; if(!Array.isArray(items)) throw 0; let n=0; for(const o of items){ if(!o||!o.id||!o.kind) continue; const loc=DB.items.get(o.id); if(!loc||(o.updatedAt||0)>(loc.updatedAt||0)){ DB.items.set(o.id,o); DB.dirty.add(o.id); n++; } } persist(); render(); Sync.soon(); state.textContent="استُورد "+n+" عنصرًا."; }catch(err){ state.textContent="الملف غير صالح."; state.className="tk-err"; } }});
+  const imp=h("input",{type:"file",accept:".json,application/json",class:"sr",onchange:async e=>{ const f=e.target.files[0]; if(!f) return; try{ const j=JSON.parse(await f.text()); const items=j.rouwadMediaItems||j.items; if(!Array.isArray(items)) throw 0; const n=importItems(items); state.textContent="استُورد "+n+" عنصرًا."; state.className="tk-ok"; }catch(err){ state.textContent="الملف غير صالح."; state.className="tk-err"; } }});
   const d=dlg("المزامنة والنسخ الاحتياطي",[
     h("p",{class:"tk-note full",style:"margin:0"},"تُحفظ المهام فورًا في هذا الجهاز، وتُزامَن مع حسابك بين الهاتف والحاسوب ولا يراها أحد غيرك. أول مرة فقط: «إنشاء حسابي»، وبعدها على كل جهاز: البريد وكلمة المرور ثم «ربط ومزامنة»."),
     h("label",{class:"f full"},"Project URL",url), h("label",{class:"f full"},"Publishable key (أو anon key)",key),
@@ -3922,6 +3924,14 @@ function syncDialog(){ const c=Sync.cfg;
      h("span",{class:"tk-sp"}), Sync.on()&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ Sync.out(); d.close(); render(); }},"تسجيل الخروج")]); }
 
 
+/* import a backup or a converted list: projects with the same name are merged, references remapped */
+function importItems(items){ const map=new Map(); let n=0;
+  for(const o of items) if(o&&o.kind==="project"&&!DB.items.has(o.id)){ const loc=projects().find(p=>p.type===o.type&&norm(p.name)===norm(o.name)); if(loc) map.set(o.id,loc.id); }
+  const m=id=>map.get(id)||id;
+  for(const o0 of items){ if(!o0||!o0.id||!o0.kind||map.has(o0.id)) continue; const o={...o0};
+    if(o.project) o.project=m(o.project); if(o.main) o.main=m(o.main); if(Array.isArray(o.focus)) o.focus=o.focus.map(m);
+    const loc=DB.items.get(o.id); if(!loc||(o.updatedAt||0)>(loc.updatedAt||0)){ DB.items.set(o.id,o); DB.dirty.add(o.id); n++; } }
+  persist(); render(); Sync.soon(); return n; }
 /* ---------- app install + offline (PWA) ---------- */
 const PWA={prompt:null};
 const inFrame=(()=>{ try{ return window.top!==window; }catch(e){ return true; } })();
@@ -3943,7 +3953,7 @@ function installBtn(){ if(standalone()) return null;
   return null; }
 (()=>{ const q=new URLSearchParams(location.search); const v=q.get("view"); if(v&&["home","inbox","list","kanban","big","balance"].includes(v)){ V.view=v; } if(q.has("add")) setTimeout(()=>{ const c=Q("#tkCap"); if(c) c.focus(); },300); })();
 /* expose for tests */
-window.rouwadTasks={parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+window.rouwadTasks={importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
 setMode(mode); render(); if(Sync.on()) Sync.run();
 })();
 </script>
