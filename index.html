@@ -852,6 +852,13 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
   .tk-pctl:not(.open){display:none}
   .tk-pstat b{font-size:17px}
 }
+/* time chooser after ticking */
+.tk-toast.tk-ttime{flex-wrap:wrap;max-width:min(560px,calc(100vw - 24px));gap:8px 12px;padding:10px 14px}
+.tk-ttm{max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-tto{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.tk-tto small{opacity:.75;font-weight:600}
+.tk-toast .tk-tchip{background:rgba(255,255,255,.14);color:var(--surface);border-radius:999px;padding:4px 10px;font-size:13px}
+.tk-toast .tk-tchip:hover{background:rgba(255,255,255,.28)}
 
 </style>
 
@@ -3728,16 +3735,33 @@ const people=()=>{ const s=new Map(); for(const t of tasks()) for(const p of (t.
 
 /* ---------- attention & balance ---------- */
 // attention = effort minutes of tasks finished in the period (a main task with subtasks counts through its subtasks)
-function attention(days,from=Date.now()){ const since=from-days*DAY, out=new Map();
-  for(const t of tasks()){ if(t.status!=="done"||!t.doneAt||t.doneAt<since||t.doneAt>from) continue; if(subsOf(t.id).length) continue;
-    out.set(t.project,(out.get(t.project)||0)+effMin(t)); } return out; }
+const POST_MIN={video:120,photos:45,story:30,design:45};
+const pubArea=()=>areas().find(p=>/حيوية/.test(p.name))||null;
+// every finished piece of work in [since,until): {project, branch, people, m (minutes), est (no real time given)}
+function workDone(since,until=Date.now()){ const out=[], va=pubArea();
+  for(const t of tasks()){ if(t.status!=="done"||!t.doneAt||t.doneAt<since||t.doneAt>=until) continue; if(subsOf(t.id).length) continue;
+    out.push({project:t.project,branch:t.branch,people:t.people||[],m:effMin(t),est:!t.minutes,at:t.doneAt}); }
+  if(va) for(const p of posts()){ if(p.stage!=="published"||!p.publishedAt||p.publishedAt<since||p.publishedAt>=until) continue;
+    out.push({project:va.id,branch:p.branch,people:p.people||[],m:p.minutes||POST_MIN[p.type]||POST_MIN.video,est:!p.minutes,at:p.publishedAt,post:1}); }
+  return out; }
+function attention(days,from=Date.now()){ const out=new Map(); for(const w of workDone(from-days*DAY,from+1)) out.set(w.project,(out.get(w.project)||0)+w.m); return out; }
+function attentionN(days){ const out=new Map(); for(const w of workDone(Date.now()-days*DAY,Date.now()+1)){ const r=out.get(w.project)||{n:0,est:0,posts:0}; r.n++; if(w.est) r.est++; if(w.post) r.posts++; out.set(w.project,r); } return out; }
+/* "how long did it take?" — asked right after ticking, one tap, skippable */
+const TIME_OPTS=[[15,"ربع ساعة"],[45,"45 د"],[120,"ساعتان"],[240,"نصف يوم"]];
+function askTime(o,msg,undo){ QA(".tk-toast").forEach(x=>x.remove()); let timer;
+  const t=h("div",{class:"tk-toast tk-ttime",role:"status"},h("span",{class:"tk-ttm"},msg),
+    h("div",{class:"tk-tto"},h("small",{},"كم أخذت؟"),TIME_OPTS.map(([m,n])=>h("button",{type:"button",class:"tk-tchip",onclick:()=>{ const x=get(o.id)||o; x.minutes=m; put(x,{silent:true}); Sync.soon(); t.remove(); clearTimeout(timer); if(V.view==="balance") render(); }},n))),
+    undo&&h("button",{type:"button",onclick:()=>{ undo(); t.remove(); }},"تراجع"));
+  document.body.append(t); timer=setTimeout(()=>t.remove(),8000); }
 function balance(days=14){ const att=attention(days), live=[...areas(),...bigs()]; const act=[...live,...bigs(true).filter(p=>p.status!=="active"&&att.get(p.id))]; const tot=[...att.values()].reduce((a,b)=>a+b,0);
   const wsum=live.reduce((a,p)=>a+(+p.weight||3),0)||1; const now=Date.now();
-  return act.map(p=>{ const m=att.get(p.id)||0, share=tot?m/tot:0, closed=p.status!=="active", target=closed?0:(+p.weight||3)/wsum;
+  const cnt=attentionN(days);
+  return act.map(p=>{ const c=cnt.get(p.id)||{n:0,est:0,posts:0}, m=att.get(p.id)||0, share=tot?m/tot:0, closed=p.status!=="active", target=closed?0:(+p.weight||3)/wsum;
     const done=tasks().filter(t=>t.project===p.id&&t.status==="done"&&t.doneAt).map(t=>t.doneAt); const last=done.length?Math.max(...done):null;
     const open=tasks().filter(t=>t.project===p.id&&t.status!=="done"&&!subsOf(t.id).length).length;
     let state="ok"; if(closed) state="closed"; else if(tot>0){ if(share>target*1.5&&share-target>0.08) state="hi"; else if(share<target*0.5&&target-share>0.06) state="lo"; } else state=open?"lo":"ok";
-    return {p,m,share,target,last,open,state,idle:last?Math.floor((now-last)/DAY):null}; }); }
+    const lp=p===pubArea()&&posts().filter(x=>x.publishedAt).map(x=>x.publishedAt); const last2=lp&&lp.length?Math.max(last||0,...lp):last;
+    return {p,m,n:c.n,est:c.est,posts:c.posts,share,target,last:last2,open,state,idle:last2?Math.floor((now-last2)/DAY):null}; }); }
 /* smart ranking: priority + deadline + balance + weekly focus (transparent "why") */
 function score(t,bal){ let s=0; const why=[]; const P={1:40,2:28,3:16,4:6}[t.priority||3]; s+=P; why.push("أولوية "+PRI[t.priority||3].n);
   const d=daysLeft(effDeadline(t));
@@ -3876,7 +3900,8 @@ function groupRows(list,o={}){ const groups=new Map(); for(const t of list){ con
 function toggleDone(t){ const was=t.status, wasAt=t.doneAt;
   if(t.status==="done"){ t.status=t.prev&&t.prev!=="done"?t.prev:"todo"; t.doneAt=null; unspawn(t); } else { t.prev=t.status; t.status="done"; t.doneAt=Date.now(); }
   put(t,{silent:true}); syncMain(t); render(); Sync.soon();
-  if(t.status==="done"&&!t.repeat) toast("أُنجزت: "+t.title,()=>{ t.status=was; t.doneAt=wasAt; put(t,{silent:true}); syncMain(t); render(); Sync.soon(); }); }
+  const undo=()=>{ t.status=was; t.doneAt=wasAt; put(t,{silent:true}); syncMain(t); render(); Sync.soon(); };
+  if(t.status==="done") askTime(t,"✓ "+t.title,t.repeat?null:undo); }
 function syncMain(t){ if(!t.main) return; const m=get(t.main); if(!m) return; const s=subsOf(m.id); if(!s.length) return;
   const allDone=s.every(x=>x.status==="done");
   if(allDone&&m.status!=="done"){ m.prev=m.status; m.status="done"; m.doneAt=Date.now(); put(m,{silent:true}); }
@@ -4222,7 +4247,7 @@ function pubDrag(e,p,card){ e.preventDefault(); e.stopPropagation(); const g=car
   let over=null, moved=false; const pos=ev=>{ g.style.left=(ev.clientX-120)+"px"; g.style.top=(ev.clientY-20)+"px"; }; pos(e);
   const mv=ev=>{ moved=true; pos(ev); const el=document.elementFromPoint(ev.clientX,ev.clientY); const col=el&&(el.closest(".tk-col")||el.closest(".tk-cday")); if(col!==over){ over&&over.classList.remove("over"); over=col; over&&over.classList.add("over"); } };
   const up=()=>{ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); g.remove(); card.classList.remove("drag-src"); over&&over.classList.remove("over");
-    if(over&&moved){ if(over.dataset.st) setStage(p,over.dataset.st); else if(over.dataset.day){ p.schedDate=over.dataset.day; put(p,{silent:true}); } p.kOrder=Date.now(); put(p,{silent:true}); render(); Sync.soon(); } };
+    if(over&&moved){ if(over.dataset.st){ const was=p.stage; setStage(p,over.dataset.st); if(over.dataset.st==="published"&&was!=="published") setTimeout(()=>askTime(p,"✓ نُشر: "+p.title),50); } else if(over.dataset.day){ p.schedDate=over.dataset.day; put(p,{silent:true}); } p.kOrder=Date.now(); put(p,{silent:true}); render(); Sync.soon(); } };
   window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up); }
 /* calendar */
 function vPubCal(){ const base=V.calMonth?new Date(V.calMonth+"-01T00:00"):new Date(); base.setDate(1); base.setHours(0,0,0,0);
@@ -4264,7 +4289,7 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
       h("div",{class:"f full"},h("label",{class:"f"},"الأشخاص"),ppl),
       h("label",{class:"f full"},"ملاحظات",notes)],
     [h("button",{type:"submit",class:"tk-btn pri",id:"tkPostSave"},isNew?"إضافة":"حفظ"),
-     !isNew&&p.stage!=="published"&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ const x=get(p.id); setStage(x,"published"); d.close(); render(); Sync.soon(); toast("✓ سُجّل كمنشور اليوم"); }},"✓ نُشر اليوم"),
+     !isNew&&p.stage!=="published"&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ const x=get(p.id); setStage(x,"published"); d.close(); render(); Sync.soon(); askTime(x,"✓ سُجّل كمنشور اليوم"); }},"✓ نُشر اليوم"),
      !isNew&&h("button",{type:"button",class:"tk-btn",title:"افتح قوالب الاستوديو",onclick:()=>{ d.close(); openTool(p.type==="photos"||p.type==="post"?"posts":"reel"); }},"✎ الاستوديو"),
      h("span",{class:"tk-sp"}),
      !isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(p.id); remove(p.id); d.close(); toast("حُذف",()=>{ old.deleted=false; put(old); }); }},"حذف")]);
@@ -4316,7 +4341,7 @@ function vHome(){ const today=iso(new Date()), open=actionable(); const ed=t=>ef
       h("span",{class:"tk-acts"},bulk(missed,"الكل لليوم",x=>x.planned=today),h("span",{class:"tk-muted"},"·"),bulk(missed,"الكل للقائمة",x=>x.planned=null))) : null,
     (()=>{ const pt=posts().filter(p=>p.schedDate===today&&p.stage!=="published"); return pt.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"للنشر اليوم"),h("span",{class:"tk-tgn"},pt.length)),
       h("div",{class:"tk-list"},pt.map(p=>h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:"+PS[p.stage].c}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},PS[p.stage].n))),
-        h("button",{type:"button",class:"tk-btn sm",onclick:e=>{ e.stopPropagation(); setStage(p,"published"); render(); Sync.soon(); toast("✓ نُشر"); }},"✓ نُشر")))))) : null; })(),
+        h("button",{type:"button",class:"tk-btn sm",onclick:e=>{ e.stopPropagation(); setStage(p,"published"); render(); Sync.soon(); askTime(p,"✓ نُشر"); }},"✓ نُشر")))))) : null; })(),
     h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"مهام اليوم"),h("span",{class:"tk-tgn"},now.length)),
       now.length? h("div",{},groupRows(now,{key:"today",rowOpts:{noPlan:true}})) : h("div",{class:"tk-empty"},"لا شيء لليوم بعد. اكتب مهمة في الأعلى، أو اختر من الاقتراحات.")),
     sugg.length? grp("sugg","اقتراحات لليوم",sugg.length,"","مهام بلا يوم محدّد، مرتّبة حسب الأولوية والموعد النهائي والتوازن.",h("div",{class:"tk-list"},sugg.map(x=>row(x.t,{why:x.why,act:btn("＋ لليوم","pri",()=>{ setPlanned(x.t,today); toast("أُضيفت إلى اليوم"); })})))) : null,
@@ -4445,19 +4470,20 @@ function vBalance(){ const days=V.days||14; const bal=balance(days); const tot=b
   const brow=(b)=>h("div",{class:"tk-brow",style:"--pc:"+pcol(b.p)},h("div",{class:"nm"},h("i"),h("span",{text:b.p.name,title:b.p.name})),
     h("div",{class:"tr"},h("b",{style:"width:"+(b.share*100).toFixed(1)+"%"}),h("u",{style:"inset-inline-start:calc("+(b.target*100).toFixed(1)+"% - 1px)",title:"الحصة المستهدفة "+Math.round(b.target*100)+"%"})),
     h("div",{class:"pc"},Math.round(b.share*100)+"%"),
-    h("div",{class:"st"},h("b",{class:b.state},b.state==="hi"?"يأخذ أكثر من حقّه":b.state==="lo"?"يحتاج وقتًا":b.state==="closed"?"مشروع مكتمل":"متوازن"),h("span",{},hm(b.m)),h("span",{},b.idle==null?"لا إنجاز بعد":"آخر إنجاز قبل "+b.idle+" يوم"),h("span",{},b.open+" مهمة مفتوحة")));
+    h("div",{class:"st"},h("b",{class:b.state},b.state==="hi"?"يأخذ أكثر من حقّه":b.state==="lo"?"يحتاج وقتًا":b.state==="closed"?"مشروع مكتمل":"متوازن"),h("span",{title:b.est?b.est+" منها بلا وقت مسجَّل (قيمة افتراضية)":"وقت مسجَّل"},b.n+" منجزة"+(b.posts?" ("+b.posts+" منشور)":"")+" · "+hm(b.m)+(b.est?" تقريبًا":"")),h("span",{},b.idle==null?"لا إنجاز بعد":"آخر إنجاز قبل "+b.idle+" يوم"),h("span",{},b.open+" مهمة مفتوحة")));
   const lo=bal.filter(b=>b.state==="lo").map(b=>b.p.name), hi=bal.filter(b=>b.state==="hi").map(b=>b.p.name);
   // branches and people over the period
-  const since=Date.now()-days*DAY, doneP=tasks().filter(t=>t.status==="done"&&t.doneAt>=since&&!subsOf(t.id).length);
-  const brM=new Map(); for(const t of doneP){ const k=t.branch||"_"; brM.set(k,(brM.get(k)||0)+effMin(t)); } const brTot=[...brM.values()].reduce((a,b)=>a+b,0);
-  const pp=new Map(); for(const t of tasks().filter(t=>t.status==="done"&&t.doneAt&&!subsOf(t.id).length)) for(const x of (t.people||[])){ const r=pp.get(x)||{n:0,m:0,last:0}; if(t.doneAt>=since){ r.n++; r.m+=effMin(t); } r.last=Math.max(r.last,t.doneAt); pp.set(x,r); }
+  const since=Date.now()-days*DAY, doneP=workDone(since,Date.now()+1);
+  const brM=new Map(); for(const t of doneP){ const k=t.branch||"_"; brM.set(k,(brM.get(k)||0)+t.m); } const brTot=[...brM.values()].reduce((a,b)=>a+b,0);
+  const pp=new Map(); for(const t of workDone(0,Date.now()+1)) for(const x of t.people){ const r=pp.get(x)||{n:0,m:0,last:0}; if(t.at>=since){ r.n++; r.m+=t.m; } r.last=Math.max(r.last,t.at); pp.set(x,r); }
   const ppl=[...pp.entries()].sort((a,b)=>b[1].m-a[1].m||b[1].last-a[1].last); const pMax=Math.max(1,...ppl.map(x=>x[1].m));
   const wk=weekDoc();
   return h("div",{},
-    h("div",{class:"tk-ph"},h("div",{},h("div",{class:"tk-muted"},"يُحسب من الجهد المقدَّر للمهام التي أنجزتها في الفترة. الخط الداكن = الحصة المستهدفة حسب وزن كل مشروع.")),h("span",{class:"tk-sp"}),dsel),
+    h("div",{class:"tk-ph"},h("div",{},h("div",{class:"tk-muted"},"يُحسب من وقت المهام المنجزة والمنشورات في الفترة. الخط الداكن = الحصة المستهدفة حسب وزن كل مشروع.")),h("span",{class:"tk-sp"}),dsel),
     h("div",{class:"tk-grid tk-bal"},
       h("div",{class:"tk-grid",style:"align-content:start"},
-        h("div",{class:"tk-card"},h("h3",{},"أين ذهب وقتك؟",h("small",{},hm(tot)+" منجزة")),
+        h("div",{class:"tk-card"},h("h3",{},"أين ذهب وقتك؟",h("small",{},bal.reduce((a,b)=>a+b.n,0)+" منجزة · "+hm(tot))),
+          (()=>{ const e=bal.reduce((a,b)=>a+b.est,0), n=bal.reduce((a,b)=>a+b.n,0); return e? h("p",{class:"tk-note",style:"margin:-4px 0 8px"},e+" من "+n+" بلا وقت مسجَّل، فحُسبت بقيمة افتراضية (مهمة 45 د، فيديو ساعتان). اختر «كم أخذت؟» عند الإنجاز لتصبح الأرقام أدق.") : null; })(),
           bal.length? bal.sort((a,b)=>b.share-a.share||b.target-a.target).map(brow) : h("div",{class:"tk-empty"},"أضف مشاريع أولًا."),
           (lo.length||hi.length)&&h("div",{class:"tk-sugg"},hi.length&&["«",hi.join("»، «"),"» أخذ وقتًا أكثر من حقه مؤخرًا. "].join(""),lo.length&&["أعطِ بعض الوقت لـ «",lo.join("»، «"),"»."].join(""))),
         h("div",{class:"tk-card tk-trend"},h("h3",{},"آخر 8 أسابيع",h("small",{},"الجهد المنجز أسبوعيًا لكل مشروع")),trend())),
@@ -4477,7 +4503,7 @@ function vBalance(){ const days=V.days||14; const bal=balance(days); const tot=b
 const hm=m=>{ m=Math.round(m); if(m<60) return m+" د"; const hh=Math.floor(m/60), mm=m%60; return hh+" س"+(mm?" "+mm+" د":""); };
 const fmtWeek=()=>{ const d=weekStart(); return d.getDate()+"/"+(d.getMonth()+1); };
 function trend(){ const ns="http://www.w3.org/2000/svg", W=560, H=200, pad=24, N=8; const ws=weekStart().getTime(); const ps=[...areas(),...bigs(true)];
-  const weeks=[...Array(N)].map((_,i)=>{ const st=ws-(N-1-i)*7*DAY, en=st+7*DAY, m=new Map(); for(const t of tasks()) if(t.status==="done"&&t.doneAt>=st&&t.doneAt<en&&!subsOf(t.id).length) m.set(t.project,(m.get(t.project)||0)+effMin(t)); return {st,m}; });
+  const weeks=[...Array(N)].map((_,i)=>{ const st=ws-(N-1-i)*7*DAY, en=st+7*DAY, m=new Map(); for(const t of workDone(st,en)) m.set(t.project,(m.get(t.project)||0)+t.m); return {st,m}; });
   const max=Math.max(60,...weeks.map(w=>[...w.m.values()].reduce((a,b)=>a+b,0)));
   const svg=document.createElementNS(ns,"svg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); const bw=(W-pad*2)/N;
   const el=(t,a)=>{ const e=document.createElementNS(ns,t); for(const[k,v] of Object.entries(a)) e.setAttribute(k,v); svg.append(e); return e; };
