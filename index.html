@@ -861,6 +861,43 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-toast .tk-tchip:hover{background:rgba(255,255,255,.28)}
 .tk-fbinfo{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;font-size:13px;color:var(--muted);background:var(--sunken);border-radius:10px;padding:8px 12px}
 .tk-fbinfo a{color:var(--brand);font-weight:700;text-decoration:none}
+/* checklists */
+.tk-cl{display:flex;flex-direction:column;gap:6px}
+.tk-clh{display:flex;align-items:center;gap:14px}
+.tk-clh .f{margin:0;margin-inline-end:auto}
+.tk-clg{border:1px solid var(--line);border-radius:12px;padding:0 10px;background:var(--surface)}
+.tk-clg.cur{border-color:color-mix(in srgb,var(--brand) 45%,var(--line))}
+.tk-clg summary{display:flex;align-items:center;gap:8px;padding:9px 0;cursor:pointer;list-style:none;font-size:13.5px}
+.tk-clg summary::-webkit-details-marker{display:none}
+.tk-clg summary::before{content:"▸";color:var(--muted);font-size:11px;transition:transform .15s}
+.tk-clg[open] summary::before{transform:rotate(-90deg)}
+.tk-cln{margin-inline-start:auto;font-size:12px;font-weight:700;color:var(--muted);background:var(--sunken);border-radius:999px;padding:1px 8px}
+.tk-cln.ok{color:#2BA14A}
+.tk-cli{display:flex;align-items:center;gap:6px;border-top:1px solid var(--line);padding:6px 0}
+.tk-cli label{display:flex;align-items:center;gap:9px;flex:1;cursor:pointer;font-size:14px;line-height:1.5}
+.tk-cli input{width:18px;height:18px;flex:none;accent-color:#2BA14A;margin:0}
+.tk-cli small{font-size:11px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:0 6px;white-space:nowrap}
+.tk-cli.done label span{text-decoration:line-through;color:var(--muted)}
+.tk-clx{border:0;background:none;color:var(--muted);font-size:16px;cursor:pointer;padding:2px 6px;border-radius:6px;opacity:.5}
+.tk-clx:hover{opacity:1;background:var(--sunken)}
+.tk-cloff{font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.tk-cloff button{font:inherit;font-size:12px;border:1px dashed var(--line);background:none;color:var(--muted);border-radius:999px;padding:2px 8px;cursor:pointer}
+.tk-clp{font-size:11.5px;font-weight:700;color:var(--muted)}
+.tk-clp.ok{color:#2BA14A}
+.tk-dlg.wide{width:min(760px,calc(100vw - 16px))}
+.tk-tpl{display:flex;flex-direction:column;gap:12px}
+.tk-tps h4{margin:4px 0 6px;font-size:13px;color:var(--muted)}
+.tk-tpi{display:flex;align-items:center;gap:6px;padding:4px 0}
+.tk-tpi input[type=text]{flex:1;min-width:0;font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink)}
+.tk-tpi select{font:inherit;font-size:12.5px;padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);max-width:120px}
+.tk-tpo{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--muted);white-space:nowrap}
+.tk-tpi .tk-ib.sm{min-width:28px;height:28px;padding:0}
+.tk-ib.dng{color:#E5484D}
+@media (max-width:860px){
+  .tk-tpi{flex-wrap:wrap}
+  .tk-tpi input[type=text]{flex-basis:calc(100% - 70px);order:-1}
+  .tk-tpi input[type=text],.tk-tpi select{font-size:16px}
+}
 
 </style>
 
@@ -3796,7 +3833,7 @@ const Sync={ cfg:Object.assign({email:""},ls.get("sb",{}),(c=>c.url&&c.key?{}:SB
   async ensure(){ if(!this.ses) throw new Error("لم يتم تسجيل الدخول"); if(Date.now()>this.ses.exp-90e3) await this.auth({refresh_token:this.ses.refresh_token},"refresh_token"); },
   async req(path,opt={},retry=true){ await this.ensure(); const r=await fetch(this.cfg.url.replace(/\/+$/,"")+path,{...opt,headers:this.hdr(opt.headers)});
     if(r.status===401&&retry){ this.ses.exp=0; return this.req(path,opt,false); }
-    if(!r.ok){ const j=await r.json().catch(()=>({})); throw new Error(j.message||j.hint||("HTTP "+r.status)); } return r; },
+    if(!r.ok){ const j=await r.json().catch(()=>({})); throw Object.assign(new Error(j.message||j.hint||("HTTP "+r.status)),{status:r.status}); } return r; },
   async run(){ if(!this.on()||this.busy) return; if(!navigator.onLine){ this.set("err","غير متصل بالإنترنت — ستتم المزامنة لاحقًا"); return; }
     this.busy=true; this.set("busy","جارٍ المزامنة…");
     try{ // pull
@@ -3813,7 +3850,11 @@ const Sync={ cfg:Object.assign({email:""},ls.get("sb",{}),(c=>c.url&&c.key?{}:SB
       // push
       const ids=[...DB.dirty]; for(let i=0;i<ids.length;i+=200){ const chunk=ids.slice(i,i+200).map(id=>DB.items.get(id)).filter(Boolean);
         const rows=chunk.map(o=>{ const {id,kind,deleted,updatedAt,...data}=o; return {id,kind,data,deleted:!!deleted,client_updated:updatedAt||Date.now()}; });
-        await this.req("/rest/v1/media_items?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
+        const send=r=>this.req("/rest/v1/media_items?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(r,(k,v)=>typeof v==="string"?wfStr(v):v)});
+        try{ await send(rows); }
+        catch(e){ if(!e.status||e.status===401||e.status>=500) throw e; // one bad item must not block the whole sync
+          let bad=0; for(const r of rows){ try{ await send([r]); }catch(e2){ if(e2.status===401) throw e2; bad++; DB.dirty.delete(r.id); console.warn("sync skip",r.id,e2.message); } }
+          if(bad) toast("تعذّرت مزامنة "+bad+" عنصر، بقيت محلية"); }
         for(const o of chunk) if((DB.items.get(o.id)||{}).updatedAt===o.updatedAt) DB.dirty.delete(o.id); }
       persist(); this.at=Date.now(); ls.set("syncAt",this.at); this.set("ok","متزامن"); if(changed){ migrateDates(); migratePosts(); render(); }
     }catch(e){ this.set("err","تعذّرت المزامنة: "+e.message); }
@@ -4194,6 +4235,8 @@ function migratePosts(){ let n=0; for(const o of DB.items.values()){ if(o.kind!=
   o.updatedAt=Date.now(); DB.dirty.add(o.id); n++; }
   if(n){ persist(); Sync.soon(); } return n; }
 /* ---------- Facebook (Meta Business Suite CSV export) → published posts ---------- */
+const wfStr=s=>s.replace(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/g,"");
+const cut=(s,n)=>Array.from(s).slice(0,n).join("");
 function parseCSV(t){ const rows=[]; let row=[], f="", q=false; t=t.replace(/^﻿/,"");
   for(let i=0;i<t.length;i++){ const c=t[i];
     if(q){ if(c==='"'){ if(t[i+1]==='"'){ f+='"'; i++; } else q=false; } else f+=c; }
@@ -4210,11 +4253,11 @@ function guessBranch(t){ const p=/ابتدائ|روضة|تحضيري/.test(t), m
 function importFbCsv(text){ const rows=parseCSV(text); if(!rows.length||!("Post ID" in rows[0])) throw new Error("ليس ملف تصدير منشورات من Meta Business Suite");
   const n=v=>parseInt(v,10)||0; let add=0, upd=0, lo=Infinity, hi=0;
   for(const x of rows){ const id="fb-"+x["Post ID"], at=ptToMs(x["Publish time"]); if(!x["Post ID"]||!at) continue; lo=Math.min(lo,at); hi=Math.max(hi,at);
-    const cap=(x["Title"]||x["Description"]||"").trim(); const first=(cap.split("\n").find(l=>l.trim())||"(بدون نص)").replace(/\s+/g," ").trim().slice(0,140);
+    const cap=(x["Title"]||x["Description"]||"").trim(); const first=(cap.split("\n").find(l=>l.trim())||"(بدون نص)").replace(/\s+/g," ").trim(); const ttl=cut(first,140);
     const stats={views:n(x["Views"]),reach:n(x["Viewers"]),reactions:n(x["Reactions"]),comments:n(x["Comments"]),shares:n(x["Shares"]),clicks:n(x["Total clicks"]),at:Date.now()};
     const old=get(id);
     if(old&&!old.deleted){ Object.assign(old,{stats,url:x["Permalink"]||old.url,publishedAt:at}); put(old,{silent:true}); upd++; }
-    else { put({id,kind:"post",v:3,title:first,stage:"published",type:x["Post type"]==="Photos"?"photos":"video",branch:guessBranch(cap.slice(0,400)),publishedAt:at,createdAt:at,url:x["Permalink"],fbId:x["Post ID"],caption:cap.slice(0,1500),source:"facebook",stats},{silent:true}); add++; } }
+    else { put({id,kind:"post",v:3,title:ttl,stage:"published",type:x["Post type"]==="Photos"?"photos":"video",branch:guessBranch(cap.slice(0,400)),publishedAt:at,createdAt:at,url:x["Permalink"],fbId:x["Post ID"],caption:cut(cap,1500),source:"facebook",stats},{silent:true}); add++; } }
   // approximate history (from ticked tasks) inside the exported period is now replaced by the real posts
   let rm=0; for(const o of posts()) if(/^pubh-/.test(o.id)&&o.publishedAt>=lo-DAY&&o.publishedAt<=hi+2*DAY){ o.deleted=true; put(o,{silent:true}); rm++; }
   render(); Sync.soon(); return {add,upd,rm}; }
@@ -4257,7 +4300,7 @@ function pubHeader(){ const s=pubStats(), cfg=s.cfg; const lastD=s.last?Math.flo
       h("div",{class:"tk-pspark",title:"المنشور أسبوعيًا (آخر 8 أسابيع)"},s.weeksBars.map(w=>h("i",{style:"height:"+(4+w.n/max*26)+"px",title:w.n+""}))),
       h("div",{class:"tk-pgoal"},h("span",{},"الوتيرة المطلوبة"),h("div",{class:"tk-opts tk-days"},[1,2,3,4,5].map(n=>h("button",{type:"button","aria-pressed":String(cfg.perWeek===n),onclick:()=>savePubCfg({perWeek:n,days:DEF_DAYS[n]})},String(n)))),h("span",{},"في الأسبوع")),
       h("div",{class:"tk-pgoal"},h("span",{},"أيام النشر"),h("div",{class:"tk-opts tk-days"},WDN.map((n,i)=>h("button",{type:"button","aria-pressed":String(cfg.days.includes(i)),onclick:()=>{ const d=cfg.days.includes(i)?cfg.days.filter(x=>x!==i):[...cfg.days,i]; if(!d.length) return; savePubCfg({days:d,perWeek:d.length}); }},n.replace("ال",""))))),
-      h("div",{class:"tk-pbtns"},h("button",{type:"button",class:"tk-btn pri",id:"tkAutoSched",onclick:autoSchedule},"برمج المحتوى الجاهز تلقائيًا"),h("button",{type:"button",class:"tk-link",onclick:unscheduleAll},"إلغاء البرمجة"),fbImportBtn()))); }
+      h("div",{class:"tk-pbtns"},h("button",{type:"button",class:"tk-btn pri",id:"tkAutoSched",onclick:autoSchedule},"برمج المحتوى الجاهز تلقائيًا"),h("button",{type:"button",class:"tk-link",onclick:unscheduleAll},"إلغاء البرمجة"),fbImportBtn(),h("button",{type:"button",class:"tk-link",onclick:()=>editTemplates()},"☑ قوالب التحقق")))); }
 /* board (kanban) */
 function vPubBoard(){ const ps=posts();
   const cols=h("div",{class:"tk-kb tk-pkb"},PSTAGE.map(([k,n,c])=>{ let items=ps.filter(p=>p.stage===k);
@@ -4271,14 +4314,15 @@ function postCard(p){ const d=p.schedDate?daysLeft(p.schedDate):null, notReady=p
     h("div",{class:"tk-tt",text:p.title}),
     h("div",{class:"tk-rm"},h("span",{class:"tk-rtag"},(PTYPE.find(x=>x[0]===p.type)||PTYPE[0])[1]),p.branch?h("span",{class:"tk-rp",style:"--pc:"+BRANCHES[p.branch].c},BRANCHES[p.branch].n):null,
       p.stage==="published"&&p.publishedAt?h("span",{class:"tk-rd8"},"✓ "+whenLabel(iso(new Date(p.publishedAt)))+(p.stats?" · 👁 "+kfmt(p.stats.views):"")):p.schedDate?h("span",{class:"tk-rd8"+(d<0?" past":""),title:"موعد النشر"},"📅 "+whenLabel(p.schedDate)):null,
-      notReady?h("span",{class:"tk-rdl past",title:"موعد نشرها قريب ولم تُجهَّز بعد"},"⚠"):null));
+      notReady?h("span",{class:"tk-rdl past",title:"موعد نشرها قريب ولم تُجهَّز بعد"},"⚠"):null,
+      (()=>{ if(p.source==="facebook"&&!p.cl) return null; const g=clProgress(p); return g.n?h("span",{class:"tk-clp"+(g.done===g.n?" ok":""),title:"قائمة التحقق لهذه المرحلة"},"☑ "+g.done+"/"+g.n):null; })()));
   Q(".tk-h",c).addEventListener("pointerdown",e=>pubDrag(e,p,c)); return c; }
 function setStage(p,s){ if(s===p.stage) return; p.stage=s; if(s==="published"&&!p.publishedAt){ p.publishedAt=Date.now(); } if(s!=="published") p.publishedAt=null; put(p,{silent:true}); }
 function pubDrag(e,p,card){ e.preventDefault(); e.stopPropagation(); const g=card.cloneNode(true); g.classList.add("ghost"); document.body.append(g); card.classList.add("drag-src");
   let over=null, moved=false; const pos=ev=>{ g.style.left=(ev.clientX-120)+"px"; g.style.top=(ev.clientY-20)+"px"; }; pos(e);
   const mv=ev=>{ moved=true; pos(ev); const el=document.elementFromPoint(ev.clientX,ev.clientY); const col=el&&(el.closest(".tk-col")||el.closest(".tk-cday")); if(col!==over){ over&&over.classList.remove("over"); over=col; over&&over.classList.add("over"); } };
   const up=()=>{ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); g.remove(); card.classList.remove("drag-src"); over&&over.classList.remove("over");
-    if(over&&moved){ if(over.dataset.st){ const was=p.stage; setStage(p,over.dataset.st); if(over.dataset.st==="published"&&was!=="published") setTimeout(()=>askTime(p,"✓ نُشر: "+p.title),50); } else if(over.dataset.day){ p.schedDate=over.dataset.day; put(p,{silent:true}); } p.kOrder=Date.now(); put(p,{silent:true}); render(); Sync.soon(); } };
+    if(over&&moved){ if(over.dataset.st){ const was=p.stage; if(over.dataset.st!=="published") warnMissing(p,over.dataset.st); setStage(p,over.dataset.st); if(over.dataset.st==="published"&&was!=="published") setTimeout(()=>askTime(p,"✓ نُشر: "+p.title),50); } else if(over.dataset.day){ p.schedDate=over.dataset.day; put(p,{silent:true}); } p.kOrder=Date.now(); put(p,{silent:true}); render(); Sync.soon(); } };
   window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up); }
 /* calendar */
 function vPubCal(){ const base=V.calMonth?new Date(V.calMonth+"-01T00:00"):new Date(); base.setDate(1); base.setHours(0,0,0,0);
@@ -4314,6 +4358,7 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
   const d=dlg(isNew?"منشور جديد":"منشور",[
       h("label",{class:"f full"},"العنوان",title),
       h("div",{class:"f full"},h("label",{class:"f"},"المرحلة"),st),
+      p.source==="facebook"&&!p.cl?null:clBlock(p,isNew),
       h("div",{class:"f full"},h("label",{class:"f"},"النوع"),ty),
       h("div",{class:"f full"},h("label",{class:"f"},"موعد النشر (المقترح حسب أيام النشر)"),sdChips,h("div",{style:"margin-top:8px"},sd)),
       h("label",{class:"f"},"الفرع",br), h("label",{class:"f"},"نُشر فعلًا يوم",pubd),
@@ -4327,10 +4372,93 @@ function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
      !isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(p.id); remove(p.id); d.close(); toast("حُذف",()=>{ old.deleted=false; put(old); }); }},"حذف")]);
   Q("form",d).addEventListener("submit",e=>{ const v=title.value.trim(); if(!v){ e.preventDefault(); title.focus(); return; }
     Object.assign(p,{title:v,type:ty.value||"video",schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
-    const ns=st.value||p.stage; if(ns!==p.stage){ p.stage=ns; if(ns!=="published") p.publishedAt=null; }
+    const ns=st.value||p.stage; if(ns!==p.stage){ if(!isNew&&ns!=="published") warnMissing(p,ns); p.stage=ns; if(ns!=="published") p.publishedAt=null; }
     if(pubd.value){ p.publishedAt=parseD(pubd.value)+12*3600e3; p.stage="published"; } else if(p.stage==="published"&&!p.publishedAt) p.publishedAt=Date.now();
     if(isNew) p.createdAt=Date.now(); put(p); toast(isNew?"أُضيف إلى غرفة النشر":"حُفظ"); });
   setTimeout(()=>title.focus(),30); }
+
+/* ---------- publishing checklists ---------- */
+// checklist stages = the work done *during* each board stage, plus "publish" (before going live) and "after" (distribution)
+const CLS=[["toshoot","التحضير"],["shot","التصوير والجمع"],["edit","الإنتاج"],["review","المراجعة"],["publish","النشر"],["after","بعد النشر"]];
+const CLS_N=Object.fromEntries(CLS);
+// which checklist stages belong to each board stage
+const CL_OF_STAGE={toshoot:["toshoot"],shot:["shot"],edit:["edit"],review:["review","publish"],published:["after"]};
+const CL_KIND=t=>(t==="video"||t==="reel")?"video":"photos";
+const CL_KIND_N={video:"فيديو وريلز",photos:"صور ومنشورات",doc:"توثيق حدث"};
+const ci=(s,t,opt)=>({id:uid().slice(0,8),s,t,opt:!!opt});
+function defaultTemplates(){
+  const pre=[ci("toshoot","الهدف والفكرة في سطر واحد"),ci("toshoot","التنسيق مع المعني (الفرع / المعلم) — وهل يوجد كولاب؟")];
+  const shot=[ci("shot","التوثيق والتصوير / جمع الصور"),ci("shot","تفريغ الهواتف إلى مجلد الأرشيف")];
+  const review=t=>[ci("review",t==="video"?"مشاهدة كاملة: الصوت، الأخطاء، الجودة":"تصفح الصور: الجودة والأخطاء"),
+    ci("review","مراجعة صورة العرض / القالب: اللون، العنوان، اللغة"),
+    ci("review","النص المرافق: بأسلوبنا المعتاد، غير مكتظ، يحقق الهدف"),
+    ci("review","الإيموجي والهاشتاغات المناسبة"),
+    ci("review","موافقة النص لسياسة النشر")];
+  const pub=t=>[ci("publish",t==="video"?"الرفع إلى Meta Business Suite":"الرفع إلى Meta Business Suite وترتيب الصور بعناية"),ci("publish","الجدولة حسب التقويم")];
+  const after=t=>[ci("after","الرابط في أول تعليق (لينكتري)"),ci("after","مراجعة سريعة بعد النشر"),ci("after","ستوري فيسبوك وإنستغرام"),
+    ci("after","مجموعات إطار الرواد"),ci("after","مجموعة مؤسسة الرواد",1),ci("after","قناة واتساب وتلغرام"),
+    ci("after","المجموعات الكبرى للقرارة"),ci("after","الستوري الشخصي"),
+    ...(t==="video"?[ci("after","تيك توك"),ci("after","يوتيوب",1)]:[])];
+  return {
+    video:[...pre,...shot,ci("edit","مشاهدة المادة والتخطيط لطريقة العرض"),ci("edit","المونتاج والتركيب"),ci("edit","ترجمة نصية",1),ci("edit","الإخراج (export)"),ci("edit","تصميم صورة العرض"),
+      ...review("video"),...pub("video"),...after("video")],
+    photos:[...pre,...shot,ci("edit","انتقاء الصور المناسبة"),ci("edit","التصميم في القالب الرسمي"),ci("edit","لون القالب وعنوانه بما يناسب السياق"),ci("edit","تصميم صورة العرض",1),
+      ...review("photos"),...pub("photos"),...after("photos")],
+    doc:[ci("shot","تنظيم الأرشيف في مجلد وإرساله لمكانه"),ci("shot","إرسال الصور المختارة للمعنيين"),ci("shot","الإعلام الداخلي الحصري (الأولياء / الإطار / قناة المؤسسة)")] }; }
+function clTemplates(){ const c=pubCfg(); return c.cl||defaultTemplates(); }
+function saveTemplates(tp){ savePubCfg({cl:tp}); }
+// a post follows the live template until its first tick; then it keeps its own copy
+function clOf(p){ if(p.cl) return p.cl; return clTemplates()[CL_KIND(p.type)].map(x=>({...x})); }
+function clSave(p,cl,live){ p.cl=cl; if(live){ const x=get(p.id); if(x){ x.cl=cl; put(x,{silent:true}); Sync.soon(); } } }
+function clProgress(p,stage=p.stage){ const want=CL_OF_STAGE[stage]||[]; const it=clOf(p).filter(x=>!x.off&&want.includes(x.s)); return {done:it.filter(x=>x.done).length,n:it.length}; }
+function clMissingBefore(p,toStage){ const order=["toshoot","shot","edit","review","published"]; const ti=order.indexOf(toStage); if(ti<0) return [];
+  const st=order.slice(0,ti).flatMap(s=>CL_OF_STAGE[s]); return clOf(p).filter(x=>!x.off&&!x.done&&!x.opt&&st.includes(x.s)); }
+function warnMissing(p,toStage){ if(!p.cl&&!["review","published"].includes(toStage)) return; const m=clMissingBefore(p,toStage); if(!m.length) return;
+  setTimeout(()=>{ QA(".tk-toast").forEach(x=>x.remove()); const t=h("div",{class:"tk-toast",role:"status"},"بقي "+m.length+" بند لم يُنجز قبل «"+PS[toStage].n+"»",
+    h("button",{type:"button",onclick:()=>{ t.remove(); editPost(get(p.id)); }},"عرض")); document.body.append(t); setTimeout(()=>t.remove(),6000); },60); }
+
+/* the checklist block inside the post sheet */
+function clBlock(p,isNew){ const box=h("div",{class:"f full tk-cl"});
+  const draw=()=>{ const cl=clOf(p); const off=cl.filter(x=>x.off); const cur=CL_OF_STAGE[p.stage]||[];
+    const groups=CLS.map(([s,n])=>{ const it=cl.filter(x=>x.s===s&&!x.off); if(!it.length) return null; const d=it.filter(x=>x.done).length;
+      return h("details",{class:"tk-clg"+(cur.includes(s)?" cur":""),open:cur.includes(s)||(s==="after"&&p.stage==="published")||undefined},
+        h("summary",{},h("b",{},n),h("span",{class:"tk-cln"+(d===it.length?" ok":"")},d+"/"+it.length)),
+        it.map(x=>h("div",{class:"tk-cli"+(x.done?" done":"")},
+          h("label",{},h("input",{type:"checkbox",checked:x.done||undefined,onchange:e=>{ const c=clOf(p).map(y=>y.id===x.id?{...y,done:e.target.checked}:y); clSave(p,c,!isNew); draw(); }}),
+            h("span",{},x.t),x.opt?h("small",{},"عند الحاجة"):null),
+          h("button",{type:"button",class:"tk-clx",title:"لا يلزم لهذا المنشور",onclick:()=>{ clSave(p,clOf(p).map(y=>y.id===x.id?{...y,off:true}:y),!isNew); draw(); }},"×")))); }).filter(Boolean);
+    const hasDoc=cl.some(x=>x.doc);
+    box.replaceChildren(h("div",{class:"tk-clh"},h("label",{class:"f"},"قائمة التحقق"),
+        !hasDoc&&h("button",{type:"button",class:"tk-link",onclick:()=>{ const add=clTemplates().doc.map(x=>({...x,id:uid().slice(0,8),doc:1})); clSave(p,[...add,...clOf(p)],!isNew); draw(); }},"＋ توثيق الحدث"),
+        h("button",{type:"button",class:"tk-link",onclick:()=>editTemplates()},"✎ تعديل القوالب")),
+      ...groups,
+      off.length?h("div",{class:"tk-cloff"},"مستبعدة لهذا المنشور: ",off.map(x=>h("button",{type:"button",title:"إعادة",onclick:()=>{ clSave(p,clOf(p).map(y=>y.id===x.id?{...y,off:false}:y),!isNew); draw(); }},"↺ "+x.t))):null); };
+  draw(); return box; }
+
+/* template editor: rename, reorder, move between stages, optional, delete, add */
+function editTemplates(){ let tp=JSON.parse(JSON.stringify(clTemplates())); let kind="video";
+  const body=h("div",{class:"f full tk-tpl"}); let focusId=null;
+  const draw=()=>{ const list=tp[kind]; const stages=kind==="doc"?[["shot","التوثيق"]]:CLS;
+    body.replaceChildren(
+      h("div",{class:"tk-opts"},Object.entries(CL_KIND_N).map(([k,n])=>h("button",{type:"button","aria-pressed":String(kind===k),onclick:()=>{ kind=k; draw(); }},n))),
+      ...stages.map(([s,n])=>{ const it=list.filter(x=>x.s===s);
+        return h("section",{class:"tk-tps"},h("h4",{},n),
+          it.map(x=>{ const i=list.indexOf(x);
+            const mv=d=>{ const sib=list.map((y,j)=>[y,j]).filter(([y])=>y.s===s); const k=sib.findIndex(([y])=>y===x), o=sib[k+d]; if(!o) return; list[i]=o[0]; list[o[1]]=x; draw(); };
+            return h("div",{class:"tk-tpi"},
+              h("button",{type:"button",class:"tk-ib sm",title:"أعلى",onclick:()=>mv(-1)},"↑"),h("button",{type:"button",class:"tk-ib sm",title:"أسفل",onclick:()=>mv(1)},"↓"),
+              h("input",{type:"text",value:x.t,data:{id:x.id},placeholder:"اكتب البند…",oninput:e=>{ x.t=e.target.value; }}),
+              kind!=="doc"&&h("select",{title:"المرحلة",onchange:e=>{ x.s=e.target.value; draw(); }},CLS.map(([k,n])=>h("option",{value:k,selected:k===x.s||undefined},n))),
+              h("label",{class:"tk-tpo",title:"بند اختياري"},h("input",{type:"checkbox",checked:x.opt||undefined,onchange:e=>{ x.opt=e.target.checked; }}),"عند الحاجة"),
+              h("button",{type:"button",class:"tk-ib sm dng",title:"حذف",onclick:()=>{ list.splice(i,1); draw(); }},"×")); }),
+          h("button",{type:"button",class:"tk-link",onclick:()=>{ const n=ci(s,""); const lastI=list.map(y=>y.s).lastIndexOf(s); list.splice(lastI+1,0,n); focusId=n.id; draw(); }},"＋ بند")); }));
+    if(focusId){ const el=Q('input[data-id="'+focusId+'"]',body); focusId=null; el&&el.focus(); } };
+  draw();
+  const d=dlg("قوالب قائمة التحقق",[h("p",{class:"f full tk-muted",style:"margin:0 0 6px"},"التعديل يسري على المنشورات الجديدة وعلى التي لم تبدأ قائمتها بعد. المنشورات التي بدأت تحتفظ بنسختها."),body],
+    [h("button",{type:"submit",class:"tk-btn pri",id:"tkTplSave"},"حفظ القوالب"),h("span",{class:"tk-sp"}),
+     h("button",{type:"button",class:"tk-btn",onclick:()=>{ tp=defaultTemplates(); draw(); }},"استرجاع الافتراضي")]);
+  d.classList.add("wide");
+  Q("form",d).addEventListener("submit",()=>{ for(const k in tp) tp[k]=tp[k].map(x=>({...x,t:x.t.trim()})).filter(x=>x.t); saveTemplates(tp); render(); toast("حُفظت القوالب"); }); }
 
 /* ---------- views ---------- */
 function render(){ if(mode!=="tasks") return; const keepFocus=document.activeElement&&document.activeElement.id; const sy=window.scrollY;
@@ -4371,6 +4499,9 @@ function vHome(){ const today=iso(new Date()), open=actionable(); const ed=t=>ef
     missed.length? grp("missed","لم تُنجز في يومها",missed.length,"missed","خطّطت لها يومًا مضى. انقلها لليوم أو أرجعها إلى قائمتها بلا تاريخ.",
       h("div",{class:"tk-list"},missed.map(t=>row(t,{act:h("span",{class:"tk-acts"},btn("لليوم","",()=>setPlanned(t,today)),btn("للقائمة","",()=>setPlanned(t,null)))}))),
       h("span",{class:"tk-acts"},bulk(missed,"الكل لليوم",x=>x.planned=today),h("span",{class:"tk-muted"},"·"),bulk(missed,"الكل للقائمة",x=>x.planned=null))) : null,
+    (()=>{ const rec=posts().filter(p=>p.stage==="published"&&p.cl&&p.publishedAt>Date.now()-4*DAY&&clProgress(p).done<clProgress(p).n);
+      return rec.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"أكمل توزيع ما نُشر"),h("span",{class:"tk-tgn"},rec.length)),
+        h("div",{class:"tk-list"},rec.map(p=>{ const g=clProgress(p); return h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:#2BA14A"}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},"بعد النشر "+g.done+"/"+g.n))))); }))) : null; })(),
     (()=>{ const pt=posts().filter(p=>p.schedDate===today&&p.stage!=="published"); return pt.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"للنشر اليوم"),h("span",{class:"tk-tgn"},pt.length)),
       h("div",{class:"tk-list"},pt.map(p=>h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:"+PS[p.stage].c}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},PS[p.stage].n))),
         h("button",{type:"button",class:"tk-btn sm",onclick:e=>{ e.stopPropagation(); setStage(p,"published"); render(); Sync.soon(); askTime(p,"✓ نُشر"); }},"✓ نُشر")))))) : null; })(),
@@ -4732,7 +4863,7 @@ function installBtn(){ if(standalone()) return null;
   if(q.has("share")){ const txt=[q.get("title"),q.get("text"),q.get("url")].filter(Boolean).join(" "); const url=(txt.match(URL_RX)||[""])[0]; const title=(q.get("title")||"").replace(url,"").trim()||(q.get("text")||"").replace(url,"").trim();
     V.view="ideas"; try{ history.replaceState(null,"",location.pathname); }catch(e){} setTimeout(()=>editIdea(null,{url,title:title.slice(0,140)}),400); } })();
 /* expose for tests */
-window.rouwadTasks={importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+window.rouwadTasks={editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
 migrateDates(); migratePosts(); setMode(mode); render(); if(Sync.on()) Sync.run();
 })();
 </script>
