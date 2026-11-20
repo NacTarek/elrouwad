@@ -1258,6 +1258,23 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 @media (hover:hover){ .tk-today2 .tk-hact{opacity:0;transition:opacity .12s} .tk-today2 .tk-r:hover .tk-hact,.tk-today2 .tk-r:focus-within .tk-hact{opacity:1} }
 @media (hover:none){ .tk-today2 .tk-tcard .tk-hact{display:none} }
 @media (max-width:700px){ .tk-tpanel .tk-rl{flex-wrap:wrap} .tk-tpanel .tk-rmain{flex:1 1 calc(100% - 60px)} .tk-tpanel .tk-rl>.tk-acts{width:100%;padding-inline-start:30px;margin-top:2px} .tk-today2 .tk-th h2+.tk-muted{font-size:12.5px} }
+/* task row v3: title on one line, small meta line under it */
+.tk-r>.tk-rl{align-items:flex-start}
+.tk-r>.tk-rl>.tk-ck,.tk-r>.tk-rl>label,.tk-r>.tk-rl>input[type=checkbox],.tk-r>.tk-rl>.tk-pdot{margin-top:3px}
+.tk-r>.tk-rl>.tk-acts,.tk-r>.tk-rl>.tk-rx,.tk-r>.tk-rl>.tk-plus,.tk-r>.tk-rl>.tk-btn{align-self:center}
+.tk-r .tk-rmain{flex-direction:column;align-items:stretch;flex-wrap:nowrap;gap:1px}
+.tk-r .tk-rt{flex:none;width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;overflow-wrap:normal}
+.tk-r .tk-rm{margin:0;font-size:12px;gap:10px;overflow:hidden;line-height:1.5}
+.tk-r .tk-rm:empty{display:none}
+.tk-r .tk-rp{max-width:240px}
+.tk-r .tk-rtag{font-size:11px;padding:0 6px}
+.tk-r .tk-rm .tk-rp{order:-1}
+.tk-r .tk-rmain>.tk-rm:empty{display:none!important}
+@media (hover:hover){ .tk-today2 .tk-hact{display:none} .tk-today2 .tk-r:hover .tk-hact,.tk-today2 .tk-r:focus-within .tk-hact{display:inline-flex;opacity:1} }
+@media (max-width:700px){ .tk-today2 .tk-plus{font-size:0} .tk-today2 .tk-plus:before{content:"＋";font-size:18px} }
+.tk-r>.tk-rl:has(.tk-rm:empty){align-items:center}
+.tk-r>.tk-rl:has(.tk-rm:empty)>.tk-ck{margin-top:0}
+.tk-r>.tk-rl{padding-top:7px;padding-bottom:7px}
 
 </style>
 
