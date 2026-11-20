@@ -1227,6 +1227,37 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 .tk-stkm{flex:1;min-width:200px;display:flex;flex-direction:column;gap:2px;cursor:pointer}
 .tk-stkm small{color:var(--muted);font-size:12.5px}
 .tk-dlg .tk-db{align-content:start}.tk-tdlg .tk-items{margin-top:0}.tk-tdlg .tk-db{row-gap:4px}
+/* اليوم v2 */
+.tk-today2 .tk-th{display:flex;align-items:center;gap:10px}
+.tk-tprog{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--muted)}
+.tk-ring{width:26px;height:26px;border-radius:50%;background:conic-gradient(#2BA14A calc(var(--p)*1%),var(--line,#E4E7EC) 0);-webkit-mask:radial-gradient(circle,transparent 8px,#000 9px);mask:radial-gradient(circle,transparent 8px,#000 9px)}
+.tk-tstrip{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 12px}
+.tk-tchip{display:inline-flex;align-items:center;gap:4px;border:1px solid var(--line,#EAECF0);background:var(--card,#fff);color:var(--ink,#344054);border-radius:999px;padding:6px 12px;font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+.tk-tchip b{font-weight:800}
+.tk-tchip.pur{color:#6B3FBF;border-color:#E3D8F7;background:#F8F5FF}.tk-tchip.pur.due{background:#EFE7FD;border-color:#7A4FC8}
+.tk-tchip.blu{color:#0B4EA2;border-color:#D3E3FB;background:#F3F8FF}
+.tk-tchip.grn{color:#1F7A3A;border-color:#CDEBD5;background:#F2FBF4}
+.tk-tchip.yel{color:#8A6100;border-color:#F4E2A8;background:#FFFAEB}
+.tk-tchip.on{box-shadow:0 0 0 2px currentColor inset}
+.tk-tpanel{margin:-4px 0 12px;padding:6px 14px 10px}
+.tk-tcard{padding:4px 16px 8px}
+.tk-tsec{display:flex;align-items:center;gap:8px;padding:12px 0 4px;font-size:13px;color:var(--muted)}
+.tk-tsec b{font-weight:800}
+.tk-tcard .tk-pg{margin:2px 0}
+.tk-ghost .tk-rt{color:var(--muted)}
+.tk-ghost .tk-cb,.tk-ghost input[type=checkbox]{opacity:.55}
+.tk-plus{border:0;background:none;color:#0B4EA2;font:inherit;font-weight:800;font-size:13px;cursor:pointer;white-space:nowrap;padding:2px 4px}
+.tk-tdone{margin-top:12px}
+.tk-tdone .tk-tgt{display:inline-flex;gap:8px;align-items:center;border:0;background:none;font:inherit;font-weight:700;color:var(--muted);cursor:pointer;padding:4px}
+.tk-tdone .tk-card{margin-top:6px}
+.tk-tdone .tk-r{opacity:.75}
+.tk-tdmenu{margin-bottom:12px}
+.tk-ttog{display:inline-flex;align-items:center;gap:6px}
+.tk-ttog i{width:14px;height:14px;border-radius:4px;border:1.5px solid currentColor;display:inline-block}
+.tk-ttog[aria-pressed=true] i{background:currentColor;box-shadow:inset 0 0 0 2px #fff}
+@media (hover:hover){ .tk-today2 .tk-hact{opacity:0;transition:opacity .12s} .tk-today2 .tk-r:hover .tk-hact,.tk-today2 .tk-r:focus-within .tk-hact{opacity:1} }
+@media (hover:none){ .tk-today2 .tk-tcard .tk-hact{display:none} }
+@media (max-width:700px){ .tk-tpanel .tk-rl{flex-wrap:wrap} .tk-tpanel .tk-rmain{flex:1 1 calc(100% - 60px)} .tk-tpanel .tk-rl>.tk-acts{width:100%;padding-inline-start:30px;margin-top:2px} .tk-today2 .tk-th h2+.tk-muted{font-size:12.5px} }
 
 </style>
 
@@ -5209,45 +5240,87 @@ function bar(){ return h("div",{class:"tk-bar"},
 const AR_MONTHS=["جانفي","فيفري","مارس","أفريل","ماي","جوان","جويلية","أوت","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
 function setPlanned(t,v){ const x=get(t.id); if(!x) return; x.planned=v||null; put(x); }
 function vHome(){ const today=iso(new Date()), open=actionable().filter(t=>t.status!=="wait"); const ed=t=>effDeadline(t)||"";
-  const late=open.filter(t=>ed(t)&&ed(t)<today).sort((a,b)=>ed(a).localeCompare(ed(b))||(a.priority||3)-(b.priority||3));
-  const lateIds=new Set(late.map(t=>t.id));
-  const missed=open.filter(t=>!lateIds.has(t.id)&&t.planned&&t.planned<today).sort((a,b)=>a.planned.localeCompare(b.planned));
-  const now=open.filter(t=>!lateIds.has(t.id)&&(t.planned===today||ed(t)===today)).sort((a,b)=>(a.priority||3)-(b.priority||3)||(a.order??a.createdAt)-(b.order??b.createdAt));
+  const TD=V.td||(V.td=Object.assign({group:"none",sort:"smart",done:true,sugg:true},ls.get("tdv",{})));
+  const saveTD=()=>{ ls.set("tdv",{group:TD.group,sort:TD.sort,done:TD.done,sugg:TD.sugg}); render(); };
+  const late=open.filter(t=>ed(t)&&ed(t)<today), lateIds=new Set(late.map(t=>t.id));
+  const missed=open.filter(t=>!lateIds.has(t.id)&&t.planned&&t.planned<today), missIds=new Set(missed.map(t=>t.id));
+  const now=open.filter(t=>!lateIds.has(t.id)&&!missIds.has(t.id)&&(t.planned===today||ed(t)===today));
+  const items=[...late,...missed,...now];
   const doneToday=tasks().filter(t=>t.status==="done"&&t.doneAt>=today0()&&!subsOf(t.id).length);
-  const bal=balance(14); const sugg=open.filter(t=>!t.planned&&!(ed(t)&&ed(t)<=today)).map(t=>({t,...score(t,bal)})).sort((a,b)=>b.s-a.s).slice(0,5);
-  const d=new Date(); const inb=inbox(), stale=inb.length&&(Date.now()-ls.get("triagedAt",0)>6*DAY);
-  const V2=V.tdOpen||(V.tdOpen={late:true,missed:true,done:false,sugg:!now.length});
-  const grp=(key,title,n,cls,hint,body,extra)=>h("section",{class:"tk-tg"+(cls?" "+cls:"")},
-    h("div",{class:"tk-tgh"},h("button",{type:"button",class:"tk-tgt","aria-expanded":String(!!V2[key]),onclick:()=>{ V2[key]=!V2[key]; render(); }},h("span",{class:"car"},V2[key]?"▾":"◂"),h("b",{},title),h("span",{class:"tk-tgn"},n)),h("span",{class:"tk-sp"}),extra||null),
-    V2[key]&&hint?h("p",{class:"tk-tghint"},hint):null, V2[key]?body:null);
-  const bulk=(list,label,fn)=>h("button",{type:"button",class:"tk-link",onclick:()=>{ list.forEach(t=>{ const x=get(t.id); fn(x); put(x,{silent:true}); }); render(); Sync.soon(); toast(label+" ("+list.length+")"); }},label);
+  const bal=balance(14); const sc=new Map(items.map(t=>[t.id,score(t,bal)]));
+  const tmr=(()=>{ const x=new Date(); x.setDate(x.getDate()+1); return iso(x); })();
+  const SRT={smart:(a,b)=>(lateIds.has(b.id)-lateIds.has(a.id))||sc.get(b.id).s-sc.get(a.id).s,
+    priority:(a,b)=>(a.priority||3)-(b.priority||3)||(ed(a)||"9").localeCompare(ed(b)||"9"),
+    deadline:(a,b)=>(ed(a)||"9").localeCompare(ed(b)||"9")||(a.priority||3)-(b.priority||3),
+    manual:(a,b)=>(a.order??a.createdAt)-(b.order??b.createdAt)};
+  items.sort(SRT[TD.sort]||SRT.smart);
+  const V2=V.tdOpen||(V.tdOpen={});
   const btn=(label,cls,fn)=>h("button",{type:"button",class:"tk-btn sm"+(cls?" "+cls:""),onclick:e=>{ e.stopPropagation(); fn(); }},label);
-  return h("div",{class:"tk-today"},
-    h("div",{class:"tk-th"},h("h2",{class:"tk-hide-m"},"اليوم"),h("span",{class:"tk-muted"},WDN[d.getDay()]+" "+d.getDate()+" "+AR_MONTHS[d.getMonth()])),
-    inb.length?h("button",{type:"button",class:"tk-inbar"+(stale?" stale":""),onclick:()=>go("inbox")},h("b",{},inb.length),h("span",{},inb.length===1?"مهمة في الوارد تنتظر الفرز":"مهام في الوارد تنتظر الفرز"),h("span",{class:"tk-sp"}),h("span",{},"افرزها ←")):null,
-    late.length? grp("late","فات الموعد النهائي",late.length,"late","مهام تجاوزت «آخر أجل» لها. أنجزها أو غيّر موعدها.",
-      h("div",{class:"tk-list"},late.map(t=>row(t,{act:t.planned===today?null:btn("لليوم","",()=>setPlanned(t,today))})))) : null,
-    missed.length? grp("missed","لم تُنجز في يومها",missed.length,"missed","خطّطت لها يومًا مضى. انقلها لليوم أو أرجعها إلى قائمتها بلا تاريخ.",
-      h("div",{class:"tk-list"},missed.map(t=>row(t,{act:h("span",{class:"tk-acts"},btn("لليوم","",()=>setPlanned(t,today)),btn("للقائمة","",()=>setPlanned(t,null)))}))),
-      h("span",{class:"tk-acts"},bulk(missed,"الكل لليوم",x=>x.planned=today),h("span",{class:"tk-muted"},"·"),bulk(missed,"الكل للقائمة",x=>x.planned=null))) : null,
-    (()=>{ const ws=waiting(), due=ws.filter(waitDue); if(!ws.length) return null; if(V2.stuck===undefined) V2.stuck=true;
-      return grp("stuck","عالقة",due.length?due.length+" تحتاج متابعة":ws.length,"stuck",due.length?"حان موعد متابعتها. هل تحرّكت؟":"لا شيء يحتاج متابعة اليوم.",
-        h("div",{class:"tk-list"},(due.length?due:ws).map(t=>row(t,{act:waitActs(t)}))),
-        h("span",{class:"tk-acts"},h("button",{type:"button",class:"tk-link",onclick:()=>reviewStuck()},"مراجعة كل العالقة ("+ws.length+")"))); })(),
-    (()=>{ const n=inspInbox().length; const due=new Date().getDay()===1||tasks().some(t=>t.status!=="done"&&/الاستلهام/.test(t.title)&&t.planned&&t.planned<=today);
-      return n&&due? h("div",{class:"tk-tricard"},h("span",{},"💡"),h("div",{},h("b",{},"الاستلهام: "+n+" تنتظر الفرز"),h("small",{},"بطاقة واحدة في كل مرة · نحو 5 دقائق")),h("button",{type:"button",class:"tk-btn pri",onclick:()=>triage()},"▶ ابدأ الفرز")) : null; })(),
-    (()=>{ const occN=occs().filter(o=>o.on!==false).map(o=>({o,d:occNext(o)})).filter(x=>x.d&&daysTo(x.d)<=7).sort((a,b)=>a.d.localeCompare(b.d));
-      return occN.length? h("div",{class:"tk-occbar"},occN.slice(0,2).map(x=>h("button",{type:"button",style:"--pc:"+(OSCOPE[x.o.scope]||OSCOPE.world)[1],onclick:()=>editOccasion(x.o)},"🗓 ",h("b",{},x.o.name)," · "+relLabel(daysTo(x.d))))) : null; })(),
-    (()=>{ const rec=posts().filter(p=>p.stage==="published"&&p.cl&&p.publishedAt>Date.now()-4*DAY&&clProgress(p).done<clProgress(p).n);
-      return rec.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"أكمل توزيع ما نُشر"),h("span",{class:"tk-tgn"},rec.length)),
-        h("div",{class:"tk-list"},rec.map(p=>{ const g=clProgress(p); return h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:#2BA14A"}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},"بعد النشر "+g.done+"/"+g.n))))); }))) : null; })(),
-    (()=>{ const pt=posts().filter(p=>p.schedDate===today&&p.stage!=="published"&&p.stage!=="idea"); return pt.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"للنشر اليوم"),h("span",{class:"tk-tgn"},pt.length)),
-      h("div",{class:"tk-list"},pt.map(p=>h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:"+PS[p.stage].c}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},PS[p.stage].n))),
-        h("button",{type:"button",class:"tk-btn sm",onclick:e=>{ e.stopPropagation(); setStage(p,"published"); render(); Sync.soon(); askTime(p,"✓ نُشر"); }},"✓ نُشر")))))) : null; })(),
-    h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"مهام اليوم"),h("span",{class:"tk-tgn"},now.length)),
-      now.length? h("div",{},groupRows(now,{key:"today",rowOpts:{noPlan:true}})) : h("div",{class:"tk-empty"},"لا شيء لليوم بعد. اكتب مهمة في الأعلى، أو اختر من الاقتراحات.")),
-    sugg.length? grp("sugg","اقتراحات لليوم",sugg.length,"","مهام بلا يوم محدّد، مرتّبة حسب الأولوية والموعد النهائي والتوازن.",h("div",{class:"tk-list"},sugg.map(x=>row(x.t,{why:x.why,act:btn("＋ لليوم","pri",()=>{ setPlanned(x.t,today); toast("أُضيفت إلى اليوم"); })})))) : null,
-    doneToday.length? grp("done","أنجزتها اليوم",doneToday.length,"done","",h("div",{class:"tk-list"},doneToday.map(t=>row(t)))) : null); }
+  const hact=t=>h("span",{class:"tk-acts tk-hact"},
+    missIds.has(t.id)||lateIds.has(t.id)&&t.planned!==today? btn("لليوم","",()=>setPlanned(t,today)) : btn("غدًا","",()=>{ setPlanned(t,tmr); toast("نُقلت إلى الغد"); }),
+    missIds.has(t.id)? btn("للقائمة","",()=>setPlanned(t,null)) : null);
+  const rowOf=t=>row(t,{noPlan:!missIds.has(t.id),noProj:TD.group==="project",act:hact(t)});
+  // grouping
+  const GROUPS={none:null,
+    project:{key:t=>t.project||"_",defs:()=>[...projects().map(p=>[p.id,p.name,pcol(p)]),["_","الوارد","#98A2B3"]]},
+    priority:{key:t=>String(t.priority||3),defs:()=>["1","2","3","4"].map(k=>[k,PRI[k].n,PRI[k].c])},
+    state:{key:t=>lateIds.has(t.id)?"late":missIds.has(t.id)?"missed":"now",defs:()=>[["late","فات آخر أجل","#E5484D"],["missed","لم تُنجز في يومها","#F5A524"],["now","لليوم","#3E8EF7"]]}};
+  const grouped=list=>{ const G=GROUPS[TD.group]; if(!G) return [h("div",{class:"tk-list"},list.map(rowOf))];
+    const m=new Map(); for(const t of list){ const k=G.key(t); if(!m.has(k)) m.set(k,[]); m.get(k).push(t); }
+    return G.defs().filter(([k])=>m.get(k)).map(([k,n,c])=>{ const key="td:"+TD.group+":"+k, cl=COLL.has(key), g=m.get(k);
+      return h("section",{class:"tk-pg"},h("button",{type:"button",class:"tk-pgh",onclick:()=>{ cl?COLL.delete(key):COLL.add(key); render(); }},h("span",{class:"car"},cl?"◂":"▾"),h("i",{style:"--pc:"+c}),h("b",{},n),h("span",{class:"tk-tgn"},g.length)),
+        cl?null:h("div",{class:"tk-list"},g.map(rowOf))); }); };
+  // posts to publish today
+  const pt=posts().filter(p=>p.schedDate===today&&p.stage!=="published"&&p.stage!=="idea");
+  const postRow=p=>h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:"+PS[p.stage].c}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:"📣 "+p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},"للنشر اليوم · "+PS[p.stage].n))),
+    h("span",{class:"tk-acts tk-hact"},btn("✓ نُشر","",()=>{ setStage(p,"published"); render(); Sync.soon(); askTime(p,"✓ نُشر"); }))));
+  // the strip: everything that is not «today's work» becomes a small chip
+  const ws=waiting(), wdue=ws.filter(waitDue), inb=inbox().length, insN=inspInbox().length;
+  const insDue=insN&&(new Date().getDay()===1||tasks().some(t=>t.status!=="done"&&/الاستلهام/.test(t.title)&&t.planned&&t.planned<=today));
+  const occN=occs().filter(o=>o.on!==false).map(o=>({o,d:occNext(o)})).filter(x=>x.d&&daysTo(x.d)<=7).sort((a,b)=>a.d.localeCompare(b.d));
+  const rec=posts().filter(p=>p.stage==="published"&&p.cl&&p.publishedAt>Date.now()-4*DAY&&clProgress(p).done<clProgress(p).n);
+  if(V2.chip==null&&wdue.length) V2.chip="stuck";
+  const chip=(k,cls,label,fn)=>h("button",{type:"button",class:"tk-tchip "+cls+(V2.chip===k?" on":""),"aria-expanded":fn?null:String(V2.chip===k),onclick:fn||(()=>{ V2.chip=V2.chip===k?"":k; render(); })},label);
+  const strip=[
+    ws.length? chip("stuck","pur"+(wdue.length?" due":""),["⏸ ",h("b",{},ws.length)," عالقة",wdue.length?" · "+wdue.length+" تحتاج متابعة":""]) : null,
+    rec.length? chip("dist","grn",["📣 ",h("b",{},rec.length)," أكمل توزيعها"]) : null,
+    ...occN.slice(0,2).map(x=>chip("occ"+x.o.id,"blu",["🗓 ",x.o.name," · "+relLabel(daysTo(x.d))],()=>editOccasion(x.o))),
+    insDue? chip("insp","yel",["💡 ",h("b",{},insN)," للفرز"],()=>triage()) : null,
+    inb? chip("inbox","",["📥 ",h("b",{},inb)," في الوارد"],()=>go("inbox")) : null].filter(Boolean);
+  const chipPanel=V2.chip==="stuck"&&ws.length? h("div",{class:"tk-card tk-tpanel"},h("div",{class:"tk-list"},(wdue.length?wdue:ws).map(t=>row(t,{act:waitActs(t)}))),
+      h("button",{type:"button",class:"tk-link",onclick:()=>reviewStuck()},"مراجعة كل العالقة ("+ws.length+")"))
+    : V2.chip==="dist"&&rec.length? h("div",{class:"tk-card tk-tpanel"},h("div",{class:"tk-list"},rec.map(p=>{ const g=clProgress(p); return h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:#2BA14A"}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},"بعد النشر "+g.done+"/"+g.n))))); })))
+    : null;
+  // suggestions
+  const suggAll=TD.sugg? open.filter(t=>!t.planned&&!(ed(t)&&ed(t)<=today)).map(t=>({t,...score(t,bal)})).sort((a,b)=>b.s-a.s).slice(0,10) : [];
+  const sugg=V2.allSugg?suggAll:suggAll.slice(0,3);
+  // progress
+  const total=items.length+doneToday.length, pc=total?Math.round(doneToday.length/total*100):0;
+  const ring=total? h("div",{class:"tk-tprog",title:doneToday.length+" منجزة من "+total},h("span",{},doneToday.length+" من "+total),h("i",{class:"tk-ring",style:"--p:"+pc})) : null;
+  // view menu
+  const seg=(arr,cur,set)=>h("div",{class:"tk-opts"},arr.map(([k,n])=>h("button",{type:"button","aria-pressed":String(cur===k),onclick:()=>{ set(k); saveTD(); }},n)));
+  const tog=(on,label,set)=>h("button",{type:"button",class:"tk-ttog","aria-pressed":String(on),onclick:()=>{ set(!on); saveTD(); }},h("i"),label);
+  const menu=V.tdMenu? h("div",{class:"tk-menu tk-tdmenu",role:"dialog","aria-label":"عرض اليوم"},
+    h("div",{class:"tk-mrow"},h("span",{class:"tk-ml"},icon("group",16),"تجميع حسب"),seg([["none","بدون"],["project","المشروع"],["priority","الأولوية"],["state","الحالة"]],TD.group,v=>TD.group=v)),
+    h("div",{class:"tk-mrow"},h("span",{class:"tk-ml"},icon("sort",16),"ترتيب حسب"),seg([["smart","ذكي"],["priority","الأولوية"],["deadline","آخر أجل"],["manual","تاريخ الإضافة"]],TD.sort,v=>TD.sort=v)),
+    h("div",{class:"tk-mrow"},h("span",{class:"tk-ml"},icon("tasks",16),"إظهار"),h("div",{class:"tk-opts"},tog(TD.done,"ما أنجزته اليوم",v=>TD.done=v),tog(TD.sugg,"الاقتراحات",v=>TD.sugg=v))),
+    h("div",{class:"tk-mfoot"},h("button",{type:"button",class:"tk-link",onclick:()=>{ Object.assign(TD,{group:"none",sort:"smart",done:true,sugg:true}); saveTD(); }},"استعادة الافتراضي"),h("span",{class:"tk-sp"}),h("button",{type:"button",class:"tk-btn sm pri",onclick:()=>{ V.tdMenu=false; render(); }},"تم"))) : null;
+  const d=new Date();
+  const moveAll=missed.length>1? h("button",{type:"button",class:"tk-link",onclick:()=>{ missed.forEach(t=>{ const x=get(t.id); x.planned=today; put(x,{silent:true}); }); render(); Sync.soon(); toast("نُقلت لليوم ("+missed.length+")"); }},"انقل الفائتة لليوم ("+missed.length+")") : null;
+  return h("div",{class:"tk-today tk-today2"},
+    h("div",{class:"tk-th"},h("h2",{class:"tk-hide-m"},"اليوم"),h("span",{class:"tk-muted"},WDN[d.getDay()]+" "+d.getDate()+" "+AR_MONTHS[d.getMonth()]),h("span",{class:"tk-sp"}),ring,
+      h("button",{type:"button",class:"tk-ib"+(V.tdMenu?" on":""),id:"tkTdMenu",title:"الفرز والتجميع والإظهار","aria-label":"الفرز والتجميع والإظهار","aria-expanded":String(!!V.tdMenu),onclick:()=>{ V.tdMenu=!V.tdMenu; render(); }},icon("sort",17),(TD.group!=="none"||TD.sort!=="smart"||!TD.done||!TD.sugg)?h("b",{class:"tk-dot"}):null)),
+    menu,
+    strip.length? h("div",{class:"tk-tstrip"},strip) : null,
+    chipPanel,
+    h("div",{class:"tk-card tk-tcard"},
+      h("div",{class:"tk-tsec"},h("b",{},"لليوم"),h("span",{class:"tk-tgn"},items.length+pt.length),h("span",{class:"tk-sp"}),moveAll),
+      items.length||pt.length? [...grouped(items), pt.length?h("div",{class:"tk-list"},pt.map(postRow)):null]
+        : h("div",{class:"tk-empty"},doneToday.length?"✓ أنجزت كل مهام اليوم":"لا شيء لليوم بعد. اكتب مهمة في الأعلى، أو اختر من الاقتراحات."),
+      sugg.length? [h("div",{class:"tk-tsec"},h("b",{},"مقترحة"),h("span",{class:"tk-tgn"},suggAll.length),h("span",{class:"tk-sp"}),suggAll.length>3?h("button",{type:"button",class:"tk-link",onclick:()=>{ V2.allSugg=!V2.allSugg; render(); }},V2.allSugg?"أقل":"عرض كل الاقتراحات"):null),
+        h("div",{class:"tk-list tk-ghost"},sugg.map(x=>row(x.t,{why:x.why,act:h("button",{type:"button",class:"tk-plus",onclick:e=>{ e.stopPropagation(); setPlanned(x.t,today); toast("أُضيفت إلى اليوم"); }},"＋ لليوم")})))] : null),
+    TD.done&&doneToday.length? h("section",{class:"tk-tdone"},h("button",{type:"button",class:"tk-tgt","aria-expanded":String(!!V2.done),onclick:()=>{ V2.done=!V2.done; render(); }},h("span",{},"✓ أنجزتها اليوم"),h("span",{class:"tk-tgn"},doneToday.length),h("span",{class:"car"},V2.done?"▾":"◂")),
+      V2.done? h("div",{class:"tk-card tk-tcard"},h("div",{class:"tk-list"},doneToday.map(t=>row(t)))) : null) : null); }
 
 function filterTasks(list){ const f=V.f, q=f.q.trim();
   return list.filter(t=>{ if(f.project&&t.project!==f.project) return false; if(f.branch&&t.branch!==f.branch) return false; if(f.person&&!(t.people||[]).includes(f.person)) return false;
@@ -5506,17 +5579,23 @@ function tagInput(vals,list){ const box=h("div",{class:"tk-tags"}); let cur=[...
 /* small checklist inside a task (TickTick style): tick, edit, delete, add with Enter */
 function itemsBlock(t,isNew){ const box=h("div",{class:"f full tk-items"});
   const save=items=>{ t.items=items; if(!isNew){ const x=get(t.id); if(x){ x.items=items; put(x,{silent:true}); Sync.soon(); render(); } } };
+  let tm=null; const saveSoon=()=>{ clearTimeout(tm); tm=setTimeout(()=>save(t.items||[]),350); };
   const subs=isNew?[]:subsOf(t.id);
-  const draw=(focusNew)=>{ const items=t.items||[];
-    const add=h("input",{type:"text",class:"tk-itadd",placeholder:"＋ عنصر فرعي ثم Enter",onkeydown:e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); e.stopPropagation(); const v=e.target.value.trim(); if(!v) return; save([...(t.items||[]),{id:uid().slice(0,8),t:v,done:false}]); draw(true); } }});
+  // typing is enough: the first letter creates the item, the rest edits it (Enter just starts the next one)
+  const draw=(focus)=>{ const items=t.items||[];
+    const add=h("input",{type:"text",class:"tk-itadd",placeholder:"＋ عنصر فرعي",oninput:e=>{ const v=e.target.value; if(!v.trim()) return; const id=uid().slice(0,8); t.items=[...(t.items||[]),{id,t:v,done:false}]; save(t.items); draw(id); }});
+    const fields=new Map();
     box.replaceChildren(
       subs.length? h("div",{class:"tk-itsubs"},subs.map(sb=>h("div",{class:"tk-it"+(sb.status==="done"?" done":"")},checkbox(sb),h("span",{class:"t",text:sb.title,onclick:()=>editTask(sb)})))) : null,
-      items.map(it=>h("div",{class:"tk-it"+(it.done?" done":"")},
-        h("input",{type:"checkbox",checked:it.done||undefined,onchange:e=>{ save((t.items||[]).map(y=>y.id===it.id?{...y,done:e.target.checked}:y)); draw(); }}),
-        h("input",{type:"text",class:"t",value:it.t,onchange:e=>{ const v=e.target.value.trim(); save(v?(t.items||[]).map(y=>y.id===it.id?{...y,t:v}:y):(t.items||[]).filter(y=>y.id!==it.id)); draw(); },onkeydown:e=>{ if(e.key==="Enter"){ e.preventDefault(); e.target.blur(); } }}),
-        h("button",{type:"button",class:"tk-clx",title:"حذف",onclick:()=>{ save((t.items||[]).filter(y=>y.id!==it.id)); draw(); }},"×"))),
+      items.map(it=>{ const f=h("input",{type:"text",class:"t",value:it.t,
+          oninput:e=>{ t.items=(t.items||[]).map(y=>y.id===it.id?{...y,t:e.target.value}:y); saveSoon(); },
+          onchange:e=>{ const v=e.target.value.trim(); clearTimeout(tm); save(v?(t.items||[]).map(y=>y.id===it.id?{...y,t:v}:y):(t.items||[]).filter(y=>y.id!==it.id)); if(!v) draw(); },
+          onkeydown:e=>{ if(e.key==="Enter"&&!e.isComposing){ e.preventDefault(); e.target.dispatchEvent(new Event("change",{bubbles:true})); draw("add"); } }}); fields.set(it.id,f);
+        return h("div",{class:"tk-it"+(it.done?" done":"")},
+          h("input",{type:"checkbox",checked:it.done||undefined,onchange:e=>{ save((t.items||[]).map(y=>y.id===it.id?{...y,done:e.target.checked}:y)); draw(); }}),
+          f, h("button",{type:"button",class:"tk-clx",title:"حذف",onclick:()=>{ save((t.items||[]).filter(y=>y.id!==it.id)); draw(); }},"×")); }),
       add);
-    if(focusNew) setTimeout(()=>add.focus(),0); };
+    if(focus) setTimeout(()=>{ const el=focus==="add"||focus===true?add:fields.get(focus); if(el){ el.focus(); const n=el.value.length; try{ el.setSelectionRange(n,n); }catch(_){} } },0); };
   draw(); return box; }
 /* small month calendar used by the date popover */
 function miniCal(getVal,setVal){ const box=h("div",{class:"tk-mcal"}); let base=null;
