@@ -3407,12 +3407,12 @@ const people=()=>{ const s=new Map(); for(const t of tasks()) for(const p of (t.
 function attention(days,from=Date.now()){ const since=from-days*DAY, out=new Map();
   for(const t of tasks()){ if(t.status!=="done"||!t.doneAt||t.doneAt<since||t.doneAt>from) continue; if(subsOf(t.id).length) continue;
     out.set(t.project,(out.get(t.project)||0)+effMin(t)); } return out; }
-function balance(days=14){ const att=attention(days), act=[...areas(),...bigs()]; const tot=[...att.values()].reduce((a,b)=>a+b,0);
-  const wsum=act.reduce((a,p)=>a+(+p.weight||3),0)||1; const now=Date.now();
-  return act.map(p=>{ const m=att.get(p.id)||0, share=tot?m/tot:0, target=(+p.weight||3)/wsum;
+function balance(days=14){ const att=attention(days), live=[...areas(),...bigs()]; const act=[...live,...bigs(true).filter(p=>p.status!=="active"&&att.get(p.id))]; const tot=[...att.values()].reduce((a,b)=>a+b,0);
+  const wsum=live.reduce((a,p)=>a+(+p.weight||3),0)||1; const now=Date.now();
+  return act.map(p=>{ const m=att.get(p.id)||0, share=tot?m/tot:0, closed=p.status!=="active", target=closed?0:(+p.weight||3)/wsum;
     const done=tasks().filter(t=>t.project===p.id&&t.status==="done"&&t.doneAt).map(t=>t.doneAt); const last=done.length?Math.max(...done):null;
     const open=tasks().filter(t=>t.project===p.id&&t.status!=="done"&&!subsOf(t.id).length).length;
-    let state="ok"; if(tot>0){ if(share>target*1.5&&share-target>0.08) state="hi"; else if(share<target*0.5&&target-share>0.06) state="lo"; } else state=open?"lo":"ok";
+    let state="ok"; if(closed) state="closed"; else if(tot>0){ if(share>target*1.5&&share-target>0.08) state="hi"; else if(share<target*0.5&&target-share>0.06) state="lo"; } else state=open?"lo":"ok";
     return {p,m,share,target,last,open,state,idle:last?Math.floor((now-last)/DAY):null}; }); }
 /* smart ranking: priority + deadline + balance + weekly focus (transparent "why") */
 function score(t,bal){ let s=0; const why=[]; const P={1:40,2:28,3:16,4:6}[t.priority||3]; s+=P; why.push("أولوية "+PRI[t.priority||3].n);
@@ -3763,7 +3763,7 @@ function vBalance(){ const days=V.days||14; const bal=balance(days); const tot=b
   const brow=(b)=>h("div",{class:"tk-brow",style:"--pc:"+pcol(b.p)},h("div",{class:"nm"},h("i"),h("span",{text:b.p.name,title:b.p.name})),
     h("div",{class:"tr"},h("b",{style:"width:"+(b.share*100).toFixed(1)+"%"}),h("u",{style:"inset-inline-start:calc("+(b.target*100).toFixed(1)+"% - 1px)",title:"الحصة المستهدفة "+Math.round(b.target*100)+"%"})),
     h("div",{class:"pc"},Math.round(b.share*100)+"%"),
-    h("div",{class:"st"},h("b",{class:b.state},b.state==="hi"?"يأخذ أكثر من حقّه":b.state==="lo"?"يحتاج وقتًا":"متوازن"),h("span",{},hm(b.m)),h("span",{},b.idle==null?"لا إنجاز بعد":"آخر إنجاز قبل "+b.idle+" يوم"),h("span",{},b.open+" مهمة مفتوحة")));
+    h("div",{class:"st"},h("b",{class:b.state},b.state==="hi"?"يأخذ أكثر من حقّه":b.state==="lo"?"يحتاج وقتًا":b.state==="closed"?"مشروع مكتمل":"متوازن"),h("span",{},hm(b.m)),h("span",{},b.idle==null?"لا إنجاز بعد":"آخر إنجاز قبل "+b.idle+" يوم"),h("span",{},b.open+" مهمة مفتوحة")));
   const lo=bal.filter(b=>b.state==="lo").map(b=>b.p.name), hi=bal.filter(b=>b.state==="hi").map(b=>b.p.name);
   // branches and people over the period
   const since=Date.now()-days*DAY, doneP=tasks().filter(t=>t.status==="done"&&t.doneAt>=since&&!subsOf(t.id).length);
