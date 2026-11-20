@@ -1293,6 +1293,31 @@ body.tk-selmode{padding-bottom:84px}
 @media (max-width:700px){ .tk-selbar{bottom:calc(76px + env(safe-area-inset-bottom));padding:8px} body.tk-selmode{padding-bottom:150px} }
 @media (hover:none){ #tk .tk-r{-webkit-user-select:none;user-select:none} }
 @media (min-width:701px){ .tk-selbar{flex-wrap:nowrap} }
+/* search */
+.tk-sfind{display:flex;align-items:center;gap:8px;width:100%;margin-bottom:10px;padding:9px 12px;border:1px solid var(--line);border-radius:12px;background:var(--card,#fff);color:var(--muted);font:inherit;font-size:13.5px;cursor:pointer;text-align:start}
+.tk-sfind span{flex:1}.tk-sfind kbd{font:inherit;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:1px 5px}
+.tk-findm{padding:6px 9px}
+.tk-finddlg .tk-df{display:none}
+dialog.tk-finddlg{width:min(640px,94vw)}
+.tk-findq{width:100%;font-size:16px;padding:12px 14px;border-radius:12px}
+.tk-findres{display:flex;flex-direction:column;gap:12px;max-height:min(62vh,560px);overflow:auto}
+.tk-findg h4{margin:0 0 4px;font-size:12.5px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.tk-findr{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;padding:8px 6px;border-radius:9px;font:inherit;text-align:start;cursor:pointer;color:inherit}
+.tk-findr:hover,.tk-findr:focus-visible{background:var(--sunken,#F2F4F7)}
+.tk-findr .t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14.5px}
+.tk-findr small{color:var(--muted);font-size:12px;white-space:nowrap}
+.tk-findr.done .t{color:var(--muted)}
+/* weekly review */
+dialog.tk-rvdlg{width:min(620px,94vw)}
+.tk-rvh{margin:0 0 10px;font-size:18px}
+.tk-rvbig{display:flex;align-items:baseline;gap:6px;margin-bottom:10px}.tk-rvbig b{font-size:30px}
+.tk-rvlist{display:flex;flex-direction:column;gap:6px;max-height:46vh;overflow:auto}
+.tk-rvp summary{display:flex;align-items:center;gap:8px;cursor:pointer;padding:6px 2px;list-style:none}
+.tk-rvp summary i{width:9px;height:9px;border-radius:3px;display:inline-block}
+.tk-rvp ul{margin:2px 0 6px;padding-inline-start:26px;color:var(--muted);font-size:13.5px}
+.tk-rvdots{display:flex;gap:5px;align-items:center}.tk-rvdots i{width:7px;height:7px;border-radius:50%;background:var(--line,#E4E7EC)}.tk-rvdots i.on{background:#0B4EA2;width:18px;border-radius:9px}.tk-rvdots i.done{background:#8FB3E8}
+.tk-rv .tk-bline{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-bottom:8px}
+.tk-snaps{border-top:1px solid var(--line);padding-top:12px;margin-top:4px}
 
 </style>
 
@@ -4134,9 +4159,18 @@ const DEFAULT_AREAS=[["خدمات للإطار","#1788EE"],["الحفاظ على
 /* ---------- local store ---------- */
 const SEL=new Set(); let selAnchor=null;
 const DB={ items:new Map(), dirty:new Set(ls.get("dirty",[])) };
-for(const o of ls.get("items",[])) if(o&&o.id) DB.items.set(o.id,o);
+const IDB=(()=>{ let pr=null; const open=()=>pr||(pr=new Promise((res,rej)=>{ try{ const r=indexedDB.open("rouwad-tasks",1); r.onupgradeneeded=()=>r.result.createObjectStore("kv"); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error("blocked")); }catch(e){ rej(e); } }));
+  const tx=(m,fn)=>open().then(db=>new Promise((res,rej)=>{ const t=db.transaction("kv",m), q=fn(t.objectStore("kv")); t.oncomplete=()=>res(q&&q.result); t.onerror=()=>rej(t.error); t.onabort=()=>rej(t.error); }));
+  return { get:k=>tx("readonly",st=>st.get(k)), set:(k,v)=>tx("readwrite",st=>st.put(v,k)), del:k=>tx("readwrite",st=>st.delete(k)) }; })();
+let IDB_ON=typeof indexedDB!=="undefined"&&ls.get("noidb",false)!==true;
+const LEGACY=ls.get("items",null); if(LEGACY) for(const o of LEGACY) if(o&&o.id) DB.items.set(o.id,o);
+for(const o of ls.get("dirtyItems",[])) if(o&&o.id){ const c=DB.items.get(o.id); if(!c||(o.updatedAt||0)>=(c.updatedAt||0)) DB.items.set(o.id,o); }
 let saveT=0;
-function flush(){ clearTimeout(saveT); saveT=0; ls.set("items",[...DB.items.values()]); ls.set("dirty",[...DB.dirty]); }
+let IDB_LOADED=false;
+function flush(){ clearTimeout(saveT); saveT=0; if(IDB_ON&&!IDB_LOADED){ saveT=setTimeout(flush,120); return; } const arr=[...DB.items.values()];
+  ls.set("dirty",[...DB.dirty]); ls.set("dirtyItems",[...DB.dirty].slice(0,400).map(id=>DB.items.get(id)).filter(Boolean));
+  if(IDB_ON) IDB.set("items",arr).then(()=>{ if(localStorage.getItem(NS+"items")!=null) ls.del("items"); }).catch(()=>{ IDB_ON=false; ls.set("noidb",true); ls.set("items",arr); });
+  else ls.set("items",arr); }
 function persist(){ clearTimeout(saveT); saveT=setTimeout(flush,60); }
 window.addEventListener("pagehide",()=>{ if(saveT) flush(); }); document.addEventListener("visibilitychange",()=>{ if(document.visibilityState==="hidden"&&saveT) flush(); });
 function put(o,{silent}={}){ o.updatedAt=Date.now(); if(o.kind==="task"&&o.repeat&&o.status==="done") spawnNext(o); DB.items.set(o.id,o); DB.dirty.add(o.id); persist(); if(!silent){ render(); Sync.soon(); } return o; }
@@ -4525,6 +4559,7 @@ applyTheme(); try{ matchMedia("(prefers-color-scheme: dark)").addEventListener("
 function sideNav(){ const c=counts(), cur=sectionOf(V.view).k;
   const badge=(n,cls)=>n?h("b",{class:"tk-nb"+(cls?" "+cls:"")},n):null;
   return h("aside",{class:"tk-side","aria-label":"التنقل"},
+    h("button",{type:"button",class:"tk-sfind",id:"tkFind",onclick:()=>findAll()},icon("search",16),h("span",{},"ابحث في كل شيء"),h("kbd",{},/Mac/.test(navigator.platform)?"⌘K":"Ctrl K")),
     h("nav",{class:"tk-sidenav"},SECTIONS.map(s=>[
       h("button",{type:"button",class:"tk-si"+(cur===s.k?" on":""),"aria-current":cur===s.k?"page":null,onclick:()=>goSection(s.k)},icon(s.i),h("span",{},s.n),
         s.k==="tasks"?badge(c.late,"late"):s.k==="pub"?badge(c.nid):null),
@@ -4544,7 +4579,7 @@ function bottomNav(){ const c=counts(), cur=sectionOf(V.view).k;
 function sectionTabs(){ const s=sectionOf(V.view); const vs=s.views.filter(v=>VIEW_LABEL[v]); if(vs.length<2) return null; const c=counts();
   return h("div",{class:"tk-tabs",role:"tablist"},vs.map(v=>h("button",{type:"button",role:"tab","aria-selected":String(V.view===v||(V.view==="proj"&&v===(get(V.proj)&&get(V.proj).type==="area"?"areas":"big"))),onclick:()=>go(v,{proj:null})},icon(VIEW_LABEL[v][1],16),VIEW_LABEL[v][0],v==="inbox"&&c.ib?h("b",{class:"tk-nb"},c.ib):null)),
     V.view==="list"?h("span",{class:"tk-sp"}):null, V.view==="list"?listTools():null); }
-function mobileTop(){ return h("div",{class:"tk-mtop"},h("b",{},sectionOf(V.view).n),h("span",{class:"tk-sp"}),h("button",{type:"button",class:"tk-sync tk-moreb"+(sectionOf(V.view).k==="more"?" on":""),title:"المزيد: الأدوات",onclick:()=>goSection("more")},icon("more",16),h("span",{},"المزيد")),themeBtn(false),installBtn(),!navigator.onLine&&h("span",{class:"tk-sync"},"✈︎"),h("button",{type:"button",class:"tk-sync",onclick:syncDialog},h("i"),h("span",{},Sync.on()?"متزامن":"محلي"))); }
+function mobileTop(){ return h("div",{class:"tk-mtop"},h("b",{},sectionOf(V.view).n),h("span",{class:"tk-sp"}),h("button",{type:"button",class:"tk-sync tk-findm","aria-label":"بحث",title:"بحث في كل شيء",onclick:()=>findAll()},icon("search",16)),h("button",{type:"button",class:"tk-sync tk-moreb"+(sectionOf(V.view).k==="more"?" on":""),title:"المزيد: الأدوات",onclick:()=>goSection("more")},icon("more",16),h("span",{},"المزيد")),themeBtn(false),installBtn(),!navigator.onLine&&h("span",{class:"tk-sync"},"✈︎"),h("button",{type:"button",class:"tk-sync",onclick:syncDialog},h("i"),h("span",{},Sync.on()?"متزامن":"محلي"))); }
 
 /* ---------- repeating tasks ---------- */
 const WDN=["الأحد","الاثنين","الثلاثاء","الأربعاء","الخميس","الجمعة","السبت"];
@@ -5092,6 +5127,8 @@ function vMore(){ const nx=occs().filter(o=>o.on!==false).map(o=>({o,d:occNext(o
   const tile=(ic,n,sub,on)=>h("button",{type:"button",class:"tk-tool",onclick:on},h("span",{class:"tk-toolic"},ic),h("b",{},n),h("small",{},sub));
   return h("div",{},h("div",{class:"tk-muted",style:"margin-bottom:12px"},"أدوات جانبية تحتاجها من حين لآخر."),
     h("div",{class:"tk-tools"},
+      tile("🔁","المراجعة الأسبوعية",(ls.get("reviewAt",0)?"آخر مراجعة "+whenLabel(iso(new Date(ls.get("reviewAt",0)))):"لم تبدأ بعد")+" · نحو 15 دقيقة",()=>weeklyReview()),
+      tile("🔎","بحث في كل شيء","المهام والمنشورات والأفكار والردود",()=>findAll()),
       tile("🗓","المناسبات",nx?"القادمة: "+nx.o.name+" · "+relLabel(daysTo(nx.d)):"وطنية، محلية، عالمية، دينية",()=>go("occasions")),
       tile("💬","ردود جاهزة",all("reply").length+" رد · نسخ بضغطة",()=>go("replies")),
       tile("🖴","الأقراص الصلبة",all("drive").length+" قرص · أين يوجد كل أرشيف",()=>go("drives")),
@@ -5321,7 +5358,9 @@ function vHome(){ const today=iso(new Date()), open=actionable().filter(t=>t.sta
     ws.length? chip("stuck","pur"+(wdue.length?" due":""),["⏸ ",h("b",{},ws.length)," عالقة",wdue.length?" · "+wdue.length+" تحتاج متابعة":""]) : null,
     rec.length? chip("dist","grn",["📣 ",h("b",{},rec.length)," أكمل توزيعها"]) : null,
     ...occN.slice(0,2).map(x=>chip("occ"+x.o.id,"blu",["🗓 ",x.o.name," · "+relLabel(daysTo(x.d))],()=>editOccasion(x.o))),
+    reviewDue()? chip("review","blu",["🗓 ","المراجعة الأسبوعية"],()=>weeklyReview()) : null,
     insDue? chip("insp","yel",["💡 ",h("b",{},insN)," للفرز"],()=>triage()) : null,
+    backupDue()? chip("backup","",["💾 ","نسخة الشهر الاحتياطية"],()=>downloadBackup()) : null,
     inb? chip("inbox","",["📥 ",h("b",{},inb)," في الوارد"],()=>go("inbox")) : null].filter(Boolean);
   const chipPanel=V2.chip==="stuck"&&ws.length? h("div",{class:"tk-card tk-tpanel"},h("div",{class:"tk-list"},(wdue.length?wdue:ws).map(t=>row(t,{act:waitActs(t)}))),
       h("button",{type:"button",class:"tk-link",onclick:()=>reviewStuck()},"مراجعة كل العالقة ("+ws.length+")"))
@@ -5803,7 +5842,8 @@ function syncDialog(){ const c=Sync.cfg;
       h("p",{class:"tk-note"},"لا تضع أبدًا مفتاح service_role هنا، فقط المفتاح العام. الحماية تأتي من سياسات RLS في الكود.")),
     h("div",{class:"full",style:"display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:12px"},
       h("button",{type:"button",class:"tk-btn",onclick:()=>{ const blob=new Blob([JSON.stringify({rouwadMediaItems:[...DB.items.values()],exportedAt:new Date().toISOString()},null,1)],{type:"application/json"}); const a=h("a",{href:URL.createObjectURL(blob),download:"rouwad-tasks-"+new Date().toISOString().slice(0,10)+".json"}); document.body.append(a); a.click(); a.remove(); }},"⇩ تصدير نسخة احتياطية"),
-      h("button",{type:"button",class:"tk-btn",onclick:()=>imp.click()},"⇧ استيراد نسخة"),imp)],
+      h("button",{type:"button",class:"tk-btn",onclick:()=>imp.click()},"⇧ استيراد نسخة"),imp),
+    snapBlock()],
     [h("button",{type:"button",class:"tk-btn pri",id:"tkSbGo",onclick:async()=>{ Sync.cfg={url:url.value.trim().replace(/\/+$/,""),key:key.value.trim(),email:em.value.trim()}; ls.set("sb",Sync.cfg);
         if(!/^https:\/\/.+/.test(Sync.cfg.url)||!Sync.cfg.key){ state.textContent="أدخل Project URL والمفتاح."; state.className="tk-err"; return; }
         try{ if(pw.value||!Sync.ses){ state.textContent="جارٍ تسجيل الدخول…"; state.className=""; await Sync.signIn(Sync.cfg.email,pw.value); pw.value=""; } await Sync.run(); if(Sync.state==="ok") state.textContent="✓ متصل ومتزامن"; }
@@ -5914,8 +5954,92 @@ function drawSelBar(){ QA(".tk-selbar").forEach(x=>x.remove()); document.body.cl
     b("تحديد الكل",()=>{ QA("#tk .tk-r[data-id]").forEach(y=>{ const x=get(y.dataset.id); if(x&&x.kind==="task") SEL.add(y.dataset.id); }); render(); }),
     b("إلغاء",()=>endSel()))); }
 
-window.rouwadTasks={bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
-migrateDates(); migratePosts(); seedOccasions(); ensureOccIdeas(); setMode(mode); render(); if(Sync.on()) Sync.run();
+/* ---------- global search ---------- */
+const FIND_KIND={task:["المهام","✓"],post:["المنشورات","📣"],idea:["الأفكار والاستلهام","💡"],reply:["الردود الجاهزة","💬"],project:["المشاريع","📁"],occasion:["المناسبات","🗓"],drive:["الأقراص الصلبة","🖴"],channel:["القنوات والمجموعات","👥"],guiderow:["دليل المنصب","🧭"]};
+const findText=o=>{ const out=[]; for(const [k,v] of Object.entries(o)){ if(/^(id|kind|project|main|color|createdAt|updatedAt|order|status|stage|type|scope|cal)$/.test(k)) continue; if(typeof v==="string") out.push(v); else if(Array.isArray(v)) v.forEach(x=>{ if(typeof x==="string") out.push(x); else if(x&&typeof x.t==="string") out.push(x.t); }); } return out.join(" "); };
+const findTitle=o=>o.title||o.name||o.text||o.body||"(بلا عنوان)";
+function findOpen(o,d){ d.close(); const k=o.kind;
+  if(k==="task") editTask(o); else if(k==="post") editPost(o); else if(k==="idea") editIdea(o); else if(k==="occasion") editOccasion(o);
+  else if(k==="reply") recEdit("reply",o,REPLY_F,"رد"); else if(k==="project") go("proj",{proj:o.id}); else if(k==="drive") go("drives"); else if(k==="channel") go("channels"); else if(k==="guiderow") go("guide"); }
+function findAll(){ const inp=h("input",{type:"search",id:"tkFindQ",class:"tk-findq",placeholder:"اكتب كلمة: مهمة، منشور، فكرة، رد، قرص…",autocomplete:"off",enterkeyhint:"search"});
+  const box=h("div",{class:"tk-findres","aria-live":"polite"}); let first=null;
+  const draw=()=>{ const q=norm(inp.value.trim()); first=null; if(q.length<2){ box.replaceChildren(h("p",{class:"tk-muted",style:"margin:6px 2px"},"ابحث في المهام (حتى المنجزة)، المنشورات، الأفكار، الردود، المشاريع، المناسبات، الأقراص والقنوات.")); return; }
+    const words=q.split(/\s+/).filter(Boolean); const groups=new Map();
+    for(const o of DB.items.values()){ if(o.deleted||!FIND_KIND[o.kind]) continue; const t=norm(findText(o)); if(!words.every(w=>t.includes(w))) continue;
+      const tt=norm(findTitle(o)); const sc=(tt.includes(q)?10:0)+(o.kind==="task"&&o.status!=="done"?3:0)+(o.updatedAt||0)/1e13;
+      if(!groups.has(o.kind)) groups.set(o.kind,[]); groups.get(o.kind).push({o,sc}); }
+    if(!groups.size){ box.replaceChildren(h("p",{class:"tk-muted",style:"margin:6px 2px"},"لا نتائج لـ «"+inp.value.trim()+"».")); return; }
+    box.replaceChildren(...Object.keys(FIND_KIND).filter(k=>groups.get(k)).map(k=>{ const g=groups.get(k).sort((a,b)=>b.sc-a.sc); const more=g.length>8;
+      return h("section",{class:"tk-findg"},h("h4",{},FIND_KIND[k][0],h("span",{class:"tk-tgn"},g.length)),
+        g.slice(0,8).map(({o})=>{ const p=o.project&&get(o.project); const b=h("button",{type:"button",class:"tk-findr"+(o.status==="done"||o.stage==="published"?" done":""),onclick:()=>findOpen(o,d)},
+          h("span",{class:"ic"},FIND_KIND[k][1]),h("span",{class:"t",text:findTitle(o)}),
+          h("small",{},[p?p.name:"",o.kind==="task"&&o.status==="done"?"منجزة":"",o.kind==="post"&&PS[o.stage]?PS[o.stage].n:"",o.planned?whenLabel(o.planned):""].filter(Boolean).join(" · ")),
+          o.kind==="reply"?h("span",{class:"tk-link",role:"button",onclick:e=>{ e.stopPropagation(); try{ navigator.clipboard.writeText(o.body||""); }catch(_){} toast("✓ نُسخ الرد"); }},"نسخ"):null); if(!first) first=b; return b; }),
+        more?h("small",{class:"tk-muted"},"و"+(g.length-8)+" أخرى — زد كلمة لتضييق البحث"):null); })); };
+  inp.addEventListener("input",draw); inp.addEventListener("keydown",e=>{ if(e.key==="Enter"&&first){ e.preventDefault(); first.click(); } else if(e.key==="Escape"){ e.preventDefault(); d.close(); } });
+  const d=dlg("بحث في كل شيء",[h("div",{class:"f full"},inp),h("div",{class:"f full"},box)],[]); d.classList.add("tk-finddlg"); draw(); try{ inp.focus(); }catch(_){} setTimeout(()=>inp.focus(),30); }
+document.addEventListener("keydown",e=>{ if(mode!=="tasks") return; const typing=/INPUT|TEXTAREA|SELECT/.test((document.activeElement||{}).tagName||"")||(document.activeElement&&document.activeElement.isContentEditable);
+  if(((e.metaKey||e.ctrlKey)&&(e.key==="k"||e.key==="K"))||(e.key==="/"&&!typing&&!Q("dialog[open]"))){ if(Q("dialog.tk-finddlg[open]")) return; e.preventDefault(); findAll(); } });
+
+/* ---------- weekly review: one sheet, five short steps ---------- */
+const reviewDue=()=>{ const d=new Date(); if(d.getDay()<4) return false; const thu=weekStart(); thu.setDate(thu.getDate()+4); return ls.get("reviewAt",0)<thu.getTime(); };
+function weeklyReview(){ let step=0; const now=new Date(); const nextWk=now.getDay()>=4; const ws=weekStart(); const since=ws.getTime();
+  const wkStartNext=new Date(ws); if(nextWk) wkStartNext.setDate(wkStartNext.getDate()+7); const fid=wkId(wkStartNext);
+  const fdoc=()=>get(fid)||{id:fid,kind:"week",focus:[],note:""};
+  const body=h("div",{class:"f full tk-rv"}), dots=h("div",{class:"tk-rvdots"}), back=h("button",{type:"button",class:"tk-btn"},"→ السابق"), next=h("button",{type:"button",class:"tk-btn pri",id:"tkRvNext"});
+  const STEPS=[
+    ["ما أنجزته هذا الأسبوع",()=>{ const w=workDone(since,Date.now()+1); const m=w.reduce((a,b)=>a+b.m,0); const by=new Map(); for(const x of w){ const k=x.project||"_"; by.set(k,(by.get(k)||[]).concat(x)); }
+      return [h("div",{class:"tk-rvbig"},h("b",{},w.length),h("span",{}," منجزة · ≈ "+hm(m)+(w.filter(x=>x.post).length?" · منها "+w.filter(x=>x.post).length+" منشور":""))),
+        w.length? h("div",{class:"tk-rvlist"},[...by.entries()].sort((a,b)=>b[1].length-a[1].length).map(([k,xs])=>{ const p=get(k); return h("details",{class:"tk-rvp"},h("summary",{},h("i",{style:"background:"+(p?pcol(p):"#98A2B3")}),h("b",{},p?p.name:"بدون مشروع"),h("span",{class:"tk-tgn"},xs.length)),
+          h("ul",{},xs.slice(0,12).map(x=>h("li",{},(x.post?"📣 ":"✓ ")+x.title)))); })) : h("p",{class:"tk-muted"},"لا شيء مسجّل هذا الأسبوع بعد. لا بأس — ابدأ الأسبوع القادم بخطوة صغيرة."),
+        h("p",{class:"tk-note"},"خذ لحظة: ما الذي أنت راضٍ عنه؟ وما الذي أخذ وقتًا أكثر مما يستحق؟")]; }],
+    ["العالقة",()=>{ const wsx=waiting(); if(!wsx.length) return [h("p",{class:"tk-empty"},"لا مهام عالقة ✓")];
+      return [h("p",{class:"tk-note",style:"margin-top:0"},"لكل مهمة: هل تحرّكت؟ إن نعم تعود لمهامك اليوم، وإن لا حدّد متى تتابعها."),
+        h("div",{class:"tk-rvlist"},wsx.map(t=>h("div",{class:"tk-stk"+(waitDue(t)?" due":"")},h("div",{class:"tk-stkm"},h("b",{},t.title),h("small",{},t.waitOn?"عند: "+t.waitOn:"لم تحدد عند من")),
+          h("span",{class:"tk-acts"},h("button",{type:"button",class:"tk-btn sm pri",onclick:()=>{ unstick(t,true); draw(); }},"✓ تحرّكت"),h("button",{type:"button",class:"tk-btn sm",onclick:()=>{ stillStuck(t,3); draw(); }},"⏳ +3"),h("button",{type:"button",class:"tk-btn sm",onclick:()=>{ stillStuck(t,7); draw(); }},"+أسبوع")))))]; }],
+    ["التوازن",()=>{ const bal=balance(14); const hi=bal.filter(b=>b.state==="hi"), lo=bal.filter(b=>b.state==="lo"), zero=bal.filter(b=>!b.n&&b.state!=="closed");
+      const ch=(b,c)=>h("span",{class:"tk-bchip "+c},h("i",{style:"background:"+pcol(b.p)}),b.p.name);
+      return [h("p",{class:"tk-note",style:"margin-top:0"},"آخر أسبوعين:"),
+        hi.length?h("div",{class:"tk-bline"},h("small",{},"▲ أخذ أكثر من حقه:"),hi.map(b=>ch(b,"hi"))):null,
+        lo.length?h("div",{class:"tk-bline"},h("small",{},"▼ يحتاج وقتًا:"),lo.map(b=>ch(b,"lo"))):null,
+        zero.length?h("div",{class:"tk-bline"},h("small",{},"لم يُلمس:"),zero.map(b=>ch(b,"muted"))):null,
+        !hi.length&&!lo.length?h("p",{},h("b",{style:"color:#2BA14A"},"✓ وقتك موزّع بتوازن")):null,
+        h("p",{class:"tk-note"},"ما يحتاج وقتًا يصلح أن يكون تركيز الأسبوع القادم (الخطوة الأخيرة).")]; }],
+    ["الاستلهام",()=>{ const n=inspInbox().length;
+      return n? [h("div",{class:"tk-rvbig"},h("b",{},n),h("span",{}," فكرة تنتظر الفرز")),h("p",{class:"tk-note"},"بطاقة واحدة في كل مرة: احفظها مرجعًا، أو حوّلها لمنشور، أو احذفها."),h("button",{type:"button",class:"tk-btn pri",onclick:()=>{ triage(); }},"▶ ابدأ الفرز")]
+        : [h("p",{class:"tk-empty"},"صندوق الاستلهام فارغ ✓")]; }],
+    [nextWk?"تركيز الأسبوع القادم":"تركيز هذا الأسبوع",()=>{ const w=fdoc(); const bal=balance(14); const lo=new Set(bal.filter(b=>b.state==="lo").map(b=>b.p.id));
+      return [h("p",{class:"tk-note",style:"margin-top:0"},"اختر مشروعًا أو اثنين فقط. مهامها ستتقدّم في «الترتيب الذكي»."+(lo.size?" المعلَّمة بـ ▼ تحتاج وقتًا.":"")),
+        h("div",{class:"tk-focus"},[...areas(),...bigs()].map(p=>h("button",{type:"button",class:"tk-fchip",style:"--pc:"+pcol(p),"aria-pressed":String(w.focus.includes(p.id)),onclick:()=>{ const x=fdoc(); x.focus=x.focus.includes(p.id)?x.focus.filter(i=>i!==p.id):[...x.focus,p.id]; put(x,{silent:true}); Sync.soon(); draw(); }},h("i"),(lo.has(p.id)?"▼ ":"")+p.name))),
+        h("textarea",{rows:2,id:"tkRvNote",placeholder:"ملاحظة للأسبوع (اختياري): ما الأهم؟",onchange:e=>{ const x=fdoc(); x.note=e.target.value; put(x,{silent:true}); Sync.soon(); }},w.note||"")]; }]];
+  const draw=()=>{ const [t,fn]=STEPS[step]; Q(".tk-dh h3",d).textContent="المراجعة الأسبوعية · "+(step+1)+"/"+STEPS.length;
+    body.replaceChildren(h("h4",{class:"tk-rvh"},t),...[].concat(fn()));
+    dots.replaceChildren(...STEPS.map((_,i)=>h("i",{class:i===step?"on":i<step?"done":""})));
+    back.hidden=step===0; next.textContent=step===STEPS.length-1?"✓ إنهاء المراجعة":"التالي ←"; };
+  back.onclick=()=>{ if(step>0){ step--; draw(); } };
+  next.onclick=()=>{ if(step<STEPS.length-1){ step++; draw(); return; } ls.set("reviewAt",Date.now()); d.close(); render(); toast("✓ انتهت المراجعة الأسبوعية — أسبوع موفق"); };
+  const d=dlg("المراجعة الأسبوعية",[body],[back,dots,h("span",{class:"tk-sp"}),next]); d.classList.add("tk-rvdlg"); draw(); }
+
+/* ---------- backups: a monthly file to keep in Drive + automatic monthly snapshots on this device ---------- */
+const backupDue=()=>DB.items.size>20&&Date.now()-ls.get("backupAt",ls.get("firstSeen",0)||Date.now())>30*DAY;
+if(!ls.get("firstSeen",0)) ls.set("firstSeen",Date.now());
+function backupBlob(items){ return new Blob([JSON.stringify({rouwadMediaItems:items||[...DB.items.values()],exportedAt:new Date().toISOString()})],{type:"application/json"}); }
+function downloadBackup(){ const a=h("a",{href:URL.createObjectURL(backupBlob()),download:"rouwad-backup-"+iso(new Date())+".json"}); document.body.append(a); a.click(); setTimeout(()=>a.remove(),500);
+  ls.set("backupAt",Date.now()); render(); toast("✓ نُزّلت النسخة — ضعها في مجلد «نسخ الاستوديو» في Drive"); }
+async function autoSnapshot(){ if(!IDB_ON||DB.items.size<5) return; const key="snap-"+iso(new Date()).slice(0,7); let list=ls.get("snaps",[]); if(list.includes(key)) return;
+  try{ await IDB.set(key,{at:Date.now(),items:[...DB.items.values()]}); list=[...list,key]; while(list.length>3){ const old=list.shift(); try{ await IDB.del(old); }catch(_){} } ls.set("snaps",list); }catch(_){} }
+function snapBlock(){ const list=ls.get("snaps",[]).slice().reverse();
+  return h("div",{class:"full tk-snaps"},h("b",{},"💾 نسخ تلقائية في هذا الجهاز"),h("small",{class:"tk-muted"}," (واحدة كل شهر، آخر 3) — للاسترجاع: نزّلها ثم «استيراد نسخة»."),
+    list.length? h("div",{class:"tk-opts",style:"margin-top:6px"},list.map(k=>h("button",{type:"button",onclick:async()=>{ const v=await IDB.get(k).catch(()=>null); if(!v){ toast("تعذّرت قراءة النسخة"); return; } const a=h("a",{href:URL.createObjectURL(backupBlob(v.items)),download:"rouwad-"+k+".json"}); document.body.append(a); a.click(); setTimeout(()=>a.remove(),500); }},"⤓ "+k.slice(5))))
+      : h("small",{class:"tk-muted",style:"display:block"},"تُنشأ أول نسخة تلقائيًا بعد فتح المنصة."),
+    h("div",{style:"margin-top:8px"},h("button",{type:"button",class:"tk-btn sm",onclick:()=>downloadBackup()},"⤓ نزّل نسخة الآن لحفظها في Drive"),
+      h("small",{class:"tk-muted"},ls.get("backupAt",0)?"  آخر تنزيل: "+whenLabel(iso(new Date(ls.get("backupAt",0)))):""))); }
+
+window.rouwadTasks={findAll,weeklyReview,reviewDue,downloadBackup,autoSnapshot,IDB,backupDue,bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+const boot=()=>{ migrateDates(); migratePosts(); seedOccasions(); ensureOccIdeas(); setMode(mode); render(); if(Sync.on()) Sync.run(); setTimeout(autoSnapshot,4000); };
+if(IDB_ON) IDB.get("items").then(arr=>{ IDB_LOADED=true; if(Array.isArray(arr)) for(const o of arr){ if(!o||!o.id) continue; const c=DB.items.get(o.id); if(!c||(o.updatedAt||0)>(c.updatedAt||0)) DB.items.set(o.id,o); } if(LEGACY||!arr) persist(); })
+  .catch(()=>{ IDB_ON=false; IDB_LOADED=true; }).finally(boot);
+else boot();
 })();
 </script>
 
