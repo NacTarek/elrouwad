@@ -796,6 +796,63 @@ dialog.tk-dlg form{display:flex;flex-direction:column;max-height:92vh}
 }
 @media (max-width:860px){.tk-tabs button[role=tab] svg{display:none}.tk-tabs{gap:5px}}
 
+/* ===== publishing room ===== */
+.tk-phead{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:14px;display:flex;flex-direction:column;gap:12px}
+.tk-pstats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.tk-pstat{display:flex;flex-direction:column;gap:2px;padding:4px 10px;border-inline-start:3px solid var(--line);min-width:0}
+.tk-pstat span{font-size:12px;color:var(--muted);font-weight:600}
+.tk-pstat b{font-size:20px;font-weight:800;line-height:1.3}
+.tk-pstat small{font-size:11.5px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-pstat.warn{border-color:#E8701E} .tk-pstat.warn b{color:#E8701E}
+.tk-pstat.ok{border-color:#2BA14A}
+.tk-pctl{display:flex;flex-wrap:wrap;gap:14px 20px;align-items:center;border-top:1px solid var(--line);padding-top:12px}
+.tk-pspark{display:flex;align-items:flex-end;gap:3px;height:32px}
+.tk-pspark i{width:7px;border-radius:2px;background:#2BA14A;opacity:.85}
+.tk-pgoal{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tk-pgoal>span{font-size:12.5px;font-weight:700;color:var(--muted)}
+.tk-days button{padding:5px 8px;font-size:12px}
+.tk-pbtns{display:flex;align-items:center;gap:12px;margin-inline-start:auto}
+.tk-pkb{grid-template-columns:repeat(5,minmax(172px,1fr));gap:10px}
+.tk-col h4 .tk-ib.sm{min-width:26px;height:26px;padding:0;border:0;background:transparent}
+.tk-pc2{border-top-width:3px}
+.tk-pc2 .tk-rm{margin-top:6px;flex-wrap:wrap;white-space:normal}
+.tk-calbar{display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.tk-calbar b{font-size:16px;min-width:120px;text-align:center}
+.tk-legend span{display:inline-flex;align-items:center;gap:5px}
+.tk-legend i{width:9px;height:9px;border-radius:3px;background:var(--pc)}
+.tk-cal{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.tk-cwd{font-size:12px;font-weight:700;color:var(--muted);text-align:center;padding:8px 2px;border-bottom:1px solid var(--line);background:var(--sunken)}
+.tk-cday{min-height:104px;border-inline-start:1px solid var(--line);border-bottom:1px solid var(--line);padding:6px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.tk-cday.out{opacity:.45}
+.tk-cday.pday{background:color-mix(in srgb,#2BA14A 5%,transparent)}
+.tk-cday.today .tk-cdn{background:var(--brand);color:var(--brand-ink);border-radius:999px;padding:0 7px}
+.tk-cday.over,.tk-cday.picking:hover{outline:2px dashed var(--brand);outline-offset:-3px;cursor:pointer}
+.tk-cdn{font-size:12px;font-weight:700;color:var(--muted);align-self:flex-start}
+.tk-cpost{font:inherit;font-size:11.5px;font-weight:600;text-align:right;border:0;border-inline-start:3px solid var(--pc);background:color-mix(in srgb,var(--pc) 14%,transparent);color:var(--ink);border-radius:6px;padding:3px 6px;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.tk-cpost.done{opacity:.7}
+.tk-cpost.big{font-size:13px;padding:7px 10px;display:inline-flex;gap:8px;align-items:center;max-width:none}
+.tk-cpost.big small{color:var(--muted);font-weight:500}
+.tk-cpost.sel{outline:2px solid var(--brand)}
+.tk-h2{cursor:grab;touch-action:none;color:var(--muted);letter-spacing:-3px}
+.tk-unsched{display:flex;flex-wrap:wrap;gap:8px}
+.tk-calpick{background:var(--brand-soft);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:13.5px;display:flex;gap:6px;align-items:center}
+.tk-pdot{width:10px;height:10px;border-radius:50%;background:var(--pc);flex:none;margin:0 4px}
+@media (max-width:860px){
+  .tk-pstats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .tk-pbtns{margin-inline-start:0;width:100%}
+  .tk-pbtns .tk-btn{flex:1;justify-content:center}
+  .tk-pkb{grid-template-columns:repeat(5,minmax(230px,80vw))}
+  .tk-cday{min-height:64px;padding:3px}
+  .tk-cpost{font-size:10px;padding:2px 4px}
+  .tk-cwd{font-size:10.5px}
+}
+.tk-pctlbtn{display:none}
+@media (max-width:860px){
+  .tk-pctlbtn{display:block;font:inherit;font-size:13px;font-weight:700;color:var(--brand);background:none;border:0;border-top:1px solid var(--line);padding:10px 0 0;text-align:start;cursor:pointer}
+  .tk-pctl:not(.open){display:none}
+  .tk-pstat b{font-size:17px}
+}
+
 </style>
 
 <div class="app" dir="rtl" lang="ar">
@@ -3732,7 +3789,7 @@ const Sync={ cfg:Object.assign({email:""},ls.get("sb",{}),(c=>c.url&&c.key?{}:SB
         const rows=chunk.map(o=>{ const {id,kind,deleted,updatedAt,...data}=o; return {id,kind,data,deleted:!!deleted,client_updated:updatedAt||Date.now()}; });
         await this.req("/rest/v1/media_items?on_conflict=id",{method:"POST",headers:{Prefer:"resolution=merge-duplicates,return=minimal"},body:JSON.stringify(rows)});
         for(const o of chunk) if((DB.items.get(o.id)||{}).updatedAt===o.updatedAt) DB.dirty.delete(o.id); }
-      persist(); this.at=Date.now(); ls.set("syncAt",this.at); this.set("ok","متزامن"); if(changed) render();
+      persist(); this.at=Date.now(); ls.set("syncAt",this.at); this.set("ok","متزامن"); if(changed){ migrateDates(); migratePosts(); render(); }
     }catch(e){ this.set("err","تعذّرت المزامنة: "+e.message); }
     finally{ this.busy=false; } },
   soon(){ if(!this.on()) return; clearTimeout(this.t); this.t=setTimeout(()=>this.run(),1500); },
@@ -3948,6 +4005,7 @@ const ICONS={
   moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',
   auto:'<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17A8.5 8.5 0 0 0 12 3.5z" fill="currentColor"/>',
   flag:'<path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5" fill="currentColor" fill-opacity=".9"/>',
+  pub:'<path d="M3 10v4a1 1 0 0 0 1 1h2l5 4V5L6 9H4a1 1 0 0 0-1 1z"/><path d="M15.5 8.5a5 5 0 0 1 0 7M18.5 5.5a9 9 0 0 1 0 13"/>',
   install:'<path d="M12 3v12m0 0-4-4m4 4 4-4"/><path d="M5 17v2a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2"/>'
 };
 function icon(n,size=20){ const s=document.createElementNS("http://www.w3.org/2000/svg","svg"); s.setAttribute("viewBox","0 0 24 24"); s.setAttribute("width",size); s.setAttribute("height",size);
@@ -3957,9 +4015,9 @@ function icon(n,size=20){ const s=document.createElementNS("http://www.w3.org/20
 const SECTIONS=[
   {k:"home",n:"اليوم",i:"today",views:["home"]},
   {k:"tasks",n:"المهام",i:"tasks",views:["inbox","list","kanban"]},
-  {k:"projects",n:"المشاريع",i:"projects",views:["big","proj","balance"]},
-  {k:"ideas",n:"الاستلهام",i:"ideas",views:["ideas"]}];
-const VIEW_LABEL={inbox:["الوارد","inbox"],list:["القائمة","list"],kanban:["كانبان","kanban"],big:["المشاريع الكبرى","projects"],balance:["التوازن","balance"]};
+  {k:"pub",n:"النشر",i:"pub",views:["pubboard","pubcal","ideas"]},
+  {k:"projects",n:"المشاريع",i:"projects",views:["big","proj","balance"]}];
+const VIEW_LABEL={pubboard:["لوحة النشر","kanban"],pubcal:["التقويم","today"],ideas:["الاستلهام","ideas"],inbox:["الوارد","inbox"],list:["القائمة","list"],kanban:["كانبان","kanban"],big:["المشاريع الكبرى","projects"],balance:["التوازن","balance"]};
 const sectionOf=v=>SECTIONS.find(s=>s.views.includes(v))||SECTIONS[0];
 function goSection(k){ const s=SECTIONS.find(x=>x.k===k); const last=ls.get("last-"+k,null); go(last&&s.views.includes(last)?last:s.views[0],{proj:null}); }
 function counts(){ const ib=inbox().length; const late=actionable().filter(t=>{ const d=daysLeft(effDeadline(t)); return d!=null&&d<0; }).length; const nid=ideasAll().filter(i=>i.status==="new").length; return {ib,late,nid}; }
@@ -3976,17 +4034,19 @@ function sideNav(){ const c=counts(), cur=sectionOf(V.view).k;
   return h("aside",{class:"tk-side","aria-label":"التنقل"},
     h("nav",{class:"tk-sidenav"},SECTIONS.map(s=>[
       h("button",{type:"button",class:"tk-si"+(cur===s.k?" on":""),"aria-current":cur===s.k?"page":null,onclick:()=>goSection(s.k)},icon(s.i),h("span",{},s.n),
-        s.k==="tasks"?badge(c.late,"late"):s.k==="ideas"?badge(c.nid):null),
+        s.k==="tasks"?badge(c.late,"late"):s.k==="pub"?badge(c.nid):null),
       s.views.filter(v=>VIEW_LABEL[v]).length>1&&cur===s.k? h("div",{class:"tk-sisub"},s.views.filter(v=>VIEW_LABEL[v]).map(v=>h("button",{type:"button",class:"tk-ssi"+((V.view===v||(v==="big"&&V.view==="proj"))?" on":""),onclick:()=>go(v,{proj:null})},icon(VIEW_LABEL[v][1],16),h("span",{},VIEW_LABEL[v][0]),v==="inbox"?badge(c.ib):null))) : null])),
     h("div",{class:"tk-sidefoot"},
-      h("button",{type:"button",class:"tk-add tk-addw",id:"tkAdd",onclick:()=>editTask(null,V.view==="proj"&&V.proj?{project:V.proj}:{})},icon("plus",18),"مهمة جديدة"),
+      (V.view==="pubboard"||V.view==="pubcal")? h("button",{type:"button",class:"tk-add tk-addw",id:"tkAdd",onclick:()=>editPost(null)},icon("plus",18),"منشور جديد")
+       : V.view==="ideas"? h("button",{type:"button",class:"tk-add tk-addw",id:"tkAdd",onclick:()=>editIdea(null)},icon("plus",18),"فكرة جديدة")
+       : h("button",{type:"button",class:"tk-add tk-addw",id:"tkAdd",onclick:()=>editTask(null,V.view==="proj"&&V.proj?{project:V.proj}:{})},icon("plus",18),"مهمة جديدة"),
       h("div",{class:"tk-sfrow"},themeBtn(true),installBtn()), !navigator.onLine&&h("span",{class:"tk-sync",style:"cursor:default"},"✈︎ دون اتصال"),
       h("button",{type:"button",class:"tk-sync",id:"tkSync",onclick:syncDialog},h("i"),h("span",{},"محلي فقط")))); }
 function bottomNav(){ const c=counts(), cur=sectionOf(V.view).k;
   const b=(k,n,i,badge)=>h("button",{type:"button",class:"tk-bi"+(cur===k?" on":""),onclick:()=>goSection(k)},h("span",{class:"ic"},icon(i,22),badge?h("b",{class:"tk-nb"},badge):null),h("span",{},n));
   return h("nav",{class:"tk-bottom","aria-label":"التنقل"},b("home","اليوم","today"),b("tasks","المهام","tasks",c.ib||null),
-    h("button",{type:"button",class:"tk-bplus","aria-label":"إضافة",onclick:()=>{ if(V.view==="ideas"){ editIdea(null); return; } editTask(null,V.view==="home"?{planned:iso(new Date())}:V.view==="proj"&&V.proj?{project:V.proj}:{}); }},icon("plus",26)),
-    b("ideas","الاستلهام","ideas",c.nid||null),b("projects","المشاريع","projects")); }
+    h("button",{type:"button",class:"tk-bplus","aria-label":"إضافة",onclick:()=>{ if(V.view==="ideas"){ editIdea(null); return; } if(V.view==="pubboard"||V.view==="pubcal"){ editPost(null); return; } editTask(null,V.view==="home"?{planned:iso(new Date())}:V.view==="proj"&&V.proj?{project:V.proj}:{}); }},icon("plus",26)),
+    b("pub","النشر","pub",c.nid||null),b("projects","المشاريع","projects")); }
 function sectionTabs(){ const s=sectionOf(V.view); const vs=s.views.filter(v=>VIEW_LABEL[v]); if(vs.length<2) return null; const c=counts();
   return h("div",{class:"tk-tabs",role:"tablist"},vs.map(v=>h("button",{type:"button",role:"tab","aria-selected":String(V.view===v||(v==="big"&&V.view==="proj")),onclick:()=>go(v,{proj:null})},icon(VIEW_LABEL[v][1],16),VIEW_LABEL[v][0],v==="inbox"&&c.ib?h("b",{class:"tk-nb"},c.ib):null)),
     V.view==="list"?h("span",{class:"tk-sp"}):null, V.view==="list"?listTools():null); }
@@ -4055,6 +4115,7 @@ function ideaCard(i){ const s=srcOf(i.url), st=ISTATE[i.status]||ISTATE.new, d=o
         i.url&&h("a",{class:"tk-btn sm",href:i.url,target:"_blank",rel:"noopener"},icon("link",14),"فتح"),
         task? h("button",{type:"button",class:"tk-btn sm",onclick:()=>editTask(task)},"↗ المهمة")
             : h("button",{type:"button",class:"tk-btn sm pri",onclick:()=>ideaToTask(i)},"حوّلها لمهمة"),
+        h("button",{type:"button",class:"tk-btn sm",title:"أضفها إلى غرفة النشر",onclick:()=>{ editPost(null,{title:i.title,notes:[i.note,i.url].filter(Boolean).join("\n"),branch:i.branch||null,stage:"toshoot",fromIdea:i.id}); }},"＋ للنشر"),
         h("span",{class:"tk-sp"}),
         i.status!=="used"&&h("button",{type:"button",class:"tk-btn sm",title:"استُعملت",onclick:()=>{ const x=get(i.id); x.status="used"; x.usedAt=Date.now(); put(x); }},"✓")))); }
 function ideaToTask(i){ const t=newTask({title:i.title||"فكرة",project:i.project||(areas().find(p=>/حيوية/.test(p.name))||{}).id,branch:i.branch||null,notes:[i.note,i.url].filter(Boolean).join("\n"),fromIdea:i.id,deadline:null});
@@ -4087,9 +4148,136 @@ function editIdea(i,preset={}){ const isNew=!i; i=i?{...i}:newIdea(preset);
     if(isNew) i.createdAt=Date.now(); put(i); toast(isNew?"💡 حُفظت الفكرة":"حُفظت"); });
   setTimeout(()=>(isNew&&!i.title?title:note).focus(),30); }
 
+/* ===================== غرفة النشر: content pipeline, calendar, cadence ===================== */
+const PSTAGE=[["toshoot","للتصوير","#98A2B3"],["shot","مصوَّر","#7A4FC8"],["edit","مونتاج","#E8701E"],["review","مراجعة","#3E8EF7"],["published","منشور","#2BA14A"]];
+const PS=Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}]));
+const PTYPE=[["video","فيديو"],["reel","ريلز"],["photos","صور"],["post","منشور"],["story","ستوري"]];
+const STAGE_FROM_TT={"للتصوير":"toshoot","مصور":"shot","مونتاج":"edit","مراجعة":"review","منشور":"published"};
+const posts=()=>all("post");
+const pubCfg=()=>Object.assign({perWeek:2,days:[0,3]},get("pubcfg")||{});
+const DEF_DAYS={1:[0],2:[0,3],3:[0,2,4],4:[0,1,3,5],5:[0,1,2,3,4],6:[0,1,2,3,4,6],7:[0,1,2,3,4,5,6]};
+const MON=["جانفي","فيفري","مارس","أفريل","ماي","جوان","جويلية","أوت","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+const longD=s=>{ const d=new Date(parseD(s)); return d.getDate()+" "+MON[d.getMonth()]; };
+function savePubCfg(c){ put(Object.assign({id:"pubcfg",kind:"pubcfg"},get("pubcfg")||{},c)); }
+function newPost(o){ return Object.assign({id:uid(),kind:"post",title:"",stage:"toshoot",type:"video",people:[],createdAt:Date.now(),v:3},o); }
+// v3: publishing tasks (they carry a TickTick column in "stage") become posts of the publishing room
+function migratePosts(){ let n=0; for(const o of DB.items.values()){ if(o.kind!=="task"||o.deleted||!o.stage) continue;
+  const st=STAGE_FROM_TT[o.stage]||o.stage; Object.assign(o,{kind:"post",stage:PS[st]?st:"shot",type:/صور/.test(o.title)?"photos":"video",notes:(o.notes||"").replace(/^مرحلة النشر:.*$/m,"").trim(),v:3});
+  for(const k of ["project","status","priority","effort","planned","deadline","inbox","guessed","main","prev","doneAt","order","kOrder","tool"]) delete o[k];
+  o.updatedAt=Date.now(); DB.dirty.add(o.id); n++; }
+  if(n){ persist(); Sync.soon(); } return n; }
+/* cadence */
+function pubStats(){ const cfg=pubCfg(), ps=posts(), now=Date.now();
+  const pub=ps.filter(p=>p.stage==="published"&&p.publishedAt).sort((a,b)=>b.publishedAt-a.publishedAt);
+  const last=pub[0]||null; const in28=pub.filter(p=>p.publishedAt>=now-28*DAY).length; const rate=Math.round(in28/4*10)/10;
+  const ready=ps.filter(p=>["review","edit","shot"].includes(p.stage)), toshoot=ps.filter(p=>p.stage==="toshoot");
+  const weeks=cfg.perWeek?Math.ceil(ready.length/cfg.perWeek):0;
+  const slots=nextSlots(ready.length,{ignore:true}); const until=slots.length?slots[slots.length-1]:null;
+  const weeksBars=[...Array(8)].map((_,i)=>{ const st=weekStart().getTime()-(7-i)*7*DAY; return {st,n:pub.filter(p=>p.publishedAt>=st&&p.publishedAt<st+7*DAY).length}; });
+  return {cfg,last,rate,ready,toshoot,weeks,until,weeksBars,pub}; }
+// publish days of the week, as many per week as the target cadence (taken in order from the chosen days)
+function nextSlots(n,{from,ignore}={}){ const cfg=pubCfg(); const days=(cfg.days&&cfg.days.length?cfg.days:[0,2,4]).slice().sort((a,b)=>a-b);
+  const per=Math.max(1,Math.min(7,cfg.perWeek||2)); const taken=new Set(ignore?[]:posts().filter(p=>p.schedDate&&p.stage!=="published").map(p=>p.schedDate));
+  const extra=[0,1,2,3,4,5,6].filter(d=>!days.includes(d)); const useDays=[...days,...extra].slice(0,per).sort((a,b)=>a-b);
+  const out=[]; const x=from?new Date(parseD(from)):new Date(); x.setHours(0,0,0,0); if(!from) x.setDate(x.getDate()+1);
+  for(let i=0;i<730&&out.length<n;i++){ const v=iso(x); if(useDays.includes(x.getDay())&&!taken.has(v)) out.push(v); x.setDate(x.getDate()+1); }
+  return out; }
+function autoSchedule(){ const order={review:0,edit:1,shot:2};
+  const todo=posts().filter(p=>order[p.stage]!=null&&!p.schedDate).sort((a,b)=>order[a.stage]-order[b.stage]||a.createdAt-b.createdAt);
+  const slots=nextSlots(todo.length); todo.forEach((p,i)=>{ if(slots[i]){ p.schedDate=slots[i]; put(p,{silent:true}); } });
+  render(); Sync.soon(); toast(todo.length?"بُرمج "+todo.length+" منشورًا حسب الوتيرة":"لا يوجد محتوى جاهز غير مبرمج"); }
+function unscheduleAll(){ const ps=posts().filter(p=>p.schedDate&&p.stage!=="published"); ps.forEach(p=>{ p.schedDate=null; put(p,{silent:true}); }); render(); Sync.soon(); toast("أُلغيت البرمجة ("+ps.length+")"); }
+function pubHeader(){ const s=pubStats(), cfg=s.cfg; const lastD=s.last?Math.floor((Date.now()-s.last.publishedAt)/DAY):null;
+  const card=(label,val,sub,cls)=>h("div",{class:"tk-pstat"+(cls?" "+cls:"")},h("span",{},label),h("b",{},val),sub?h("small",{},sub):null);
+  const max=Math.max(1,...s.weeksBars.map(w=>w.n));
+  return h("div",{class:"tk-phead"},
+    h("div",{class:"tk-pstats"},
+      card("آخر نشر",lastD==null?"—":lastD===0?"اليوم":"قبل "+lastD+(lastD===1?" يوم":" أيام"),s.last?s.last.title:"سجّل أول منشور",lastD!=null&&lastD>7?"warn":""),
+      card("الوتيرة الحالية",s.rate+" / أسبوع","متوسط آخر 4 أسابيع",s.rate<cfg.perWeek?"warn":"ok"),
+      card("جاهز للنشر",s.ready.length,s.toshoot.length+" تحتاج تصويرًا"),
+      card("يكفي حتى",s.until?longD(s.until):"—",s.ready.length?s.weeks+(s.weeks===1?" أسبوع":" أسابيع")+" بوتيرة "+cfg.perWeek+"/أسبوع":"لا محتوى جاهز")),
+    h("button",{type:"button",class:"tk-pctlbtn",onclick:()=>{ V.pctl=!V.pctl; render(); }},V.pctl?"إخفاء ضبط الوتيرة ▴":"ضبط الوتيرة والبرمجة ▾"),
+    h("div",{class:"tk-pctl"+(V.pctl?" open":"")},
+      h("div",{class:"tk-pspark",title:"المنشور أسبوعيًا (آخر 8 أسابيع)"},s.weeksBars.map(w=>h("i",{style:"height:"+(4+w.n/max*26)+"px",title:w.n+""}))),
+      h("div",{class:"tk-pgoal"},h("span",{},"الوتيرة المطلوبة"),h("div",{class:"tk-opts tk-days"},[1,2,3,4,5].map(n=>h("button",{type:"button","aria-pressed":String(cfg.perWeek===n),onclick:()=>savePubCfg({perWeek:n,days:DEF_DAYS[n]})},String(n)))),h("span",{},"في الأسبوع")),
+      h("div",{class:"tk-pgoal"},h("span",{},"أيام النشر"),h("div",{class:"tk-opts tk-days"},WDN.map((n,i)=>h("button",{type:"button","aria-pressed":String(cfg.days.includes(i)),onclick:()=>{ const d=cfg.days.includes(i)?cfg.days.filter(x=>x!==i):[...cfg.days,i]; if(!d.length) return; savePubCfg({days:d,perWeek:d.length}); }},n.replace("ال",""))))),
+      h("div",{class:"tk-pbtns"},h("button",{type:"button",class:"tk-btn pri",id:"tkAutoSched",onclick:autoSchedule},"برمج المحتوى الجاهز تلقائيًا"),h("button",{type:"button",class:"tk-link",onclick:unscheduleAll},"إلغاء البرمجة")))); }
+/* board (kanban) */
+function vPubBoard(){ const ps=posts();
+  const cols=h("div",{class:"tk-kb tk-pkb"},PSTAGE.map(([k,n,c])=>{ let items=ps.filter(p=>p.stage===k);
+      items=k==="published"? items.sort((a,b)=>(b.publishedAt||0)-(a.publishedAt||0)).slice(0,12) : items.sort((a,b)=>(a.schedDate||"9999").localeCompare(b.schedDate||"9999")||(a.kOrder??a.createdAt)-(b.kOrder??b.createdAt));
+      return h("div",{class:"tk-col",data:{st:k}},h("h4",{style:"--sc:"+c},h("i"),n,h("small",{},ps.filter(p=>p.stage===k).length),h("span",{class:"tk-sp"}),k!=="published"?h("button",{type:"button",class:"tk-ib sm",title:"إضافة",onclick:()=>editPost(null,{stage:k})},icon("plus",15)):null),
+        items.map(p=>postCard(p))); }));
+  return h("div",{},pubHeader(),cols); }
+function postCard(p){ const d=p.schedDate?daysLeft(p.schedDate):null, notReady=p.schedDate&&["toshoot","shot"].includes(p.stage)&&d!=null&&d<=3;
+  const c=h("div",{class:"tk-kc tk-pc2",style:"--pc:"+PS[p.stage].c,data:{id:p.id},onclick:()=>editPost(p)},
+    h("span",{class:"tk-h","aria-hidden":"true",title:"اسحب لتغيير المرحلة"},"⋮⋮"),
+    h("div",{class:"tk-tt",text:p.title}),
+    h("div",{class:"tk-rm"},h("span",{class:"tk-rtag"},(PTYPE.find(x=>x[0]===p.type)||PTYPE[0])[1]),p.branch?h("span",{class:"tk-rp",style:"--pc:"+BRANCHES[p.branch].c},BRANCHES[p.branch].n):null,
+      p.stage==="published"&&p.publishedAt?h("span",{class:"tk-rd8"},"✓ "+whenLabel(iso(new Date(p.publishedAt)))):p.schedDate?h("span",{class:"tk-rd8"+(d<0?" past":""),title:"موعد النشر"},"📅 "+whenLabel(p.schedDate)):null,
+      notReady?h("span",{class:"tk-rdl past",title:"موعد نشرها قريب ولم تُجهَّز بعد"},"⚠"):null));
+  Q(".tk-h",c).addEventListener("pointerdown",e=>pubDrag(e,p,c)); return c; }
+function setStage(p,s){ if(s===p.stage) return; p.stage=s; if(s==="published"&&!p.publishedAt){ p.publishedAt=Date.now(); } if(s!=="published") p.publishedAt=null; put(p,{silent:true}); }
+function pubDrag(e,p,card){ e.preventDefault(); e.stopPropagation(); const g=card.cloneNode(true); g.classList.add("ghost"); document.body.append(g); card.classList.add("drag-src");
+  let over=null, moved=false; const pos=ev=>{ g.style.left=(ev.clientX-120)+"px"; g.style.top=(ev.clientY-20)+"px"; }; pos(e);
+  const mv=ev=>{ moved=true; pos(ev); const el=document.elementFromPoint(ev.clientX,ev.clientY); const col=el&&(el.closest(".tk-col")||el.closest(".tk-cday")); if(col!==over){ over&&over.classList.remove("over"); over=col; over&&over.classList.add("over"); } };
+  const up=()=>{ window.removeEventListener("pointermove",mv); window.removeEventListener("pointerup",up); window.removeEventListener("pointercancel",up); g.remove(); card.classList.remove("drag-src"); over&&over.classList.remove("over");
+    if(over&&moved){ if(over.dataset.st) setStage(p,over.dataset.st); else if(over.dataset.day){ p.schedDate=over.dataset.day; put(p,{silent:true}); } p.kOrder=Date.now(); put(p,{silent:true}); render(); Sync.soon(); } };
+  window.addEventListener("pointermove",mv); window.addEventListener("pointerup",up); window.addEventListener("pointercancel",up); }
+/* calendar */
+function vPubCal(){ const base=V.calMonth?new Date(V.calMonth+"-01T00:00"):new Date(); base.setDate(1); base.setHours(0,0,0,0);
+  const ym=base.getFullYear()+"-"+String(base.getMonth()+1).padStart(2,"0"); const today=iso(new Date());
+  const first=new Date(base); first.setDate(1-first.getDay()); // start on Sunday
+  const ps=posts(); const byDay=new Map(); for(const p of ps){ const k=p.stage==="published"&&p.publishedAt?iso(new Date(p.publishedAt)):p.schedDate; if(!k) continue; if(!byDay.has(k)) byDay.set(k,[]); byDay.get(k).push(p); }
+  const cfg=pubCfg(); const pick=V.calPick&&get(V.calPick);
+  const unsched=ps.filter(p=>p.stage!=="published"&&!p.schedDate).sort((a,b)=>PSTAGE.findIndex(x=>x[0]===b.stage)-PSTAGE.findIndex(x=>x[0]===a.stage));
+  const mv=n=>{ const x=new Date(base); x.setMonth(x.getMonth()+n); V.calMonth=x.getFullYear()+"-"+String(x.getMonth()+1).padStart(2,"0"); render(); };
+  const cells=[]; for(let i=0;i<42;i++){ const x=new Date(first); x.setDate(first.getDate()+i); const k=iso(x); const inM=x.getMonth()===base.getMonth(); if(i>=35&&!inM) break;
+    const items=byDay.get(k)||[]; const isPubDay=(cfg.days||[]).includes(x.getDay());
+    cells.push(h("div",{class:"tk-cday"+(inM?"":" out")+(k===today?" today":"")+(isPubDay?" pday":"")+(pick?" picking":""),data:{day:k},onclick:()=>{ if(pick){ pick.schedDate=k; put(pick,{silent:true}); V.calPick=null; render(); Sync.soon(); toast("بُرمج «"+pick.title+"» يوم "+fmtD(k)); } }},
+      h("span",{class:"tk-cdn"},x.getDate()),
+      items.map(p=>h("button",{type:"button",class:"tk-cpost"+(p.stage==="published"?" done":""),style:"--pc:"+PS[p.stage].c,title:p.title+" — "+PS[p.stage].n,onclick:e=>{ e.stopPropagation(); editPost(p); }},p.stage==="published"?"✓ ":"",p.title)))); }
+  return h("div",{},pubHeader(),
+    h("div",{class:"tk-calbar"},h("button",{type:"button",class:"tk-ib",onclick:()=>mv(-1),"aria-label":"الشهر السابق"},"→"),h("b",{},AR_MONTHS[base.getMonth()]+" "+base.getFullYear()),h("button",{type:"button",class:"tk-ib",onclick:()=>mv(1),"aria-label":"الشهر التالي"},"←"),h("button",{type:"button",class:"tk-link",onclick:()=>{ V.calMonth=null; render(); }},"اليوم"),
+      h("span",{class:"tk-sp"}),h("span",{class:"tk-legend"},PSTAGE.map(([k,n,c])=>h("span",{style:"--pc:"+c},h("i"),n)))),
+    pick?h("div",{class:"tk-calpick"},"اختر يومًا لنشر «",h("b",{},pick.title),"»",h("button",{type:"button",class:"tk-link",onclick:()=>{ V.calPick=null; render(); }},"إلغاء")):null,
+    h("div",{class:"tk-cal"},WDN.map(n=>h("div",{class:"tk-cwd"},n)),cells),
+    unsched.length? h("section",{class:"tk-tg",style:"margin-top:16px"},h("div",{class:"tk-tgh"},h("b",{},"غير مبرمجة"),h("span",{class:"tk-tgn"},unsched.length),h("span",{class:"tk-muted",style:"font-size:12px"},"اضغط على منشور ثم على يوم في التقويم، أو اسحبه إليه")),
+      h("div",{class:"tk-unsched"},unsched.map(p=>{ const b=h("button",{type:"button",class:"tk-cpost big"+(V.calPick===p.id?" sel":""),style:"--pc:"+PS[p.stage].c,onclick:()=>{ V.calPick=V.calPick===p.id?null:p.id; render(); }},h("span",{class:"tk-h2"},"⋮⋮"),p.title,h("small",{},PS[p.stage].n)); Q(".tk-h2",b).addEventListener("pointerdown",e=>pubDrag(e,p,b)); return b; }))) : null); }
+/* editor */
+function editPost(p,preset={}){ const isNew=!p; p=p?{...p}:newPost(preset);
+  const title=h("textarea",{rows:2,id:"tkPostTitle",placeholder:"عنوان المنشور أو الفيديو"},p.title||"");
+  const st=opts(Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}])),p.stage,{color:true});
+  const ty=opts(Object.fromEntries(PTYPE.map(([k,n])=>[k,{n}])),p.type||"video");
+  const sd=h("input",{type:"date",id:"tkPostDate",value:p.schedDate||""});
+  const slots=nextSlots(3);
+  const sdChips=h("div",{class:"tk-opts"},slots.map(v=>h("button",{type:"button",onclick:()=>{ sd.value=v; }},WDN[new Date(parseD(v)).getDay()]+" "+fmtD(v))),h("button",{type:"button",onclick:()=>{ sd.value=""; }},"بدون"));
+  const br=h("select",{id:"tkPostBr"},h("option",{value:""},"— بدون —"),Object.entries(BRANCHES).map(([k,b])=>h("option",{value:k},b.n))); br.value=p.branch||"";
+  const ppl=tagInput(p.people,people()); const notes=h("textarea",{rows:3,id:"tkPostNotes",placeholder:"فكرة، نص مصاحب، روابط…"},p.notes||"");
+  const pubd=h("input",{type:"date",id:"tkPostPub",value:p.publishedAt?iso(new Date(p.publishedAt)):""});
+  const d=dlg(isNew?"منشور جديد":"منشور",[
+      h("label",{class:"f full"},"العنوان",title),
+      h("div",{class:"f full"},h("label",{class:"f"},"المرحلة"),st),
+      h("div",{class:"f full"},h("label",{class:"f"},"النوع"),ty),
+      h("div",{class:"f full"},h("label",{class:"f"},"موعد النشر (المقترح حسب أيام النشر)"),sdChips,h("div",{style:"margin-top:8px"},sd)),
+      h("label",{class:"f"},"الفرع",br), h("label",{class:"f"},"نُشر فعلًا يوم",pubd),
+      h("div",{class:"f full"},h("label",{class:"f"},"الأشخاص"),ppl),
+      h("label",{class:"f full"},"ملاحظات",notes)],
+    [h("button",{type:"submit",class:"tk-btn pri",id:"tkPostSave"},isNew?"إضافة":"حفظ"),
+     !isNew&&p.stage!=="published"&&h("button",{type:"button",class:"tk-btn",onclick:()=>{ const x=get(p.id); setStage(x,"published"); d.close(); render(); Sync.soon(); toast("✓ سُجّل كمنشور اليوم"); }},"✓ نُشر اليوم"),
+     !isNew&&h("button",{type:"button",class:"tk-btn",title:"افتح قوالب الاستوديو",onclick:()=>{ d.close(); openTool(p.type==="photos"||p.type==="post"?"posts":"reel"); }},"✎ الاستوديو"),
+     h("span",{class:"tk-sp"}),
+     !isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(p.id); remove(p.id); d.close(); toast("حُذف",()=>{ old.deleted=false; put(old); }); }},"حذف")]);
+  Q("form",d).addEventListener("submit",e=>{ const v=title.value.trim(); if(!v){ e.preventDefault(); title.focus(); return; }
+    Object.assign(p,{title:v,type:ty.value||"video",schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
+    const ns=st.value||p.stage; if(ns!==p.stage){ p.stage=ns; if(ns!=="published") p.publishedAt=null; }
+    if(pubd.value){ p.publishedAt=parseD(pubd.value)+12*3600e3; p.stage="published"; } else if(p.stage==="published"&&!p.publishedAt) p.publishedAt=Date.now();
+    if(isNew) p.createdAt=Date.now(); put(p); toast(isNew?"أُضيف إلى غرفة النشر":"حُفظ"); });
+  setTimeout(()=>title.focus(),30); }
+
 /* ---------- views ---------- */
 function render(){ if(mode!=="tasks") return; const keepFocus=document.activeElement&&document.activeElement.id; const sy=window.scrollY;
-  const body=h("div",{class:"tk-body"},...[mobileTop(),sectionTabs(),["inbox","ideas","balance"].includes(V.view)?null:captureBar(),({home:vHome,inbox:vInbox,list:vList,kanban:vKanban,big:vBig,proj:vProj,balance:vBalance,ideas:vIdeas}[V.view]||vHome)()].filter(Boolean));
+  const body=h("div",{class:"tk-body"},...[mobileTop(),sectionTabs(),["inbox","ideas","balance","pubboard","pubcal"].includes(V.view)?null:captureBar(),({home:vHome,inbox:vInbox,list:vList,kanban:vKanban,big:vBig,proj:vProj,balance:vBalance,ideas:vIdeas,pubboard:vPubBoard,pubcal:vPubCal}[V.view]||vHome)()].filter(Boolean));
   root.replaceChildren(h("div",{class:"tk-shell"},sideNav(),body),bottomNav());
   Sync.set(Sync.on()?(Sync.state==="local"?"ok":Sync.state):"local",Sync.on()?Sync.msg:"البيانات محفوظة في هذا المتصفح فقط");
   if(keepFocus){ const el=document.getElementById(keepFocus); if(el&&el.focus){ el.focus(); if(el.setSelectionRange&&el.value!=null&&el.type!=="date"){ try{ el.setSelectionRange(el.value.length,el.value.length); }catch(e){} } } }
@@ -4126,6 +4314,9 @@ function vHome(){ const today=iso(new Date()), open=actionable(); const ed=t=>ef
     missed.length? grp("missed","لم تُنجز في يومها",missed.length,"missed","خطّطت لها يومًا مضى. انقلها لليوم أو أرجعها إلى قائمتها بلا تاريخ.",
       h("div",{class:"tk-list"},missed.map(t=>row(t,{act:h("span",{class:"tk-acts"},btn("لليوم","",()=>setPlanned(t,today)),btn("للقائمة","",()=>setPlanned(t,null)))}))),
       h("span",{class:"tk-acts"},bulk(missed,"الكل لليوم",x=>x.planned=today),h("span",{class:"tk-muted"},"·"),bulk(missed,"الكل للقائمة",x=>x.planned=null))) : null,
+    (()=>{ const pt=posts().filter(p=>p.schedDate===today&&p.stage!=="published"); return pt.length? h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"للنشر اليوم"),h("span",{class:"tk-tgn"},pt.length)),
+      h("div",{class:"tk-list"},pt.map(p=>h("div",{class:"tk-r",onclick:()=>editPost(p)},h("div",{class:"tk-rl"},h("span",{class:"tk-pdot",style:"--pc:"+PS[p.stage].c}),h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:p.title}),h("span",{class:"tk-rm"},h("span",{class:"tk-rtag"},PS[p.stage].n))),
+        h("button",{type:"button",class:"tk-btn sm",onclick:e=>{ e.stopPropagation(); setStage(p,"published"); render(); Sync.soon(); toast("✓ نُشر"); }},"✓ نُشر")))))) : null; })(),
     h("section",{class:"tk-tg"},h("div",{class:"tk-tgh"},h("b",{},"مهام اليوم"),h("span",{class:"tk-tgn"},now.length)),
       now.length? h("div",{},groupRows(now,{key:"today",rowOpts:{noPlan:true}})) : h("div",{class:"tk-empty"},"لا شيء لليوم بعد. اكتب مهمة في الأعلى، أو اختر من الاقتراحات.")),
     sugg.length? grp("sugg","اقتراحات لليوم",sugg.length,"","مهام بلا يوم محدّد، مرتّبة حسب الأولوية والموعد النهائي والتوازن.",h("div",{class:"tk-list"},sugg.map(x=>row(x.t,{why:x.why,act:btn("＋ لليوم","pri",()=>{ setPlanned(x.t,today); toast("أُضيفت إلى اليوم"); })})))) : null,
@@ -4459,7 +4650,7 @@ function importItems(items){ const map=new Map(); let n=0;
   for(const o0 of items){ if(!o0||!o0.id||!o0.kind||map.has(o0.id)) continue; const o={...o0};
     if(o.project) o.project=m(o.project); if(o.main) o.main=m(o.main); if(Array.isArray(o.focus)) o.focus=o.focus.map(m);
     const loc=DB.items.get(o.id); if(!loc||(o.updatedAt||0)>(loc.updatedAt||0)){ DB.items.set(o.id,o); DB.dirty.add(o.id); n++; } }
-  persist(); migrateDates(); render(); Sync.soon(); return n; }
+  persist(); migrateDates(); migratePosts(); render(); Sync.soon(); return n; }
 /* ---------- app install + offline (PWA) ---------- */
 const PWA={prompt:null};
 const inFrame=(()=>{ try{ return window.top!==window; }catch(e){ return true; } })();
@@ -4479,12 +4670,12 @@ function installBtn(){ if(standalone()) return null;
   if(PWA.prompt) return h("button",{type:"button",class:"tk-sync",onclick:async()=>{ const p=PWA.prompt; PWA.prompt=null; p.prompt(); try{ await p.userChoice; }catch(e){} render(); }},"📲 تثبيت التطبيق");
   if(isIOS()&&!inFrame&&location.protocol==="https:") return h("button",{type:"button",class:"tk-sync",onclick:()=>dlg("تثبيت على الآيفون",[h("ol",{class:"tk-steps full"},h("li",{},"افتح الصفحة في Safari."),h("li",{},"اضغط زر المشاركة ⬆︎ أسفل الشاشة."),h("li",{},"اختر «إضافة إلى الشاشة الرئيسية» ثم «إضافة».")),h("p",{class:"tk-note full"},"بعدها يفتح كتطبيق مستقل ويعمل دون إنترنت.")],[h("button",{type:"submit",class:"tk-btn pri"},"حسنًا")])},"📲 تثبيت");
   return null; }
-(()=>{ const q=new URLSearchParams(location.search); const v=q.get("view"); if(v&&["home","inbox","list","kanban","big","balance","ideas"].includes(v)){ V.view=v; } if(q.has("add")) setTimeout(()=>{ const c=Q("#tkCap"); if(c) c.focus(); },300);
+(()=>{ const q=new URLSearchParams(location.search); const v=q.get("view"); if(v&&["home","inbox","list","kanban","big","balance","ideas","pubboard","pubcal"].includes(v)){ V.view=v; } if(q.has("add")) setTimeout(()=>{ const c=Q("#tkCap"); if(c) c.focus(); },300);
   if(q.has("share")){ const txt=[q.get("title"),q.get("text"),q.get("url")].filter(Boolean).join(" "); const url=(txt.match(URL_RX)||[""])[0]; const title=(q.get("title")||"").replace(url,"").trim()||(q.get("text")||"").replace(url,"").trim();
     V.view="ideas"; try{ history.replaceState(null,"",location.pathname); }catch(e){} setTimeout(()=>editIdea(null,{url,title:title.slice(0,140)}),400); } })();
 /* expose for tests */
-window.rouwadTasks={importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
-migrateDates(); setMode(mode); render(); if(Sync.on()) Sync.run();
+window.rouwadTasks={posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+migrateDates(); migratePosts(); setMode(mode); render(); if(Sync.on()) Sync.run();
 })();
 </script>
 
