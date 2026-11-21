@@ -3679,13 +3679,26 @@ for(const [id,key,ty] of [["#cName","name","v"],["#cGray","gray","c"],["#cTop","
 const isHeic=f=>/\.(heic|heif)$/i.test(f.name||"")||/heic|heif/i.test(f.type||"");
 const isImg=f=>/^image\//.test(f.type||"")||isHeic(f);
 function loadScript(src){ return new Promise((res,rej)=>{ const s=document.createElement("script"); s.src=src; s.onload=res; s.onerror=rej; document.head.appendChild(s); }); }
-async function fileToImage(f){ try{ return await loadImg(URL.createObjectURL(f)); }catch(e){ if(!isHeic(f)) throw e; }
-  if(!window.heic2any) await loadScript("https://cdn.jsdelivr.net/npm/heic2any@0.0.4/dist/heic2any.min.js");
-  let out=await heic2any({blob:f,toType:"image/jpeg",quality:0.92}); if(Array.isArray(out)) out=out[0]; const im=await loadImg(URL.createObjectURL(out)); im._blob=out; return im; }
+/* HEIC: Safari opens it natively; elsewhere decode with heic-to (current libheif, handles new iPhone photos).
+   The decoder is loaded once, from this site first (works offline once cached) then from the CDN. */
+const HEIC_SRC=["heic-to.js","https://cdn.jsdelivr.net/npm/heic-to@1.6.7/dist/iife/heic-to.js"];
+let heicLib=null;
+function loadHeicLib(){ return heicLib||(heicLib=(async()=>{ for(const src of HEIC_SRC){ try{ await loadScript(src); if(window.HeicTo) return window.HeicTo; }catch(e){} } heicLib=null; throw new Error("heic-lib"); })()); }
+async function sniffHeic(f){ try{ const b=new Uint8Array(await f.slice(4,12).arrayBuffer()); const t=String.fromCharCode(...b); return /^ftyp(heic|heix|hevc|hevx|heim|heis|mif1|msf1)$/.test(t); }catch(e){ return false; } }
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,j)=>setTimeout(()=>j(new Error("timeout")),ms))]);
+async function fileToImage(f){ const heic=isHeic(f)||await sniffHeic(f);
+  if(!heic) return loadImg(URL.createObjectURL(f));
+  try{ return await withTimeout(loadImg(URL.createObjectURL(f)),8000); }catch(e){}
+  const lib=await loadHeicLib();
+  const out=await withTimeout(lib({blob:f,type:"image/jpeg",quality:0.92}),90000);
+  const im=await loadImg(URL.createObjectURL(out)); im._blob=out; return im; }
 async function addFiles(files){ const list=[...files].filter(isImg); if(!list.length) return;
-  status(`جارٍ تحميل ${list.length} صورة…`);
+  const nH=list.filter(isHeic).length; status(nH?`جارٍ تحميل ${list.length} صورة (تحويل ${nH} من HEIC قد يأخذ ثواني)…`:`جارٍ تحميل ${list.length} صورة…`);
   try{
-    if(tab==="posts"){ phPush(); const first=posts.photos.length; for(const f of list){ const im=await fileToImage(f); const p=mkPhoto(im,f.name); p.blob=im._blob||f; posts.photos.push(p); } posts.active=first; buildThumbs(); phSave(); }
+    if(tab==="posts"){ phPush(); const first=posts.photos.length; let bad=0, i=0;
+      for(const f of list){ i++; if(list.length>1) status(`جارٍ تحميل الصورة ${i} من ${list.length}…`); try{ const im=await fileToImage(f); const p=mkPhoto(im,f.name); p.blob=im._blob||f; posts.photos.push(p); }catch(e){ bad++; } }
+      if(posts.photos.length>first){ posts.active=first; buildThumbs(); phSave(); }
+      if(bad){ redraw(); status(`تعذّر فتح ${bad} من ${list.length} صورة. إن كانت HEIC فتأكد من الاتصال بالإنترنت أول مرة (لتحميل المحوّل).`,true); return; } }
     else if(tab==="occ"){ occ.p=mkPhoto(await fileToImage(list[0]),list[0].name); }
     else if(tab==="reel"){ reel.p=mkPhoto(await fileToImage(list[0]),list[0].name); }
     else { cond.p=mkPhoto(await fileToImage(list[0]),list[0].name); }

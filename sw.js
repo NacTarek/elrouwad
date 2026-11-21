@@ -1,8 +1,10 @@
 /* Rouwad studio offline worker: open instantly from cache, check for a newer page in the background */
-const CACHE = "rouwad-studio-v23";
+const CACHE = "rouwad-studio-v24";
 const SHELL = ["./", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./icon-maskable-512.png", "./apple-touch-icon.png"];
 self.addEventListener("install", e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener("activate", e => { e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => self.clients.claim())); });
+// HEIC decoder (3 MB): fetched quietly after install so iPhone photos open offline too
+self.addEventListener("activate", e => { e.waitUntil(caches.open(CACHE).then(c => c.match("./heic-to.js").then(h => h || c.add("./heic-to.js"))).catch(() => {})); });
 const sameOrigin = u => new URL(u).origin === self.location.origin;
 async function refreshPage(){ // revalidate the page (ETag → 304 when unchanged, so this is cheap)
   try{
