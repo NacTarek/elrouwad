@@ -3009,7 +3009,7 @@ const letter = {
       if(s.recKashida!==false && rows.filter(r=>r.b||r.inl).length>1) rows.forEach(r=>{ if(r.w>=target*0.985||(!r.b&&!r.inl)) return;
         if(r.inl){ c.font=LBF(700,z); const wn=c.measureText(r.n).width, s0=sp(); c.font=LBF(400,z); r.t=kashidaLast(c,r.t,target-wn-s0); r.w=rowW(r); }
         else { c.font=LBF(r.b?700:400,z); r.t=kashidaLast(c,r.t,target); r.w=c.measureText(r.t).width; } });
-      const h=Math.max(rows.length,(s.ref||"").trim()?1:0)*rlh+z*0.35;
+      const h=Math.max(rows.length,(s.ref||"").trim()?1:0)*rlh+z*(s.art&&s.art!=="none"?0.85:0.35);
       add(h,(c,y)=>{ const dx=s.recDX||0, dy=s.recDY||0, cx=rcx+dx; let ry=y+dy; c.direction="rtl"; c.textAlign="center"; c.fillStyle=INK();
         const bw=Math.max(...rows.map(r=>r.w),1); if(rows.length) this._recBox={x:cx-bw/2-20,y:ry,w:bw+40,h:rows.length*rlh+z*0.3};
         rows.forEach((r,i)=>{ if(r.inl){ const xr=cx+r.w/2; c.textAlign="right"; c.font=LBF(400,z); const a=c.measureText(r.t).width; c.fillText(r.t,xr,ry+z); c.font=LBF(700,z); c.fillText(r.n,xr-a-sp(),ry+z); c.textAlign="center"; ry+=rlh; return; }
