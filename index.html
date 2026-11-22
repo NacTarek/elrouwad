@@ -3006,7 +3006,7 @@ const letter = {
       const rowW=r=>{ if(r.inl){ c.font=LBF(400,z); const a=c.measureText(r.t).width; c.font=LBF(700,z); return a+sp()+c.measureText(r.n).width; } c.font=LBF(r.b?700:400,z); return c.measureText(r.t).width; };
       rows.forEach(r=>r.w=rowW(r));
       const target=Math.min(W*(inl?0.62:0.6), Math.max(0,...rows.map(r=>r.w)));
-      if(s.recKashida!==false && rows.length>1) rows.forEach(r=>{ if(r.w>=target*0.985) return;
+      if(s.recKashida!==false && rows.filter(r=>r.b||r.inl).length>1) rows.forEach(r=>{ if(r.w>=target*0.985||(!r.b&&!r.inl)) return;
         if(r.inl){ c.font=LBF(700,z); const wn=c.measureText(r.n).width, s0=sp(); c.font=LBF(400,z); r.t=kashidaLast(c,r.t,target-wn-s0); r.w=rowW(r); }
         else { c.font=LBF(r.b?700:400,z); r.t=kashidaLast(c,r.t,target); r.w=c.measureText(r.t).width; } });
       const h=Math.max(rows.length,(s.ref||"").trim()?1:0)*rlh+z*0.35;
