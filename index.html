@@ -1373,6 +1373,11 @@ dialog.tk-rvdlg{width:min(620px,94vw)}
 .tk-ibp{margin-top:10px}
 .tk-pubday .tk-tsec b{color:#B54708}
 .tk-pushrow{cursor:default}.tk-pushrow .tk-link{font-weight:700;text-align:start}.tk-pushrow .tk-x{border:0;background:none;font-size:18px;cursor:pointer;color:inherit;opacity:.6}
+.tk-manyprev{display:flex;flex-direction:column;gap:4px;max-height:240px;overflow:auto}
+.tk-manyrow{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;background:var(--soft,#F5F7FA);font-size:13.5px}
+.tk-manyrow .ck{color:#2BA14A;font-weight:800}.tk-manyrow .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tk-manyrow .tk-rtag.miss{opacity:.55}
+#tkMany{width:100%;box-sizing:border-box;font:inherit;line-height:1.7}
 
 </style>
 
@@ -6225,6 +6230,38 @@ function topBlock(tops,rowOf){ const td=iso(new Date()); const dismissed=ls.get(
   return h("div",{class:"tk-card tk-tcard tk-top3"},head,list,sugBox); }
 
 /* ---------- المنجزة: review what was done, fix project and time, add what was never logged ---------- */
+/* several done tasks at once: one per line, optional time at the end ("— 30" / "45د" / "ساعة ونصف") */
+function lineTime(line){ let t=line.trim(), m=null; const W=[[/\s*[-—–:،,]?\s*(ساعة ونصف|ساعة و نصف)$/,90],[/\s*[-—–:،,]?\s*(ساعتان|ساعتين)$/,120],[/\s*[-—–:،,]?\s*نصف ساعة$/,30],[/\s*[-—–:،,]?\s*ربع ساعة$/,15],[/\s*[-—–:،,]?\s*نصف يوم$/,240],[/\s*[-—–:،,]?\s*يوم كامل$/,480],[/\s*[-—–:،,]\s*ساعة$/,60]];
+  for(const [rx,v] of W) if(rx.test(t)){ return {t:t.replace(rx,"").trim(),m:v}; }
+  const d=s=>+String(s).replace(/[٠-٩]/g,c=>"٠١٢٣٤٥٦٧٨٩".indexOf(c)).replace(",",".");
+  let x=t.match(/\s*[-—–:،,]?\s*([\d٠-٩]+(?:[.,][\d٠-٩]+)?)\s*(س|ساعة|ساعات|h)$/i); if(x) return {t:t.slice(0,x.index).trim(),m:Math.round(d(x[1])*60)};
+  x=t.match(/\s*[-—–:،,]?\s*([\d٠-٩]+)\s*(د|دق|دقيقة|دقائق|min|m)$/i); if(x) return {t:t.slice(0,x.index).trim(),m:d(x[1])};
+  x=t.match(/\s*[-—–]\s*([\d٠-٩]+)$/); if(x) return {t:t.slice(0,x.index).trim(),m:d(x[1])};
+  return {t,m}; }
+function addDoneMany(){ const MINS=[[10,"10 د"],[15,"ربع ساعة"],[30,"نصف ساعة"],[45,"45 د"],[60,"ساعة"],[90,"ساعة ونصف"],[120,"ساعتان"],[180,"3 ساعات"],[240,"نصف يوم"]];
+  const ta=h("textarea",{rows:6,id:"tkMany",placeholder:"مهمة في كل سطر، مثلًا:\nتصوير حصة العلوم — 45\nمونتاج ريلز الرحلة ساعة ونصف\nالرد على رسائل الصفحة 20د"});
+  const dayIn=h("input",{type:"date",id:"tkManyDay",value:iso(new Date())});
+  const dayCh=h("div",{class:"tk-opts"},[["اليوم",0],["أمس",1],["قبل يومين",2]].map(([n,o])=>h("button",{type:"button","aria-pressed":String(!o),onclick:e=>{ const x=new Date(); x.setDate(x.getDate()-o); dayIn.value=iso(x); QA("button",dayCh).forEach(b=>b.setAttribute("aria-pressed",String(b===e.currentTarget))); }},n)));
+  const pj=projSelect("",()=>draw(),{empty:"✦ تخمين لكل سطر",id:"tkManyProj"});
+  const ms=h("select",{id:"tkManyMin"},h("option",{value:""},"— بلا وقت —"),MINS.map(([m,n])=>h("option",{value:m},n)));
+  const prev=h("div",{class:"full tk-manyprev"});
+  const parse=()=>ta.value.split(/\n+/).map(l=>l.replace(/^\s*[-•*✓☑\d]+[.)]?\s+/,"").trim()).filter(Boolean).map(l=>{ const r=lineTime(l); const p=pj.value||guessProject(r.t); return {...r,p,m:r.m||(+ms.value||null)}; });
+  function draw(){ const L=parse(); save.textContent=L.length>1?"✓ إضافة "+L.length+" منجزات":"✓ إضافة";
+    prev.replaceChildren(...(L.length?L.map(x=>{ const g=x.p&&get(x.p); return h("div",{class:"tk-manyrow"},h("span",{class:"ck"},"✓"),h("span",{class:"t",text:x.t}),
+      h("span",{class:"tk-rtag",style:g?"--pc:"+pcol(g):""},g?(pj.value?"":"✦ ")+g.name:"بدون مشروع"),h("span",{class:"tk-rtag"+(x.m?"":" miss")},x.m?"⏱ "+hm(x.m):"⏱ —")); }):[h("span",{class:"tk-muted"},"اكتب ما أنجزته، سطرًا لكل مهمة. الوقت في آخر السطر اختياري.")])); }
+  const save=h("button",{type:"submit",class:"tk-btn pri",id:"tkManySave"},"✓ إضافة");
+  const d=dlg("منجزات لم أوثّقها",[
+    h("label",{class:"f full"},"ما أنجزته",ta),
+    h("div",{class:"f full"},h("label",{class:"f"},"يوم الإنجاز"),h("div",{class:"tk-sdrow"},dayCh,dayIn)),
+    h("label",{class:"f"},"المشروع",pj), h("label",{class:"f"},"الوقت لما لم تكتب وقته",ms),
+    prev],
+    [save,h("span",{class:"tk-sp"}),h("button",{type:"button",class:"tk-link",onclick:()=>{ d.close(); editTask(null,{status:"done",doneAt:Date.now(),prev:"todo"}); }},"مهمة واحدة بتفاصيل أكثر")]);
+  ta.addEventListener("input",draw); ms.addEventListener("change",draw); dayIn.addEventListener("change",()=>QA("button",dayCh).forEach(b=>b.setAttribute("aria-pressed","false")));
+  draw(); setTimeout(()=>ta.focus(),50);
+  Q("form",d).addEventListener("submit",e=>{ const L=parse(); if(!L.length){ e.preventDefault(); ta.focus(); return; }
+    const base=parseD(dayIn.value||iso(new Date())), isToday=dayIn.value===iso(new Date());
+    const ids=L.map((x,i)=>{ const t=newTask({title:x.t,status:"done",prev:"todo",project:x.p||null,inbox:false,minutes:x.m||null,doneAt:isToday?Date.now()-i*1000:base+12*3600e3-i*1000,createdAt:Date.now()}); put(t,{silent:true}); return t.id; });
+    render(); Sync.soon(); toast("✓ أُضيفت "+ids.length+" منجزة",()=>{ ids.forEach(id=>remove(id)); }); }); }
 function vDone(){ const D=V.dn||(V.dn={days:7,miss:false}); const since=today0()-(D.days-1)*DAY;
   let list=tasks().filter(t=>t.status==="done"&&t.doneAt&&t.doneAt>=since&&!t.postId&&!subsOf(t.id).length).sort((a,b)=>b.doneAt-a.doneAt);
   const noTime=list.filter(t=>!t.minutes).length; if(D.miss) list=list.filter(t=>!t.minutes);
@@ -6236,10 +6273,10 @@ function vDone(){ const D=V.dn||(V.dn={days:7,miss:false}); const since=today0()
     return s; };
   const psel=t=>{ const s=projSelect(t.project||"",v=>upd(t,x=>{ x.project=v||null; x.inbox=!v; if(x.main&&get(x.main)&&get(x.main).project!==x.project) x.main=null; }),{empty:"الوارد"}); s.classList.add("tk-dsel"); s.addEventListener("click",e=>e.stopPropagation()); s.value=t.project||""; return s; };
   const days=new Map(); for(const t of list){ const k=iso(new Date(t.doneAt)); if(!days.has(k)) days.set(k,[]); days.get(k).push(t); }
-  const add=()=>editTask(null,{status:"done",doneAt:Date.now(),prev:"todo"});
+  const add=()=>addDoneMany();
   return h("div",{class:"tk-dview"},
     h("div",{class:"tk-ph"},h("div",{},h("b",{style:"font-size:18px"},list.length+" منجزة"),h("span",{class:"tk-muted"}," · ≈ "+hm(tot))),h("span",{class:"tk-sp"}),seg),
-    h("div",{class:"tk-dtools"},h("button",{type:"button",class:"tk-btn pri",id:"tkAddDone",onclick:add},"＋ منجزة لم أوثّقها"),
+    h("div",{class:"tk-dtools"},h("button",{type:"button",class:"tk-btn pri",id:"tkAddDone",onclick:add},"＋ منجزات لم أوثّقها"),
       noTime?h("button",{type:"button",class:"tk-btn"+(D.miss?" on":""),id:"tkDMiss",onclick:()=>{ D.miss=!D.miss; render(); }},(D.miss?"✓ ":"")+"بلا وقت مسجّل ("+noTime+")"):h("span",{class:"tk-muted"},"✓ كل المهام لها وقت مسجّل"),
       h("span",{class:"tk-sp"}),h("span",{class:"tk-muted",style:"font-size:12.5px"},"غيّر المشروع أو الوقت من السطر مباشرة، أو افتح المهمة للمزيد.")),
     list.length? [...days.entries()].map(([k,ts])=>h("section",{class:"tk-dday"},h("h4",{},whenLabel(k)+" · "+longD(k),h("span",{class:"tk-tgn"},ts.length),h("small",{class:"tk-muted"}," ≈ "+hm(ts.reduce((a,t)=>a+effMin(t),0)))),
@@ -6295,7 +6332,7 @@ function editTopics(){ let T=[...topicsList()]; const box=h("div",{class:"f full
       h("button",{type:"button",class:"tk-clx",onclick:()=>{ T.splice(i,1); draw(); }},"×"))),h("button",{type:"button",class:"tk-link",onclick:()=>{ T.push(""); draw(); setTimeout(()=>{ const ii=QA("input",box); ii[ii.length-1].focus(); },20); }},"＋ محور"));
   draw(); const d=dlg("محاور المحتوى",[box],[h("button",{type:"button",class:"tk-btn pri",onclick:()=>{ savePubCfg({topics:T.map(x=>x.trim()).filter(Boolean)}); d.close(); render(); }},"حفظ")]); }
 
-window.rouwadTasks={Push,pushDialog,inboxCard,vDone,ensurePostTasks,topicOf,topicsList,suggestTop,topToday,toggleTop,findAll,weeklyReview,reviewDue,downloadBackup,autoSnapshot,IDB,backupDue,bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+window.rouwadTasks={addDoneMany,lineTime,Push,pushDialog,inboxCard,vDone,ensurePostTasks,topicOf,topicsList,suggestTop,topToday,toggleTop,findAll,weeklyReview,reviewDue,downloadBackup,autoSnapshot,IDB,backupDue,bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
 const boot=()=>{ migrateDates(); migratePosts(); seedOccasions(); ensureOccIdeas(); setMode(mode); render(); if(Sync.on()) Sync.run(); setTimeout(autoSnapshot,4000); };
 if(IDB_ON) IDB.get("items").then(arr=>{ IDB_LOADED=true; if(Array.isArray(arr)) for(const o of arr){ if(!o||!o.id) continue; const c=DB.items.get(o.id); if(!c||(o.updatedAt||0)>(c.updatedAt||0)) DB.items.set(o.id,o); } if(LEGACY||!arr) persist(); })
   .catch(()=>{ IDB_ON=false; IDB_LOADED=true; }).finally(boot);
