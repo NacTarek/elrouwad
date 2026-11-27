@@ -1329,6 +1329,33 @@ dialog.tk-rvdlg{width:min(620px,94vw)}
 .tk-why1{font-size:11px;border-radius:99px;padding:0 7px;background:var(--sunken,#F2F4F7);color:var(--muted)}
 .tk-why1.hot{background:#FEF0EB;color:#C4320A}.tk-why1.foc{background:#EEF4FF;color:#0B4EA2}
 .tk-rvstar{margin:4px 0 8px}
+/* المنجزة */
+.tk-dtools{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 14px}
+.tk-dtools .tk-btn.on{background:#FFF4E5;border-color:#F4C38A;color:#B54708}
+.tk-dday h4{display:flex;align-items:center;gap:8px;margin:14px 2px 6px;font-size:14px}
+.tk-dlist{padding:2px 12px}
+.tk-drow{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.tk-drow:last-child{border-bottom:0}
+.tk-dck{width:20px;height:20px;border-radius:6px;background:#2BA14A;color:#fff;display:grid;place-items:center;font-size:12px;flex:none}
+.tk-dt{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--muted)}
+.tk-dpc{width:8px;height:8px;border-radius:50%;background:var(--pc);flex:none}
+.tk-dsel{font:inherit;font-size:12.5px;border:1px solid var(--line);border-radius:8px;padding:3px 6px;background:var(--card,#fff);color:inherit;max-width:150px}
+.tk-dsel.miss{border-color:#F4C38A;color:#B54708;background:#FFF8EE}
+@media (max-width:700px){ .tk-drow{flex-wrap:wrap} .tk-dt{flex-basis:calc(100% - 40px)} .tk-dpc{display:none} .tk-dsel{flex:1;max-width:none} }
+/* checklist reminder */
+.tk-toast.tk-clwarn{background:#0B4EA2}.tk-toast.tk-clwarn.bad{background:#B54708}
+/* topics */
+.tk-topics{margin-bottom:14px}
+.tk-tcards{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+.tk-tcard2{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:start;border:1.5px solid var(--line);border-radius:14px;padding:12px;background:var(--card,#fff);font:inherit;color:inherit;cursor:pointer}
+.tk-tcard2 b{font-size:14px;line-height:1.35}
+.tk-tcard2 .big{font-size:26px;font-weight:800}.tk-tcard2 .big small{font-size:12px;font-weight:500;color:var(--muted)}
+.tk-tcard2 .tl{font-size:11px;font-weight:700;border-radius:99px;padding:1px 8px}
+.tk-tcard2 .lst,.tk-tcard2 .wk{font-size:11.5px;color:var(--muted)}
+.tk-tcard2.ok{border-color:#B7E1C1}.tk-tcard2.ok .tl{background:#E9F7EC;color:#1F7A3A}
+.tk-tcard2.mid{border-color:#F4D58A}.tk-tcard2.mid .tl{background:#FFF7E0;color:#8A6100}
+.tk-tcard2.bad{border-color:#F7B9A6;background:#FFF8F5}.tk-tcard2.bad .tl{background:#FEE4DA;color:#C4320A}
+.tk-tbar2{width:100%;height:5px;border-radius:9px;background:var(--sunken,#F2F4F7);overflow:hidden}.tk-tbar2 i{display:block;height:100%;background:currentColor;opacity:.5}
 
 </style>
 
@@ -4234,7 +4261,7 @@ const POST_MIN={video:120,photos:45,story:30,design:45};
 const pubArea=()=>areas().find(p=>/حيوية/.test(p.name))||null;
 // every finished piece of work in [since,until): {project, branch, people, m (minutes), est (no real time given)}
 function workDone(since,until=Date.now()){ const out=[], va=pubArea();
-  for(const t of tasks()){ if(t.status!=="done"||!t.doneAt||t.doneAt<since||t.doneAt>=until) continue; if(subsOf(t.id).length) continue;
+  for(const t of tasks()){ if(t.status!=="done"||!t.doneAt||t.doneAt<since||t.doneAt>=until) continue; if(subsOf(t.id).length||t.postId) continue;
     out.push({id:t.id,title:t.title,project:t.project,branch:t.branch,people:t.people||[],m:effMin(t),est:!t.minutes,at:t.doneAt}); }
   if(va) for(const p of posts()){ if(p.stage!=="published"||!p.publishedAt||p.publishedAt<since||p.publishedAt>=until) continue;
     out.push({id:p.id,title:p.title,project:va.id,branch:p.branch,people:p.people||[],m:p.minutes||POST_MIN[p.type]||POST_MIN.video,est:!p.minutes,at:p.publishedAt,post:1}); }
@@ -4409,7 +4436,7 @@ function row(t,o={}){ const p=get(t.project), done=t.status==="done", open=OPENR
   const det=open? h("div",{class:"tk-rdet"},chips(t,Object.assign({},o,{noProj:true,noPlan:true,compact:true})),
       t.notes?h("p",{class:"tk-rnote",text:t.notes.length>220?t.notes.slice(0,220)+"…":t.notes}):null,
       o.why?h("div",{class:"tk-why"},o.why.map(w=>h("span",{},w)),o.score!=null?h("span",{},"درجة "+o.score):null):null) : null;
-  return h("div",{class:"tk-r"+(done?" done":"")+(open?" open":"")+(o.sub?" sub":"")+(V.panelId===t.id?" on":"")+(SEL.has(t.id)?" sel":""),data:{id:t.id},style:"--prc:"+PRI[t.priority||3].c,onclick:()=>editTask(t)},
+  return h("div",{class:"tk-r"+(done?" done":"")+(open?" open":"")+(o.sub?" sub":"")+(V.panelId===t.id?" on":"")+(SEL.has(t.id)?" sel":""),data:{id:t.id},style:"--prc:"+PRI[t.priority||3].c,onclick:()=>t.postId&&get(t.postId)?editPost(get(t.postId)):editTask(t)},
     h("div",{class:"tk-rl"},checkbox(t),
       h("div",{class:"tk-rmain"},h("span",{class:"tk-rt",text:t.title}),meta),
       o.act||null,
@@ -4421,7 +4448,7 @@ function groupRows(list,o={}){ const groups=new Map(); for(const t of list){ con
     out.push(h("section",{class:"tk-pg"},h("button",{type:"button",class:"tk-pgh",onclick:()=>{ c?COLL.delete(key):COLL.add(key); render(); }},h("span",{class:"car"},c?"◂":"▾"),h("i",{style:"--pc:"+pcol(p)}),h("b",{},p?p.name:"الوارد"),h("span",{class:"tk-tgn"},g.length)),
       c?null:h("div",{class:"tk-list"},g.map(t=>row(t,Object.assign({noProj:true},typeof o.rowOpts==="function"?o.rowOpts(t):o.rowOpts||{})))))); }
   return out; }
-function toggleDone(t){ const was=t.status, wasAt=t.doneAt;
+function toggleDone(t){ if(t.postId&&t.status!=="done"&&get(t.postId)){ postTaskDone(t); return; } const was=t.status, wasAt=t.doneAt;
   if(t.status==="done"){ t.status=t.prev&&t.prev!=="done"?t.prev:"todo"; t.doneAt=null; unspawn(t); } else { t.prev=t.status; t.status="done"; t.doneAt=Date.now(); }
   put(t,{silent:true}); syncMain(t); render(); Sync.soon();
   const undo=()=>{ t.status=was; t.doneAt=wasAt; put(t,{silent:true}); syncMain(t); render(); Sync.soon(); };
@@ -4564,11 +4591,11 @@ function icon(n,size=20){ const s=document.createElementNS("http://www.w3.org/20
 /* ---------- navigation: 4 sections, each with its own views ---------- */
 const SECTIONS=[
   {k:"home",n:"اليوم",i:"today",views:["home"]},
-  {k:"tasks",n:"المهام",i:"tasks",views:["inbox","list","kanban"]},
+  {k:"tasks",n:"المهام",i:"tasks",views:["inbox","list","kanban","done"]},
   {k:"pub",n:"النشر",i:"pub",views:["pubboard","publist","pubcal","pubstats","ideas"]},
   {k:"projects",n:"المشاريع",i:"projects",views:["areas","big","proj","balance"]},
   {k:"more",n:"المزيد",i:"more",views:["more","occasions","replies","guide","channels","drives","season"]}];
-const VIEW_LABEL={pubboard:["لوحة النشر","kanban"],publist:["القائمة","list"],pubstats:["الإحصائيات","balance"],pubcal:["التقويم","today"],ideas:["الاستلهام","ideas"],inbox:["الوارد","inbox"],list:["القائمة","list"],kanban:["كانبان","kanban"],areas:["المستمرة","projects"],big:["الكبرى","projects"],balance:["التوازن","balance"]};
+const VIEW_LABEL={pubboard:["لوحة النشر","kanban"],publist:["القائمة","list"],pubstats:["الإحصائيات","balance"],pubcal:["التقويم","today"],ideas:["الاستلهام","ideas"],inbox:["الوارد","inbox"],list:["القائمة","list"],kanban:["كانبان","kanban"],done:["المنجزة","balance"],areas:["المستمرة","projects"],big:["الكبرى","projects"],balance:["التوازن","balance"]};
 const sectionOf=v=>SECTIONS.find(s=>s.views.includes(v))||SECTIONS[0];
 function goSection(k){ const s=SECTIONS.find(x=>x.k===k); const last=ls.get("last-"+k,null); go(last&&s.views.includes(last)?last:s.views[0],{proj:null}); }
 function counts(){ const ib=inbox().length; const late=actionable().filter(t=>{ const d=daysLeft(effDeadline(t)); return d!=null&&d<0; }).length; const nid=inspInbox().length; return {ib,late,nid}; }
@@ -4853,7 +4880,7 @@ const PL_PAGE=10;
 function vPubList(){ const f=V.pl||(V.pl={st:"work",q:"",br:"",ty:"",page:0});
   const all=posts(); const q=norm(f.q||"");
   const groups={work:["قيد العمل",x=>x.stage!=="published"&&x.stage!=="idea"],idea:["أفكار",x=>x.stage==="idea"],arch:["الأرشيف (منشور)",x=>x.stage==="published"],all:["الكل",()=>true]};
-  let list=all.filter(groups[f.st][1]).filter(x=>(!f.br||x.branch===f.br)&&(!f.ty||(f.ty==="video"?["video","reel"].includes(x.type):x.type===f.ty))&&(!q||norm((x.title||"")+" "+(x.caption||"")+" "+(x.notes||"")).includes(q)));
+  let list=all.filter(groups[f.st][1]).filter(x=>(!f.br||x.branch===f.br)&&(!f.ty||(f.ty==="video"?["video","reel"].includes(x.type):x.type===f.ty))&&(!f.topic||topicOf(x)===f.topic)&&(!q||norm((x.title||"")+" "+(x.caption||"")+" "+(x.notes||"")).includes(q)));
   const dateOf=x=>x.stage==="published"?(x.publishedAt||0):x.schedDate?parseD(x.schedDate):(x.createdAt||0);
   const order=PSTAGE.map(x=>x[0]);
   list.sort(f.st==="work"?((a,b)=>order.indexOf(b.stage)-order.indexOf(a.stage)||(a.schedDate||"9999").localeCompare(b.schedDate||"9999")):((a,b)=>dateOf(b)-dateOf(a)));
@@ -4878,7 +4905,8 @@ function vPubList(){ const f=V.pl||(V.pl={st:"work",q:"",br:"",ty:"",page:0});
       h("div",{class:"tk-opts"},Object.entries(groups).map(([k,[n]])=>h("button",{type:"button","aria-pressed":String(f.st===k),onclick:()=>set({st:k,page:0})},n+" ",h("small",{},cnt(k))))),
       h("div",{class:"tk-plf"},search,
         sel(f.br,[["","كل الفروع"],...Object.entries(BRANCHES).map(([k,b])=>[k,b.n])],v=>set({br:v,page:0})),
-        sel(f.ty,[["","كل الأنواع"],["video","فيديو وريلز"],["photos","صور"],["post","منشور"],["story","ستوري"]],v=>set({ty:v,page:0})))),
+        sel(f.ty,[["","كل الأنواع"],["video","فيديو وريلز"],["photos","صور"],["post","منشور"],["story","ستوري"]],v=>set({ty:v,page:0})),
+        sel(f.topic||"",[["","كل المحاور"],...topicsList().map(x=>[x,x])],v=>set({topic:v||null,page:0})))),
     slice.length? h("div",{class:"tk-list tk-pl"},slice.map(row)) : h("div",{class:"tk-empty"},f.q?"لا نتائج لهذا البحث.":"لا شيء هنا بعد."),
     pages>1? h("div",{class:"tk-pager"},
       h("button",{type:"button",class:"tk-btn sm",disabled:f.page===0||undefined,onclick:()=>set({page:f.page-1})},"→ السابق"),
@@ -4918,6 +4946,7 @@ function vPubStats(){ const per=V.psPer||180; const now=Date.now(), since=per?no
       kpi("متوسط المشاهدات",kfmt(Math.round(avg(withS,V_))),"للمنشور الواحد"),
       kpi("متوسط التفاعل",Math.round(avg(withS,E_)),"إعجاب + تعليق + مشاركة"),
       kpi("أفضل وقت",bestD?bestD.n:"—",bestH?bestH.n+" · بحسب متوسط المشاهدات":""))),
+    topicCards(per),
     h("div",{class:"tk-card",style:"margin-bottom:14px"},h("h3",{},"المنشورات شهريًا"),monthChart),
     h("div",{class:"tk-grid tk-sgrid"},
       grp("حسب النوع",Object.keys(PTYPE_LOOK),p=>PTYPE_LOOK[p.type]?p.type:"video",k=>typeTag(k),k=>PTYPE_LOOK[k][1]),
@@ -4983,6 +5012,7 @@ function editPost(p,preset={}){ const isNew=!p; dlg.panel=p?p.id:"new"; p=p?{...
   const st=opts(Object.fromEntries(PSTAGE.map(([k,n,c])=>[k,{n,c}])),p.stage,{color:true});
   const ty=opts(Object.fromEntries(PTYPE.map(([k,n])=>[k,{n:PTYPE_LOOK[k][0]+" "+n,c:PTYPE_LOOK[k][1]}])),p.type||"video",{color:true});
   const pur=opts(Object.fromEntries(PURPOSE.map(x=>[x,{n:x}])),p.purpose||""); pur.dataset.clear="1";
+  const tpc=opts(Object.fromEntries(topicsList().map(x=>[x,{n:x}])),topicOf(p)||""); tpc.dataset.clear="1";
   const sd=h("input",{type:"date",id:"tkPostDate",value:p.schedDate||""});
   const slots=nextSlots(3);
   const sdChips=h("div",{class:"tk-opts"},slots.map(v=>h("button",{type:"button",onclick:()=>{ sd.value=v; }},WDN[new Date(parseD(v)).getDay()]+" "+fmtD(v))),h("button",{type:"button",onclick:()=>{ sd.value=""; }},"بدون"));
@@ -4999,6 +5029,7 @@ function editPost(p,preset={}){ const isNew=!p; dlg.panel=p?p.id:"new"; p=p?{...
       h("div",{class:"f full"},h("label",{class:"f"},"المرحلة"),st),
       p.source==="facebook"&&!p.cl?null:clBlock(p,isNew),
       h("div",{class:"f full"},h("label",{class:"f"},"النوع"),ty),
+      h("div",{class:"f full"},h("label",{class:"f"},"المحور"),tpc),
       h("div",{class:"f full"},h("label",{class:"f"},"الغرض"),pur),
       h("div",{class:"f full"},h("label",{class:"f"},"موعد النشر (المقترح حسب أيام النشر)"),sdChips,h("div",{class:"tk-sdrow"},sd,tslot)),
       h("label",{class:"f"},"الفرع",br), h("label",{class:"f"},"نُشر فعلًا يوم",pubd),
@@ -5013,7 +5044,7 @@ function editPost(p,preset={}){ const isNew=!p; dlg.panel=p?p.id:"new"; p=p?{...
      h("span",{class:"tk-sp"}),
      !isNew&&h("button",{type:"button",class:"tk-btn dng",onclick:()=>{ const old=get(p.id); remove(p.id); d.close(); toast("حُذف",()=>{ old.deleted=false; put(old); }); }},"حذف")]);
   Q("form",d).addEventListener("submit",e=>{ const v=title.value.trim(); if(!v){ e.preventDefault(); title.focus(); return; }
-    Object.assign(p,{title:v,type:ty.value||"video",purpose:pur.value||null,grades:grd.values(),ptime:tslot.value||null,schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
+    Object.assign(p,{title:v,type:ty.value||"video",purpose:pur.value||null,topic:tpc.value||null,grades:grd.values(),ptime:tslot.value||null,schedDate:sd.value||null,branch:br.value||null,people:ppl.values(),notes:notes.value.trim()});
     const ns=st.value||p.stage; if(ns!==p.stage){ if(!isNew&&ns!=="published") warnMissing(p,ns); p.stage=ns; if(ns!=="published") p.publishedAt=null; }
     if(pubd.value){ p.publishedAt=parseD(pubd.value)+12*3600e3; p.stage="published"; } else if(p.stage==="published"&&!p.publishedAt) p.publishedAt=Date.now();
     if(isNew) p.createdAt=Date.now(); put(p); toast(isNew?"أُضيف إلى غرفة النشر":"حُفظ"); });
@@ -5056,18 +5087,20 @@ function clSave(p,cl,live){ p.cl=cl; if(live){ const x=get(p.id); if(x){ x.cl=cl
 function clProgress(p,stage=p.stage){ const want=CL_OF_STAGE[stage]||[]; const it=clOf(p).filter(x=>!x.off&&want.includes(x.s)); return {done:it.filter(x=>x.done).length,n:it.length}; }
 function clMissingBefore(p,toStage){ const order=["toshoot","shot","edit","review","published"]; const ti=order.indexOf(toStage); if(ti<0) return [];
   const st=order.slice(0,ti).flatMap(s=>CL_OF_STAGE[s]); return clOf(p).filter(x=>!x.off&&!x.done&&!x.opt&&st.includes(x.s)); }
-function warnMissing(p,toStage){ if(!p.cl&&!["review","published"].includes(toStage)) return; const m=clMissingBefore(p,toStage); if(!m.length) return;
-  setTimeout(()=>{ QA(".tk-toast").forEach(x=>x.remove()); const t=h("div",{class:"tk-toast",role:"status"},"بقي "+m.length+" بند لم يُنجز قبل «"+PS[toStage].n+"»",
-    h("button",{type:"button",onclick:()=>{ t.remove(); editPost(get(p.id)); }},"عرض")); document.body.append(t); setTimeout(()=>t.remove(),6000); },60); }
+function warnMissing(p,toStage){ const m=(p.cl||["review","published"].includes(toStage))?clMissingBefore(p,toStage):[]; const nxt=clProgress(p,toStage);
+  if(!m.length&&!nxt.n) return;
+  const msg=m.length?"⚠ بقي "+m.length+" بند لم يُنجز قبل «"+PS[toStage].n+"»"+(nxt.n?"، وللمرحلة الجديدة "+nxt.n+" بنود":""):"☑ لمرحلة «"+PS[toStage].n+"» قائمة تحقق: "+(nxt.n-nxt.done)+" بند";
+  setTimeout(()=>{ QA(".tk-toast").forEach(x=>x.remove()); const t=h("div",{class:"tk-toast tk-clwarn"+(m.length?" bad":""),role:"status"},msg,
+    h("button",{type:"button",onclick:()=>{ t.remove(); editPost(get(p.id)); }},"افتح القائمة")); document.body.append(t); setTimeout(()=>t.remove(),7000); },60); }
 
 /* the checklist block inside the post sheet */
-function clBlock(p,isNew){ const box=h("div",{class:"f full tk-cl"});
+function clBlock(p,isNew){ const box=h("div",{class:"f full tk-cl"}); const OPEN=new Set([...(CL_OF_STAGE[p.stage]||[]),...(p.stage==="published"?["after"]:[])]);
   const draw=()=>{ const cl=clOf(p); const off=cl.filter(x=>x.off); const cur=CL_OF_STAGE[p.stage]||[];
     const groups=CLS.map(([s,n])=>{ const it=cl.filter(x=>x.s===s&&!x.off); if(!it.length) return null; const d=it.filter(x=>x.done).length;
-      return h("details",{class:"tk-clg"+(cur.includes(s)?" cur":""),open:cur.includes(s)||(s==="after"&&p.stage==="published")||undefined},
+      return h("details",{class:"tk-clg"+(cur.includes(s)?" cur":""),open:OPEN.has(s)||undefined,ontoggle:e=>{ e.target.open?OPEN.add(s):OPEN.delete(s); }},
         h("summary",{},h("b",{},n),h("span",{class:"tk-cln"+(d===it.length?" ok":"")},d+"/"+it.length)),
         it.map(x=>h("div",{class:"tk-cli"+(x.done?" done":"")},
-          h("label",{},h("input",{type:"checkbox",checked:x.done||undefined,onchange:e=>{ const c=clOf(p).map(y=>y.id===x.id?{...y,done:e.target.checked}:y); clSave(p,c,!isNew); draw(); }}),
+          h("label",{},h("input",{type:"checkbox",checked:x.done||undefined,onclick:e=>e.stopPropagation(),onchange:e=>{ e.stopPropagation(); const c=clOf(p).map(y=>y.id===x.id?{...y,done:e.target.checked}:y); clSave(p,c,!isNew); draw(); }}),
             h("span",{},x.t),x.opt?h("small",{},"عند الحاجة"):null),
           h("button",{type:"button",class:"tk-clx",title:"لا يلزم لهذا المنشور",onclick:()=>{ clSave(p,clOf(p).map(y=>y.id===x.id?{...y,off:true}:y),!isNew); draw(); }},"×")))); }).filter(Boolean);
     const hasDoc=cl.some(x=>x.doc);
@@ -5320,8 +5353,8 @@ function vSeason(){ const now=new Date(); const cur=now.getMonth()>=8?now.getFul
       h("textarea",{rows:5,placeholder:"نقاط الضعف، أسباب التعثر، التوصيات…",onchange:e=>{ const id="season-"+y; const x=get(id)||{id,kind:"season",y}; x.note=e.target.value; put(x,{silent:true}); Sync.soon(); }},(get("season-"+y)||{}).note||""))); }
 
 /* ---------- views ---------- */
-function render(){ if(mode!=="tasks") return; const keepFocus=document.activeElement&&document.activeElement.id; const sy=window.scrollY;
-  const body=h("div",{class:"tk-body"},...[mobileTop(),sectionTabs(),["inbox","ideas","balance","pubboard","pubcal","publist","pubstats","areas","big","more","occasions","replies","guide","channels","drives","season"].includes(V.view)?null:captureBar(),({home:vHome,inbox:vInbox,list:vList,kanban:vKanban,areas:vAreas,big:vBig,proj:vProj,balance:vBalance,ideas:vIdeas,pubboard:vPubBoard,pubcal:vPubCal,publist:vPubList,pubstats:vPubStats,more:vMore,occasions:vOccasions,replies:vReplies,guide:vGuide,channels:vChannels,drives:vDrives,season:vSeason}[V.view]||vHome)()].filter(Boolean));
+function render(){ if(mode!=="tasks") return; ensurePostTasks(); const keepFocus=document.activeElement&&document.activeElement.id; const sy=window.scrollY;
+  const body=h("div",{class:"tk-body"},...[mobileTop(),sectionTabs(),["inbox","done","ideas","balance","pubboard","pubcal","publist","pubstats","areas","big","more","occasions","replies","guide","channels","drives","season"].includes(V.view)?null:captureBar(),({home:vHome,inbox:vInbox,list:vList,kanban:vKanban,done:vDone,areas:vAreas,big:vBig,proj:vProj,balance:vBalance,ideas:vIdeas,pubboard:vPubBoard,pubcal:vPubCal,publist:vPubList,pubstats:vPubStats,more:vMore,occasions:vOccasions,replies:vReplies,guide:vGuide,channels:vChannels,drives:vDrives,season:vSeason}[V.view]||vHome)()].filter(Boolean));
   root.replaceChildren(h("div",{class:"tk-shell"},sideNav(),body),bottomNav());
   Sync.set(Sync.on()?(Sync.state==="local"?"ok":Sync.state):"local",Sync.on()?Sync.msg:"البيانات محفوظة في هذا المتصفح فقط");
   if(keepFocus){ const el=document.getElementById(keepFocus); if(el&&el.focus){ el.focus(); if(el.setSelectionRange&&el.value!=null&&el.type!=="date"){ try{ el.setSelectionRange(el.value.length,el.value.length); }catch(e){} } } }
@@ -5727,6 +5760,10 @@ function editTask(t,preset={}){ const isNew=!t; dlg.panel=t?t.id:"new"; t=t?{...
     prMenu.replaceChildren(...[1,2,3,4].map(k=>h("button",{type:"button",class:"tk-flagopt"+(k===prio?" on":""),style:"--fc:"+PRI[k].c,onclick:()=>{ prio=k; prMenu.hidden=true; drawPr(); title.dispatchEvent(new Event("change",{bubbles:true})); }},icon("flag",18),h("span",{},PRI[k].n)))); };
   drawPr();
   const mins=h("input",{type:"number",min:5,step:5,id:"tkMin",placeholder:"دقائق",value:t.minutes||"",style:"width:90px",oninput:()=>pills()});
+  const isDone=()=>((!isNew&&get(t.id))||t).status==="done";
+  const doneD=h("input",{type:"date",id:"tkDoneD",value:t.doneAt?iso(new Date(t.doneAt)):"",onchange:()=>pills()});
+  const doneQ=h("div",{class:"tk-opts"},[["اليوم",0],["أمس",1],["قبل يومين",2]].map(([n,k])=>h("button",{type:"button",onclick:()=>{ const x=new Date(); x.setDate(x.getDate()-k); doneD.value=iso(x); pills(); doneD.dispatchEvent(new Event("change",{bubbles:true})); }},n)));
+  const minQ=h("div",{class:"tk-opts"},TIME_OPTS.map(([m,n])=>h("button",{type:"button",onclick:()=>{ mins.value=m; pills(); mins.dispatchEvent(new Event("change",{bubbles:true})); }},n)));
   const dl=h("input",{type:"date",id:"tkDate",value:t.planned||"",class:"sr"});
   const dd=h("input",{type:"date",id:"tkDeadline",value:t.deadline||"",onchange:()=>{ drawWhen(); pills(); }});
   const r0=t.repeat||null; let rdays=[...((r0&&r0.days)||[])]; let repOpen=!!r0;
@@ -5760,16 +5797,18 @@ function editTask(t,preset={}){ const isNew=!t; dlg.panel=t?t.id:"new"; t=t?{...
   // properties as pills, each opening its own small panel below
   const popBox=h("div",{class:"tk-popbox",hidden:true}); let popKey=null;
   const POPS={date:()=>datePop,proj:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"المشروع",proj),mainWrap),ppl:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"من طلبها أو من تخدمه"),ppl),
-    eff:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"الجهد المتوقع"),h("div",{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap"},ef,h("span",{class:"tk-muted"},"أو"),mins)),
+    done:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"أُنجزت يوم",doneD),doneQ),
+    eff:()=>isDone()?h("div",{class:"tk-popf"},h("label",{class:"f"},"كم أخذت فعلًا؟"),minQ,h("label",{class:"f"},"أو بالدقائق",mins)):h("div",{class:"tk-popf"},h("label",{class:"f"},"الجهد المتوقع"),h("div",{style:"display:flex;gap:8px;align-items:center;flex-wrap:wrap"},ef,h("span",{class:"tk-muted"},"أو"),mins)),
     br:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"الفرع",br)),dl:()=>h("div",{class:"tk-popf"},ddRow),tool:()=>h("div",{class:"tk-popf"},h("label",{class:"f"},"قالب مرتبط في الاستوديو",tool)),wait:()=>h("div",{class:"tk-popf"},wToggle,wBody)};
   function openPop(k){ if(popKey===k){ popBox.hidden=true; popKey=null; pills(); return; } popKey=k; popBox.replaceChildren(POPS[k]()); popBox.hidden=false; pills(); if(k==="date") cal.redraw(); }
   const pillRow=h("div",{class:"tk-pills"});
   function pills(){ const p=get(proj.value), m=mainWrap.hidden?null:get(mainSel.value); const pv=ppl.values?ppl.values():[]; const e=ef.value&&EFF[ef.value];
     const pill=(k,on,label,extra)=>h("button",{type:"button",class:"tk-pill"+(on?"":" empty")+(popKey===k?" open":""),style:extra||"",onclick:()=>openPop(k)},label);
     pillRow.replaceChildren(
+      isDone()?pill("done",true,"✓ أُنجزت "+(doneD.value?whenLabel(doneD.value):"اليوم"),"color:#1F7A3A;border-color:#7ACB8C"):null,
       pill("proj",!!p,p?[h("i",{style:"background:"+pcol(p)}),p.name+(m?" › "+m.title.slice(0,24):"")]:"＋ مشروع"),
       pill("ppl",pv.length,pv.length?"👤 "+pv.join("، "):"＋ أشخاص"),
-      pill("eff",!!(e||mins.value),e?"⚡ "+e.n:mins.value?"⚡ "+mins.value+" د":"＋ الجهد"),
+      isDone()?pill("eff",!!mins.value,mins.value?"⏱ أخذت "+hm(+mins.value):"⏱ كم أخذت؟",mins.value?"":"color:#B54708;border-color:#F4C38A"):pill("eff",!!(e||mins.value),e?"⚡ "+e.n:mins.value?"⚡ "+mins.value+" د":"＋ الجهد"),
       pill("br",!!br.value,br.value?"🏫 "+BRANCHES[br.value].n:"＋ الفرع"),
       pill("dl",!!dd.value,dd.value?"⏱ "+fmtD(dd.value):"⏱ آخر أجل",dd.value&&daysLeft(dd.value)<=2?"color:var(--late)":""),
       pill("tool",!!tool.value,tool.value?"🎨 "+TOOLS[tool.value]:"🎨 قالب"),
@@ -5798,6 +5837,7 @@ function editTask(t,preset={}){ const isNew=!t; dlg.panel=t?t.id:"new"; t=t?{...
       if(prio===3&&g.priority<3) prio=g.priority; const pv=ppl.values(); for(const x of g.people) if(!pv.includes(x)) pv.push(x); }
     const was=get(t.id); if(was&&was.items) t.items=was.items; if(was&&was.status!==t.status){ t.status=was.status; t.doneAt=was.doneAt; t.repeatNext=was.repeatNext; }
     Object.assign(t,{title:v,project:proj.value||null,main:mainWrap.hidden?(t.main&&get(t.main)&&get(t.main).project===(proj.value||null)?t.main:null):(mainSel.value||null),priority:prio,planned:dl.value||null,deadline:dd.value||null,v:2,effort:ef.value||"",minutes:+mins.value||null,branch:br.value||null,tool:tool.value||null,people:ppl.values(),notes:notes.value.trim()});
+    if(t.status==="done"&&doneD.value&&doneD.value!==(t.doneAt?iso(new Date(t.doneAt)):"")){ const dd0=parseD(doneD.value); t.doneAt=doneD.value===iso(new Date())?Date.now():dd0+17*3600e3; }
     if(t.status!=="done"){ if(wst){ if(t.status!=="wait") t.waitSince=Date.now(); t.status="wait"; t.waitOn=wOn.value.trim()||null; t.waitUntil=wUntil.value||null; } else if(t.status==="wait"){ t.status="todo"; } }
     const rv=repOpen?rsel.value:""; t.repeat=!rv?null:rv==="wd"?{f:"w",days:[0,1,2,3,4]}:rv==="w"?{f:"w",days:rdays.length?rdays:[new Date().getDay()]}:{f:rv};
     if(t.repeat&&!t.planned){ const td=iso(new Date()); const ok=t.repeat.f!=="w"||t.repeat.days.includes(new Date().getDay()); t.planned=ok?td:nextDate(t.repeat,td); }
@@ -6100,7 +6140,77 @@ function topBlock(tops,rowOf){ const td=iso(new Date()); const dismissed=ls.get(
   if(!tops.length&&!sug.length) return dismissed? null : null;
   return h("div",{class:"tk-card tk-tcard tk-top3"},head,list,sugBox); }
 
-window.rouwadTasks={suggestTop,topToday,toggleTop,findAll,weeklyReview,reviewDue,downloadBackup,autoSnapshot,IDB,backupDue,bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
+/* ---------- المنجزة: review what was done, fix project and time, add what was never logged ---------- */
+function vDone(){ const D=V.dn||(V.dn={days:7,miss:false}); const since=today0()-(D.days-1)*DAY;
+  let list=tasks().filter(t=>t.status==="done"&&t.doneAt&&t.doneAt>=since&&!t.postId&&!subsOf(t.id).length).sort((a,b)=>b.doneAt-a.doneAt);
+  const noTime=list.filter(t=>!t.minutes).length; if(D.miss) list=list.filter(t=>!t.minutes);
+  const tot=list.reduce((a,t)=>a+effMin(t),0);
+  const seg=h("div",{class:"tk-seg"},[[1,"اليوم"],[7,"أسبوع"],[30,"شهر"],[90,"3 أشهر"]].map(([d,n])=>h("button",{type:"button","aria-pressed":String(D.days===d),onclick:()=>{ D.days=d; render(); }},n)));
+  const upd=(t,f)=>{ const x=get(t.id); if(!x) return; f(x); put(x,{silent:true}); Sync.soon(); render(); };
+  const tsel=t=>{ const cur=t.minutes||""; const s=h("select",{class:"tk-dsel"+(cur?"":" miss"),title:"كم أخذت",onclick:e=>e.stopPropagation(),onchange:e=>upd(t,x=>x.minutes=+e.target.value||null)},
+      h("option",{value:""},"⏱ كم أخذت؟"),[[10,"10 د"],[15,"ربع ساعة"],[30,"نصف ساعة"],[45,"45 د"],[60,"ساعة"],[90,"ساعة ونصف"],[120,"ساعتان"],[180,"3 ساعات"],[240,"نصف يوم"],[480,"يوم كامل"]].concat(cur&&![10,15,30,45,60,90,120,180,240,480].includes(cur)?[[cur,hm(cur)]]:[]).map(([m,n])=>h("option",{value:m,selected:cur===m||undefined},n)));
+    return s; };
+  const psel=t=>{ const s=projSelect(t.project||"",v=>upd(t,x=>{ x.project=v||null; x.inbox=!v; if(x.main&&get(x.main)&&get(x.main).project!==x.project) x.main=null; }),{empty:"الوارد"}); s.classList.add("tk-dsel"); s.addEventListener("click",e=>e.stopPropagation()); s.value=t.project||""; return s; };
+  const days=new Map(); for(const t of list){ const k=iso(new Date(t.doneAt)); if(!days.has(k)) days.set(k,[]); days.get(k).push(t); }
+  const add=()=>editTask(null,{status:"done",doneAt:Date.now(),prev:"todo"});
+  return h("div",{class:"tk-dview"},
+    h("div",{class:"tk-ph"},h("div",{},h("b",{style:"font-size:18px"},list.length+" منجزة"),h("span",{class:"tk-muted"}," · ≈ "+hm(tot))),h("span",{class:"tk-sp"}),seg),
+    h("div",{class:"tk-dtools"},h("button",{type:"button",class:"tk-btn pri",id:"tkAddDone",onclick:add},"＋ منجزة لم أوثّقها"),
+      noTime?h("button",{type:"button",class:"tk-btn"+(D.miss?" on":""),id:"tkDMiss",onclick:()=>{ D.miss=!D.miss; render(); }},(D.miss?"✓ ":"")+"بلا وقت مسجّل ("+noTime+")"):h("span",{class:"tk-muted"},"✓ كل المهام لها وقت مسجّل"),
+      h("span",{class:"tk-sp"}),h("span",{class:"tk-muted",style:"font-size:12.5px"},"غيّر المشروع أو الوقت من السطر مباشرة، أو افتح المهمة للمزيد.")),
+    list.length? [...days.entries()].map(([k,ts])=>h("section",{class:"tk-dday"},h("h4",{},whenLabel(k)+" · "+longD(k),h("span",{class:"tk-tgn"},ts.length),h("small",{class:"tk-muted"}," ≈ "+hm(ts.reduce((a,t)=>a+effMin(t),0)))),
+      h("div",{class:"tk-card tk-dlist"},ts.map(t=>h("div",{class:"tk-drow",data:{id:t.id},onclick:()=>editTask(t)},
+        h("span",{class:"tk-dck",title:"إلغاء الإنجاز",onclick:e=>{ e.stopPropagation(); toggleDone(get(t.id)); }},"✓"),
+        h("span",{class:"tk-dt",text:t.title}),
+        h("span",{class:"tk-dpc",style:"--pc:"+pcol(get(t.project))}),psel(t),tsel(t))))))
+      : h("div",{class:"tk-empty"},D.miss?"لا مهام بلا وقت ✓":"لا مهام منجزة في هذه الفترة. أضف ما أنجزته ولم توثّقه من الزر بالأعلى.")); }
+
+/* ---------- content in progress becomes a task: idea → develop it, toshoot → shoot it, shot/edit → edit it ---------- */
+const PTASK={idea:"💡 تطوير فكرة: ",toshoot:"📷 تصوير: ",shot:"🎬 مونتاج: ",edit:"🎬 مونتاج: "};
+const PNEXT={idea:"toshoot",toshoot:"shot",shot:"review",edit:"review"};
+let PT_LOCK=false;
+function ensurePostTasks(){ if(PT_LOCK) return; PT_LOCK=true; try{ const va=pubArea(); const seen=new Set();
+  for(const p of posts()){ const pre=PTASK[p.stage]; const id="ptask-"+p.id; if(!pre||p.source==="facebook"&&p.stage==="published") continue; seen.add(id);
+    const raw=DB.items.get(id); const title=pre+(p.title||"منشور");
+    if(raw&&raw.deleted&&raw.pStage===p.stage) continue; // the user removed it for this stage
+    const dl=p.schedDate||null;
+    if(!raw||raw.deleted||raw.pStage!==p.stage){ put(Object.assign(raw&&!raw.deleted?raw:newTask({id,createdAt:Date.now()}),{kind:"task",postId:p.id,pStage:p.stage,title,status:"todo",doneAt:null,deleted:false,project:va?va.id:null,inbox:!va,deadline:dl,branch:p.branch||null}),{silent:true}); continue; }
+    if(raw.title!==title||raw.deadline!==dl){ raw.title=title; raw.deadline=dl; put(raw,{silent:true}); } }
+  for(const t of tasks()) if(t.postId&&!seen.has(t.id)){ t.deleted=true; put(t,{silent:true}); }
+  } finally { PT_LOCK=false; } }
+function postTaskDone(t){ const p=get(t.postId); const was=p.stage, nx=PNEXT[was]||"review";
+  warnMissing(p,nx); setStage(p,nx); ensurePostTasks(); render(); Sync.soon();
+  QA(".tk-toast").forEach(x=>x.remove());
+  setTimeout(()=>toast("✓ «"+p.title.slice(0,40)+"» انتقل إلى «"+PS[nx].n+"»",()=>{ const x=get(p.id); setStage(x,was); ensurePostTasks(); render(); Sync.soon(); }),900); }
+
+/* ---------- content themes: is each theme getting enough attention on the page? ---------- */
+const TOPICS_DEFAULT=["نشاطات الأبناء","نشاطات صفية","مناسبات","مرافقة","الأنشطة اللاصفية في الابتدائي"];
+const topicsList=()=>{ const c=pubCfg(); return c.topics&&c.topics.length?c.topics:TOPICS_DEFAULT; };
+const TOPIC_RX=[["مناسبات",/عيد|المولد|رمضان|الاستقلال|الثوره|نوفمبر|اليوم العالمي|اليوم الوطني|يوم العلم|عاشوراء|تهنئه|ذكرى|المناسبه|الهجري|الاضحى|الفطر/],
+  ["مرافقة",/مرافقه|ارشدني|اولياء|الاولياء|الوالدين|توجيه|ارشاد|لقاء الاولياء|التوجيه/],
+  ["الأنشطة اللاصفية في الابتدائي",/(ابتدائ|روضه|تحضيري|البراعم).*(خرجه|رحله|نادي|ورشه|مخيم|زياره|نشاط|يوم تفاعلي)|(خرجه|رحله|نادي|ورشه|مخيم|زياره|يوم تفاعلي).*(ابتدائ|روضه|تحضيري|البراعم)/],
+  ["نشاطات صفية",/حصه|القسم|درس|صفي|تجربه|داخل القسم|مشروع|عرض|التقويم/],
+  ["نشاطات الأبناء",/تلاميذ|تلميذ|التلاميذ|ابناء|ابنائنا|طلبه|تتويج|فوز|مسابقه|مشاركه|انجاز|المتفوقين/]];
+const topicOf=p=>{ if(p.topic) return p.topic; const tx=norm((p.title||"")+" "+(p.caption||"").slice(0,400)); for(const [k,rx] of TOPIC_RX) if(rx.test(tx)&&topicsList().includes(k)) return k; return null; };
+function topicCards(per){ const now=Date.now(), since=per?now-per*DAY:0; const pubAll=posts().filter(p=>p.stage==="published"&&p.publishedAt); const pub=pubAll.filter(p=>p.publishedAt>=since);
+  const T=topicsList(); const rows=T.map(k=>{ const it=pub.filter(p=>topicOf(p)===k); const all=pubAll.filter(p=>topicOf(p)===k); const last=all.length?Math.max(...all.map(p=>p.publishedAt)):0;
+    const idle=last?Math.floor((now-last)/DAY):null; const work=posts().filter(p=>p.stage!=="published"&&topicOf(p)===k).length; return {k,n:it.length,idle,work,share:pub.length?it.length/pub.length:0}; });
+  const fair=1/T.length; const none=pub.filter(p=>!topicOf(p)).length; const mx=Math.max(0,...rows.map(r=>r.n));
+  const st=r=>r.n===0||r.idle==null||r.idle>30?["bad","يحتاج اهتمامًا"]:r.share<fair*0.5||r.idle>14?["mid","قليل"]:["ok","حاضر"];
+  return h("div",{class:"tk-card tk-topics"},h("h3",{},"الاهتمام بالمحاور",h("small",{},"المنشور في الصفحة خلال الفترة المختارة")),
+    h("div",{class:"tk-tcards"},rows.map(r=>{ const [c,l]=st(r); return h("button",{type:"button",class:"tk-tcard2 "+c,onclick:()=>{ V.pl={st:"all",q:"",br:"",ty:"",page:0,topic:r.k}; go("publist"); }},
+      h("span",{class:"tl"},l),h("b",{},r.k),h("div",{class:"big"},r.n,h("small",{}," منشور")),
+      h("div",{class:"tk-tbar2"},h("i",{style:"width:"+(mx?r.n/mx*100:0)+"%"})),
+      h("small",{class:"lst"},r.idle==null?"لم يُنشر فيه بعد":r.idle===0?"آخر منشور اليوم":"آخر منشور قبل "+r.idle+" يوم"),
+      r.work?h("small",{class:"wk"},"🛠 "+r.work+" قيد العمل"):null); })),
+    h("p",{class:"tk-note",style:"margin:10px 0 0"},"المحور يُقترح تلقائيًا من نص المنشور، وتصحّحه من «المحور» داخل المنشور."+(none?" "+none+" منشور بلا محور في هذه الفترة.":""),
+      h("button",{type:"button",class:"tk-link",onclick:()=>editTopics()}," ✎ تعديل المحاور"))); }
+function editTopics(){ let T=[...topicsList()]; const box=h("div",{class:"f full"});
+  const draw=()=>box.replaceChildren(...T.map((t,i)=>h("div",{class:"tk-cli"},h("input",{type:"text",value:t,oninput:e=>{ T[i]=e.target.value; }}),
+      h("button",{type:"button",class:"tk-clx",onclick:()=>{ T.splice(i,1); draw(); }},"×"))),h("button",{type:"button",class:"tk-link",onclick:()=>{ T.push(""); draw(); setTimeout(()=>{ const ii=QA("input",box); ii[ii.length-1].focus(); },20); }},"＋ محور"));
+  draw(); const d=dlg("محاور المحتوى",[box],[h("button",{type:"button",class:"tk-btn pri",onclick:()=>{ savePubCfg({topics:T.map(x=>x.trim()).filter(Boolean)}); d.close(); render(); }},"حفظ")]); }
+
+window.rouwadTasks={vDone,ensurePostTasks,topicOf,topicsList,suggestTop,topToday,toggleTop,findAll,weeklyReview,reviewDue,downloadBackup,autoSnapshot,IDB,backupDue,bigToTask,startSel,endSel,SEL,waiting,reviewStuck,unstick,stillStuck,hashtagsFor,purposeOf,repeatProject,newSeries,gradePicker,guessGrades,gradesOf,occs,occNext,ensureOccIdeas,triage,inspInbox,quickIdea,editTemplates,clOf,clProgress,importFbCsv,posts,pubStats,nextSlots,autoSchedule,migratePosts,importItems,parseCapture,inbox,DB,put,get,all,tasks,projects,balance,ranked,score,attention,go,Sync,render,setMode,newTask,uid};
 const boot=()=>{ migrateDates(); migratePosts(); seedOccasions(); ensureOccIdeas(); setMode(mode); render(); if(Sync.on()) Sync.run(); setTimeout(autoSnapshot,4000); };
 if(IDB_ON) IDB.get("items").then(arr=>{ IDB_LOADED=true; if(Array.isArray(arr)) for(const o of arr){ if(!o||!o.id) continue; const c=DB.items.get(o.id); if(!c||(o.updatedAt||0)>(c.updatedAt||0)) DB.items.set(o.id,o); } if(LEGACY||!arr) persist(); })
   .catch(()=>{ IDB_ON=false; IDB_LOADED=true; }).finally(boot);
